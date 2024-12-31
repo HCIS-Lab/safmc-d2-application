@@ -1,8 +1,9 @@
-.PHONY : all clean
 SHELL := /usr/bin/bash
+.PHONY : all clean
 
 all:
-	colcon build --packages-select agent agent_msgs
+	git submodule update --init --recursive
+	colcon build --packages-select px4_msgs agent agent_msgs
 	source install/setup.bash
 	ros2 run agent agent
 
