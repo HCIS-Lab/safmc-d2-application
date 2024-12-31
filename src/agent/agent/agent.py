@@ -39,7 +39,10 @@ class Agent(Node):
                 self.drone.drop()
 
             case States.DROP:
-                self.drone.walk_to_supply()
+                if not self.drone.camera_blocked():
+                    self.drone.walk_to_supply()
+                else: #checking get_drop_signal() should be done in WAIT
+                    self.drone.drop_payload()
 
             case _:
                 pass
