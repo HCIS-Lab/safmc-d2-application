@@ -1,6 +1,6 @@
 from rclpy.node import Node
 from transitions import Machine
-from agent_msgs.msg import Drop
+from agent_msgs.msg import Wait
 
 from .states import States, transitions
 
