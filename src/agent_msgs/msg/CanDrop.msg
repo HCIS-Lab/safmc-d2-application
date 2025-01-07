@@ -1,1 +1,0 @@
-bool can_drop

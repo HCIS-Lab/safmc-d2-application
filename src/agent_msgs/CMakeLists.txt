@@ -18,7 +18,7 @@ find_package(std_msgs REQUIRED)
 
 set(msg_files
     "msg/Wait.msg",
-    "msg/CanDrop.msg"
+    "msg/Signal.msg"
 )
 rosidl_generate_interfaces(${PROJECT_NAME}
     ${msg_files}
