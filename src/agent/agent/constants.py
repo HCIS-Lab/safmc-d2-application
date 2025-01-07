@@ -1,1 +1,1 @@
-DELTA_TIME = 1
+DELTA_TIME = 0.2

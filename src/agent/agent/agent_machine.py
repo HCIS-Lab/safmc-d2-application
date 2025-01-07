@@ -56,7 +56,8 @@ class AgentMachine(Machine):
         # 根據條件判斷是否要 transition
         match self.state:
             case States.IDLE:
-                pass
+                if False:
+                    self.takeoff()
             case States.TAKEOFF:
                 pass
             case States.WALK_TO_SUPPLY:
