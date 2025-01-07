@@ -1,23 +1,22 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, Int8
 
 class Metiator(Node):
     def __init__(self):
         super().__init__('metiator')
         self.wait_signal = [False, False, False, False]
 
-        self.subscriber_0 = self.create_subscription(Empty, '/drone0/Wait', lambda msg: self.signal_callback(msg, 0), 10)
-        self.subscriber_1 = self.create_subscription(Empty, '/drone1/Wait', lambda msg: self.signal_callback(msg, 1), 10)
-        self.subscriber_2 = self.create_subscription(Empty, '/drone2/Wait', lambda msg: self.signal_callback(msg, 2), 10)
-        self.subscriber_3 = self.create_subscription(Empty, '/drone3/Wait', lambda msg: self.signal_callback(msg, 3), 10)
+        self.subscriber_0 = self.create_subscription(Int8, '/pair0/Wait', self.signal_callback, 10)
+        self.subscriber_1 = self.create_subscription(Int8, '/pair1/Wait', self.signal_callback, 10)
         self.publisher_0 = self.create_publisher(Empty, '/pair0/Signal', 10)
         self.publisher_1 = self.create_publisher(Empty, '/pair1/Signal', 10)
 
-    def signal_callback(self, msg, signal_type):
-        self.wait_signal[signal_type] = True
-        self.get_logger().info(f'Received signal from drone{signal_type}')
-        self.check_wait_publish_drop()
+    def signal_callback(self, msg):
+        if msg.data >= 0 and msg.data <= 3:
+            self.wait_signal[msg.data] = True
+            self.get_logger().info(f'Received signal from drone{msg.data}')
+            self.check_wait_publish_drop()
 
     def check_wait_publish_drop(self):
         if self.wait_signal[0] and self.wait_signal[1]:
