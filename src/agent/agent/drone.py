@@ -10,12 +10,11 @@ class Drone(Machine):
         super().__init__(self, states=States,
                          transitions=transitions, initial=States.IDLE)
         
-        self.drone_id = 0
         self.group_id = 0
 
-        node.wait_publisher = node.create_publisher(Int8, 'Wait', 10)
+        node.wait_publisher = node.create_publisher(Int8, f'/pair{self.group_id}/wait', 10)
         node.wait_signal_subscription = node.create_subscription(
-                Empty, f'/pair{self.group_id}/Signal', self.__set_signal, 10)
+                Empty, f'/pair{self.group_id}/signal', self.__set_signal, 10)
     
     def publish_wait(self):
         signal_msg = Int8()

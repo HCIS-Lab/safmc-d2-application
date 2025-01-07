@@ -7,13 +7,13 @@ class Metiator(Node):
         super().__init__('metiator')
         self.wait_signal = [False, False, False, False]
 
-        self.subscriber_0 = self.create_subscription(Int8, '/pair0/Wait', self.signal_callback, 10)
-        self.subscriber_1 = self.create_subscription(Int8, '/pair1/Wait', self.signal_callback, 10)
-        self.publisher_0 = self.create_publisher(Empty, '/pair0/Signal', 10)
-        self.publisher_1 = self.create_publisher(Empty, '/pair1/Signal', 10)
+        self.subscriber_0 = self.create_subscription(Int8, '/pair0/wait', self.signal_callback, 10)
+        self.subscriber_1 = self.create_subscription(Int8, '/pair1/wait', self.signal_callback, 10)
+        self.publisher_0 = self.create_publisher(Empty, '/pair0/signal', 10)
+        self.publisher_1 = self.create_publisher(Empty, '/pair1/signal', 10)
 
     def signal_callback(self, msg):
-        if msg.data >= 0 and msg.data <= 3:
+        if msg.data >=0 and msg.data <= 3:
             self.wait_signal[msg.data] = True
             self.get_logger().info(f'Received signal from drone{msg.data}')
             self.check_wait_publish_drop()
