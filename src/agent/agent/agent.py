@@ -36,7 +36,11 @@ class Agent(Node):
                 self.drone.wait()
 
             case States.WAIT:
-                self.drone.drop()
+                if self.drone.get_drop_signal():
+                    self.get_logger().info('Received server signal.')
+                    self.drone.drop()
+                else:
+                    self.drone.publish_wait()
 
             case States.DROP:
                 self.drone.walk_to_supply()
