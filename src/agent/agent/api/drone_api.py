@@ -90,6 +90,9 @@ class DroneApi(Api):
         self.__local_coord = NEDCoordinate(0.0, 0.0, 0.0)
 
         self.__vehicle_status = VehicleStatus()
+        
+        self.__preload = False
+        self.__altitude_reached = False
 
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition) -> None:
         self.__vehicle_local_position = vehicle_local_position_msg
@@ -107,6 +110,12 @@ class DroneApi(Api):
         self.__home_coord.x = coord.x
         self.__home_coord.y = coord.y
         self.__home_coord.z = coord.z
+    
+    def set_preload(self, status: bool) -> None:
+        self.__preload = status
+
+    def set_altitude_reached(self, status) -> None:
+        self.__altitude_reached = status
 
     def publish_vehicle_command(self, command, **params) -> None:
 
@@ -143,9 +152,9 @@ class DroneApi(Api):
         goto_setpoint_msg.timestamp = int(
             self.__node.get_clock().now().nanoseconds / 1000)
 
-        goto_setpoint_msg.coord.x = coord.x
-        goto_setpoint_msg.coord.y = coord.y
-        goto_setpoint_msg.coord.z = coord.z
+        goto_setpoint_msg.position[0] = coord.x
+        goto_setpoint_msg.position[1] = coord.y
+        goto_setpoint_msg.position[2] = coord.z
 
         if heading is None:
             goto_setpoint_msg.flag_control_heading = False
@@ -169,10 +178,10 @@ class DroneApi(Api):
             goto_setpoint_msg.max_vertical_speed = max_vertical_speed
 
         if max_heading_rate is None:
-            goto_setpoint_msg.flag_set_heading_rate = False
+            goto_setpoint_msg.flag_set_max_heading_rate = False
             goto_setpoint_msg.max_heading_rate = 0.0
         else:
-            goto_setpoint_msg.flag_set_heading_rate = False
+            goto_setpoint_msg.flag_set_max_heading_rate = False
             goto_setpoint_msg.max_heading_rate = max_heading_rate
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
@@ -238,6 +247,12 @@ class DroneApi(Api):
     
     def get_node(self) -> Node:
         return self.__node
+    
+    def get_preload(self) -> bool:
+        return self.__preload
+        
+    def get_altitude_reached(self) -> bool:
+        return self.__altitude_reached
 
     # utility functions
 
@@ -253,3 +268,8 @@ class DroneApi(Api):
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             param1=1.0)
         self.__node.get_logger().info('Sending arm command')
+    
+    def goal_arrived(self, target : NEDCoordinate, thresh : float) -> bool:
+        return (self.__local_coord.x - target.x)**2 + \
+            (self.__local_coord.y - target.y)**2 + \
+            (self.__local_coord.z - target.z)**2 <= thresh
