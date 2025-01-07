@@ -1,6 +1,6 @@
 from rclpy.node import Node
 from transitions import Machine
-from agent_msgs.msg import Wait, Signal
+from std_msgs.msg import Empty
 
 from .states import States, transitions
 
@@ -10,22 +10,19 @@ class Drone(Machine):
         super().__init__(self, states=States,
                          transitions=transitions, initial=States.IDLE)
         
-        self.wait_publisher = self.create_publisher(Wait, 'Wait', 10)
-        if self.get_namespace() == "drone0" or self.get_namespace() == "drone1":
-            self.wait_signal_subscription = node.create_subscription(
-                Signal, '/pair0/Signal', self.__set_signal, 10)
-        else:
-            self.wait_signal_subscription = node.create_subscription(
-                Signal, '/pair1/Signal', self.__set_signal, 10)
+        self.group_id = 0
+
+        node.wait_publisher = node.create_publisher(Empty, 'Wait', 10)
+        node.wait_signal_subscription = node.create_subscription(
+                Empty, f'/pair{self.group_id}/Signal', self.__set_signal, 10)
     
-    def __set_signal(self, msg: Signal):
-        self.__signal = (msg.signal)
+    def __set_signal(self, msg: Empty):
+        self.__signal = True
 
     def get_drop_signal(self):
         return self.__signal
     
     def publish_wait(self):
-        signal_msg = Wait()
-        signal_msg.data = True
+        signal_msg = Empty()
         self.wait_publisher.publish(signal_msg)
     
