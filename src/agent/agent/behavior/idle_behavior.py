@@ -5,6 +5,7 @@ from api import DroneApi, MediatorApi
 
 
 class IdleBehavior(Behavior):
+    @staticmethod
     def execute(self, drone_api: DroneApi, mediator_api: MediatorApi):
 
         if (not drone_api.get_armed_status()) and \

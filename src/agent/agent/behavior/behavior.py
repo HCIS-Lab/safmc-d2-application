@@ -3,7 +3,7 @@ from api import DroneApi, MediatorApi
 
 
 class Behavior(ABC):
-    @staticmethod
     @abstractmethod
+    @staticmethod
     def execute(self, drone_api: DroneApi, mediator_api: MediatorApi):
         pass
