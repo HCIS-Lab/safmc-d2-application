@@ -5,6 +5,17 @@ from .constants import DELTA_TIME
 from .drone import Drone
 from .states import States
 
+from px4_msgs.msg import (
+
+    OffboardControlMode,
+    GotoSetpoint,
+    VehicleCommand,
+    VehicleLocalPosition,
+    VehicleStatus,
+    TrajectorySetpoint
+
+)
+
 
 class Agent(Node):
     def __init__(self):
@@ -15,10 +26,33 @@ class Agent(Node):
         self.timer = self.create_timer(DELTA_TIME, self.update)
         self.drone = Drone(self)
 
+    def handle_idle(self) -> bool:
+
+        if (not self.drone.get_armed_status()) and \
+            self.drone.get_vehicle_status().timestamp > 2000 and \
+            self.drone.get_vehicle_status().pre_flight_checks_pass:
+            # self.drone.get_vehicle_status().nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD: why??
+
+            self.drone.set_armed_status(True)
+            self.drone.set_home_coord(self.drone.get_vehicle_local_position())
+
+            self.drone.engage_offboard_mode()
+            self.drone.arm()
+            
+            return True
+
+        return False
+
+
     def update(self):
+
+        self.drone.publish_offboard_control_heartbeat("position")
+
         match self.drone.state:
             case States.IDLE:
-                self.drone.takeoff()
+                self.get_logger().info("STATE : IDLE")
+                if(self.handle_idle()):
+                    self.drone.takeoff()
 
             case States.TAKEOFF:
                 if True:
