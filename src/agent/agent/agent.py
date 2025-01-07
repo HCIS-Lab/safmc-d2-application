@@ -1,9 +1,8 @@
 import rclpy
 from rclpy.node import Node
-
+from api import DroneApi, MediatorApi
 from .constants import DELTA_TIME
-from .drone import Drone
-from .states import States
+from .agent_machine import AgentMachine
 
 
 class Agent(Node):
@@ -12,41 +11,18 @@ class Agent(Node):
 
         # TODO: QoS
 
+        # context
+        drone_api = DroneApi(self)
+        mediator_api = MediatorApi(self)
+
+        # machine
+        self.machine = AgentMachine(drone_api, mediator_api)
+
         self.timer = self.create_timer(DELTA_TIME, self.update)
-        self.drone = Drone(self)
 
     def update(self):
-        match self.drone.state:
-            case States.IDLE:
-                self.drone.takeoff()
-
-            case States.TAKEOFF:
-                if True:
-                    self.drone.walk_to_supply()
-                else:
-                    self.drone.walk_to_hotspot()
-
-            case States.WALK_TO_SUPPLY:
-                self.drone.load()
-
-            case States.LOAD:
-                self.drone.walk_to_hotspot()
-
-            case States.WALK_TO_HOTSPOT:
-                self.drone.wait()
-
-            case States.WAIT:
-                if self.drone.get_drop_signal():
-                    self.get_logger().info('Received server signal.')
-                    self.drone.drop()
-                else:
-                    self.drone.publish_wait()
-
-            case States.DROP:
-                self.drone.walk_to_supply()
-
-            case _:
-                pass
+        self.machine.proceed()
+        self.machine.execute()
 
 
 def main(args=None):
