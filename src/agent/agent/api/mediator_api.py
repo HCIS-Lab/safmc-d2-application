@@ -8,8 +8,15 @@ class MediatorApi(Api):
     def __init__(self, node: Node):
 
         # TODO: read from params.yaml
-        self.group_id = 0
-        self.drone_id = 0
+        node.declare_parameters(
+            parameters=[
+                ('drone_id', -1),
+                ('group_id', -1)
+            ])
+        self.drone_id = node.get_parameter('drone_id').get_parameter_value().integer_value
+        self.group_id = node.get_parameter('group_id').get_parameter_value().integer_value
+        if self.drone_id == -1 or self.group_id == -1:
+            node.get_logger().error("Failed to import parameters from YAML!")
 
         # subscriptions
         self.__signal = False
