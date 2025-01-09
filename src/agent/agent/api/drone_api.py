@@ -19,6 +19,7 @@ from px4_msgs.msg import (
     TrajectorySetpoint
 )
 
+from std_msgs.msg import Bool
 
 @dataclass
 class NEDCoordinate:
@@ -71,6 +72,13 @@ class DroneApi(Api):
         self.trajectory_setpoint_pub = node.create_publisher(
             TrajectorySetpoint,
             "/fmu/in/trajectory_setpoint",
+            qos_profile
+        )
+
+        #payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
+        self.grab_status_pub = node.ceate_publisher(
+            Bool,
+            "grab_status",
             qos_profile
         )
 
@@ -243,3 +251,12 @@ class DroneApi(Api):
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             param1=1.0)
         self.__node.get_logger().info('Sending arm command')
+
+    def is_payload_dropped(self) -> bool:
+        # TODO: decide whether ths payload is dropped
+        return True
+    
+    def drop_payload(self) -> None:
+        grab_status_msg = Bool()
+        grab_status_msg.data = False
+        self.grab_status_pub.publish(grab_status_msg)
