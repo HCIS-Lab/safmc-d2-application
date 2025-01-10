@@ -16,8 +16,7 @@ class LoadBehavior(Behavior):
         )
 
         if (drone_api.goal_arrived(load_coord, NAV_THRESH)):
-            
-            drone_api.grab_payload()# grab
+            drone_api.grab_payload()
             if drone_api.is_grabbed():
                 load_coord = drone_api.get_local_coord()
                 load_coord = NEDCoordinate(
@@ -30,6 +29,5 @@ class LoadBehavior(Behavior):
                     drone_api.has_loaded()
                 else:
                     drone_api.publish_goto_setpoint(load_coord)
-
         else:
             drone_api.publish_goto_setpoint(load_coord)
