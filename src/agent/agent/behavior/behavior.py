@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from api import DroneApi, MediatorApi
+from agent.api import DroneApi, MediatorApi
 
 
 class Behavior(ABC):
-    @abstractmethod
     @staticmethod
-    def execute(self, drone_api: DroneApi, mediator_api: MediatorApi):
+    @abstractmethod
+    def execute(drone_api: DroneApi, mediator_api: MediatorApi):
         pass

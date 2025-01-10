@@ -44,11 +44,18 @@ class DroneApi(Api):
 
         # subscriptions
         self.vehicle_local_position_sub = node.create_subscription(
-            VehicleStatus,
+            VehicleLocalPosition,
             "/fmu/out/vehicle_local_position",
             self.__set_vehicle_local_position,
             qos_profile)
 
+        self.vehicle_status_sub = node.create_subscription(
+            VehicleStatus,
+            "/fmu/out/vehicle_status",
+            self.__set_vehicle_status,
+            qos_profile
+        )
+        
         # publishers
         self.vehicle_command_pub = node.create_publisher(
             VehicleCommand,
@@ -228,6 +235,9 @@ class DroneApi(Api):
 
     def get_armed_status(self) -> bool:
         return self.__armed
+    
+    def get_node(self) -> Node:
+        return self.__node
 
     # utility functions
 

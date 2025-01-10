@@ -1,7 +1,7 @@
 from enum import Enum
 from transitions import Machine
-from api import DroneApi, MediatorApi
-from behavior import WaitBehavior
+from .api import DroneApi, MediatorApi
+from .behavior import WaitBehavior, IdleBehavior
 
 
 class States(Enum):
@@ -43,11 +43,13 @@ class AgentMachine(Machine):
 
         # init behaviors
         self.behaviors = {
+            States.IDLE: IdleBehavior,
             States.WAIT: WaitBehavior
         }
 
     def execute(self):
         # 執行當前 state 任務 (一步)
+        self.drone_api.publish_offboard_control_heartbeat("position")
         behavior = self.behaviors.get(self.state)
         if behavior:
             behavior.execute(self.drone_api, self.mediator_api)
@@ -56,7 +58,7 @@ class AgentMachine(Machine):
         # 根據條件判斷是否要 transition
         match self.state:
             case States.IDLE:
-                if False:
+                if self.drone_api.get_armed_status():
                     self.takeoff()
             case States.TAKEOFF:
                 pass
