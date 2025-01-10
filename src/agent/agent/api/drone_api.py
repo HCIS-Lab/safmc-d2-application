@@ -20,6 +20,8 @@ from px4_msgs.msg import (
     VehicleStatus
 )
 
+from std_msgs.msg import Bool
+
 
 @dataclass
 class NEDCoordinate:
@@ -79,6 +81,13 @@ class DroneApi(Api):
         self.offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode,
             "/fmu/in/offboard_control_mode",
+            qos_profile
+        )
+        self.grab_status_pub = node.create_publisher(
+            Bool,
+            # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
+            "grab_status",
+
             qos_profile
         )
 
@@ -225,4 +234,11 @@ class DroneApi(Api):
         vehicle_command_msg.timestamp = int(
             timestamp / 1000)  # microseconds
 
-        self.vehicle_command_pub.publish(vehicle_command_msg)
+    def is_payload_dropped(self) -> bool:
+        # TODO: decide whether ths payload is dropped
+        return True
+
+    def drop_payload(self) -> None:
+        grab_status_msg = Bool()
+        grab_status_msg.data = False
+        self.grab_status_pub.publish(grab_status_msg)
