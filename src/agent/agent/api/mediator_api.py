@@ -2,19 +2,15 @@ from rclpy.node import Node
 from std_msgs.msg import Empty, Int8
 
 from .api import Api
-
+from agent.config import Config
 
 class MediatorApi(Api):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, config: Config):
 
         # TODO: read from params.yaml
-        node.declare_parameters(
-            parameters=[
-                ('drone_id', -1),
-                ('group_id', -1)
-            ])
-        self.drone_id = node.get_parameter('drone_id').get_parameter_value().integer_value
-        self.group_id = node.get_parameter('group_id').get_parameter_value().integer_value
+        self.drone_id = config.get_int_parameter('drone_id')
+        self.group_id = config.get_int_parameter('group_id')
+        
         if self.drone_id == -1 or self.group_id == -1:
             node.get_logger().error("Failed to import parameters from YAML!")
 
