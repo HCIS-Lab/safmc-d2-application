@@ -184,7 +184,8 @@ class DroneApi(Api):
         """
         vehicle_command_msg = self.vehicle_command_gen(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            timestamp
+            timestamp,
+            0
         )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
