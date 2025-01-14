@@ -1,8 +1,9 @@
-from .behavior import Behavior
+from rclpy.clock import Clock
+from rclpy.impl.rcutils_logger import RcutilsLogger
 
 from agent.api import DroneApi, MediatorApi
-from rclpy.impl.rcutils_logger import RcutilsLogger
-from rclpy.clock import Clock
+
+from .behavior import Behavior
 
 
 class WaitBehavior(Behavior):
