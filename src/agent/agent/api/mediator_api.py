@@ -2,6 +2,7 @@ from .api import Api
 
 from rclpy.node import Node
 from std_msgs.msg import Empty, Int8
+from agent.common.parameters import get_parameter
 
 from rclpy.qos import (
     QoSProfile,
@@ -14,9 +15,10 @@ from rclpy.qos import (
 class MediatorApi(Api):
     def __init__(self, node: Node):
 
-        # TODO: read from params.yaml
-        self.group_id = 0
-        self.drone_id = 0
+        self.drone_id = get_parameter(node, 'drone_id', 0)
+        self.group_id = get_parameter(node, 'group_id', 0)
+
+        # TODO: check param (drone_id, group_id) is unique
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(

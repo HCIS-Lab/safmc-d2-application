@@ -9,7 +9,7 @@ class Agent(Node):
     def __init__(self):
         super().__init__('agent')
 
-        # TODO: QoS
+        # TODO: QoS?
 
         # logging
         logger = self.get_logger()
