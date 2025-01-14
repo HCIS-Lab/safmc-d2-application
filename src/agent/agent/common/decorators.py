@@ -1,7 +1,6 @@
 import functools
 import inspect
 import warnings
-
 from typing import Callable, Union
 
 string_types = (type(b''), type(u''))
