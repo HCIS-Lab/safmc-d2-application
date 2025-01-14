@@ -92,7 +92,7 @@ class DroneApi(Api):
             qos_profile
         )
 
-        self.grab_status_pub = node.create_publisher(
+        self.grab_status_pub = node.create_publisher(  # TODO change topic name
             Bool,
             # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
             "grab_status",
@@ -144,10 +144,10 @@ class DroneApi(Api):
         '''
         vehicle_command_msg = VehicleCommand()
         vehicle_command_msg.command = command
-        
+
         # params
         params = list(params) + [0] * (7 - len(params))
-        for i, param in enumerate(params[:7], start = 1):
+        for i, param in enumerate(params[:7], start=1):
             setattr(vehicle_command_msg, f'param{i}', float(param))
 
         # defaults
@@ -158,7 +158,7 @@ class DroneApi(Api):
         vehicle_command_msg.from_external = True
         vehicle_command_msg.timestamp = int(
             timestamp / 1000)  # microseconds
-        
+
         # other kwargs
         for attr, value in kwargs.items():
             try:
@@ -232,33 +232,36 @@ class DroneApi(Api):
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
         vehicle_command_msg = self.vehicle_command_gen(
-            VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 
-            timestamp, 
-            1, 
+            VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
+            timestamp,
+            1,
             6
         )
-        
-        self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    # TODO
-    # listen topic to update __is_loaded (not from camera)
+        self.vehicle_command_pub.publish(vehicle_command_msg)
 
     @property
     def is_loaded(self) -> bool:
         return self.__is_loaded
 
+    # TODO
+    # listen topic to update __is_loaded (not from camera)
+
     def activate_magnet(self) -> None:
+        # TODO change msg type (custom)
         grab_status_msg = Bool()
         grab_status_msg.data = True
         self.grab_status_pub.publish(grab_status_msg)
 
     def deactivate_magnet(self) -> None:
+        # TODO change msg type (custom)
         grab_status_msg = Bool()
         grab_status_msg.data = False
         self.grab_status_pub.publish(grab_status_msg)
 
     # TODO refactor
     def publish_goto_setpoint(self,
+                              timestamp: int,
                               coord: NEDCoordinate,
                               heading: Optional[float] = None,
                               max_horizontal_speed: Optional[float] = None,
@@ -267,7 +270,7 @@ class DroneApi(Api):
 
         goto_setpoint_msg = GotoSetpoint()
         goto_setpoint_msg.timestamp = int(
-            self.__node.get_clock().now().nanoseconds / 1000)
+            timestamp / 1000)  # microseconds
 
         goto_setpoint_msg.position[0] = coord.x
         goto_setpoint_msg.position[1] = coord.y
@@ -303,20 +306,17 @@ class DroneApi(Api):
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
 
-        self.__node.get_logger().info(f"Publishing goto setpoint: {coord}")
+    @property
+    def is_altitude_reached(self) -> bool:
+        return self.__is_altitude_reached
 
-        if heading is not None:
-            self.__node.get_logger().info(f"With heading: {heading} rad")
+    def get_supply_reached(self) -> bool:
+        return self.__supply_reached
 
-        if max_horizontal_speed is not None:
-            self.__node.get_logger().info(
-                f"With max horizontal speed: {max_horizontal_speed} m/s")
+    def get_supply_coord(self) -> NEDCoordinate:
+        return self.__supply_coord
 
-        if max_vertical_speed is not None:
-            self.__node.get_logger().info(
-                f"With max vertical speed: {max_vertical_speed} m/s")
-
-        if max_heading_rate is not None:
-            self.__node.get_logger().info(
-                f"With max heading rate: {max_heading_rate} rad/s")
-        self.grab_status_pub.publish(grab_status_msg)
+    def goal_arrived(self, target: NEDCoordinate, thresh: float) -> bool:
+        return (self.__local_position.x - target.x)**2 + \
+            (self.__local_position.y - target.y)**2 + \
+            (self.__local_position.z - target.z)**2 <= thresh
