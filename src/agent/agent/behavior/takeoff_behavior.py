@@ -1,14 +1,17 @@
 from .behavior import Behavior
 from agent.api import DroneApi, MediatorApi
 from agent.api.drone_api import NEDCoordinate
-from agent.constants import TAKEOFF_HEIGHT,NAV_THRESH
+from agent.constants import TAKEOFF_HEIGHT, NAV_THRESH
+
+from rclpy.impl.rcutils_logger import RcutilsLogger
+from rclpy.clock import Clock
 
 
 class TakeoffBehavior(Behavior):
     @staticmethod
-    def execute(drone_api: DroneApi, mediator_api: MediatorApi):
+    def execute(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
 
-        takeoff_coord = drone_api.get_home_coord()
+        takeoff_coord = drone_api.start_position
         takeoff_coord = NEDCoordinate(
             takeoff_coord.x,
             takeoff_coord.y,
@@ -18,4 +21,5 @@ class TakeoffBehavior(Behavior):
         if (drone_api.goal_arrived(takeoff_coord, NAV_THRESH)):
             drone_api.set_altitude_reached(True)
         else:
-            drone_api.publish_goto_setpoint(takeoff_coord)
+            drone_api.publish_goto_setpoint(
+                clock.now().nanoseconds, takeoff_coord)

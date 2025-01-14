@@ -1,0 +1,4 @@
+agent:
+  ros__parameters:
+    drone_id: 3
+    group_id: 4

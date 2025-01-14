@@ -1,7 +1,17 @@
+from rclpy.clock import Clock
+from rclpy.impl.rcutils_logger import RcutilsLogger
 from enum import Enum
 from transitions import Machine
-from .api import DroneApi, MediatorApi
-from .behavior import WaitBehavior, IdleBehavior, TakeoffBehavior,WalkToSupplyBehavior
+from agent.behavior import (
+    Behavior,
+    IdleBehavior,
+    TakeoffBehavior,
+    WalkToSupplyBehavior,
+    LoadBehavior,
+    WaitBehavior,
+    DropBehavior
+)
+from agent.api import DroneApi, MediatorApi
 
 
 class States(Enum):
@@ -27,7 +37,7 @@ transitions = [
 
 
 class AgentMachine(Machine):
-    def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi):
+    def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
 
         # TODO: refactor function
         def populate_triggers(transitions):
@@ -40,31 +50,39 @@ class AgentMachine(Machine):
 
         self.drone_api = drone_api
         self.mediator_api = mediator_api
+        self.logger = logger
+        self.clock = clock
 
         # init behaviors
         self.behaviors = {
             States.IDLE: IdleBehavior,
-            States.TAKEOFF : TakeoffBehavior,
-            States.WAIT: WaitBehavior,
+            States.TAKEOFF: TakeoffBehavior,
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
+            States.LOAD: LoadBehavior,
+            States.WAIT: WaitBehavior,
+            States.DROP: DropBehavior
         }
 
     def execute(self):
+        if True:  # TODO why?
+            self.drone_api.maintain_offboard_control(
+                self.clock.now().nanoseconds)
+
         # 執行當前 state 任務 (一步)
-        self.drone_api.publish_offboard_control_heartbeat("position")
-        behavior = self.behaviors.get(self.state)
+        behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
-            behavior.execute(self.drone_api, self.mediator_api)
+            behavior.execute(self.drone_api, self.mediator_api,
+                             self.logger, self.clock)
 
     def proceed(self):
         # 根據條件判斷是否要 transition
         match self.state:
             case States.IDLE:
-                if self.drone_api.get_armed_status():
+                if self.drone_api.is_armed:
                     self.takeoff()
             case States.TAKEOFF:
-                if self.drone_api.get_altitude_reached():
-                    if self.drone_api.get_preload():
+                if self.drone_api.is_altitude_reached:
+                    if self.drone_api.is_loaded:
                         self.walk_to_hotspot()
                     else:
                         self.walk_to_supply()
@@ -72,13 +90,15 @@ class AgentMachine(Machine):
                 if self.drone_api.get_supply_reached():
                     self.load()
             case States.LOAD:
-                pass
+                if self.drone_api.is_loaded:
+                    self.walk_to_hotspot()
             case States.WALK_TO_HOTSPOT:
                 pass
             case States.WAIT:
-                if self.mediator_api.get_signal():
+                if self.mediator_api.signal():
                     self.drop()
             case States.DROP:
-                pass
+                if not self.drone_api.is_loaded:
+                    self.walk_to_supply()
             case _:
                 pass
