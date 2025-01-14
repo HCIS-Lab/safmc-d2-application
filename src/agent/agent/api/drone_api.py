@@ -1,3 +1,4 @@
+import math
 from .api import Api
 
 from typing import Optional
@@ -40,6 +41,28 @@ class NEDCoordinate:
 
     def __sub__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
         return NEDCoordinate(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __mul__(self, scalar: float) -> 'NEDCoordinate':
+        return NEDCoordinate(self.x * scalar, self.y * scalar, self.z * scalar)
+
+    @staticmethod
+    def distance(coord1: 'NEDCoordinate', coord2: 'NEDCoordinate') -> float:
+        return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2)
+
+    @staticmethod
+    @property
+    def north() -> 'NEDCoordinate':
+        return NEDCoordinate(1, 0, 0)
+
+    @staticmethod
+    @property
+    def east() -> 'NEDCoordinate':
+        return NEDCoordinate(0, 1, 0)
+
+    @staticmethod
+    @property
+    def down() -> 'NEDCoordinate':
+        return NEDCoordinate(0, 0, 1)
 
 
 class DroneApi(Api):
@@ -320,6 +343,7 @@ class DroneApi(Api):
     def get_supply_coord(self) -> NEDCoordinate:
         return self.__supply_coord
 
+    @deprecated
     def goal_arrived(self, target: NEDCoordinate, thresh: float) -> bool:
         return (self.__local_position.x - target.x)**2 + \
             (self.__local_position.y - target.y)**2 + \
