@@ -75,7 +75,7 @@ class AgentMachine(Machine):
             case States.WALK_TO_SUPPLY:
                 pass
             case States.LOAD:
-                if self.drone_api.is_loaded():
+                if self.drone_api.is_loaded:
                     self.walk_to_hotspot()
             case States.WALK_TO_HOTSPOT:
                 pass
@@ -83,7 +83,7 @@ class AgentMachine(Machine):
                 if self.mediator_api.signal():
                     self.drop()
             case States.DROP:
-                if self.drone_api.is_payload_dropped():
+                if not self.drone_api.is_loaded:
                     self.walk_to_supply()
             case _:
                 pass

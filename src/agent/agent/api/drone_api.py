@@ -191,6 +191,76 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
+    def reset_start_position(self) -> None:
+        """
+        Resets the starting position to the current local position.
+        """
+        self.__start_position = self.local_position
+
+    @ property
+    def start_position(self) -> NEDCoordinate:
+        return self.__start_position
+
+    def maintain_offboard_control(self, timestamp: int) -> None:
+        """
+        Keeps the drone in offboard control mode by sending periodic updates.
+
+        This method publishes an `OffboardControlMode` message with the current timestamp,
+        ensuring the drone stays in offboard control mode by setting the position control flag.
+        It must be continuously called to prevent the system from switching back to another mode.
+        """
+        offboard_control_mode_msg = OffboardControlMode()
+        offboard_control_mode_msg.timestamp = int(
+            timestamp / 1000)  # microseconds
+        offboard_control_mode_msg.position = True
+        self.offboard_control_mode_pub.publish(offboard_control_mode_msg)
+
+    def activate_offboard_control_mode(self, timestamp: int) -> None:
+        """
+        Activates the offboard control mode for the drone.
+
+        This method sends a `VehicleCommand` message to switch the drone to offboard mode 
+        by setting the appropriate control mode flags. The mode is switched by using the
+        `VEHICLE_CMD_DO_SET_MODE` command.
+        """
+        vehicle_command_msg = VehicleCommand()
+        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_DO_SET_MODE
+        vehicle_command_msg.param1 = float(1)
+        vehicle_command_msg.param2 = float(6)
+        vehicle_command_msg.param3 = float(0)
+        vehicle_command_msg.param4 = float(0)
+        vehicle_command_msg.param5 = float(0)
+        vehicle_command_msg.param6 = float(0)
+        vehicle_command_msg.param7 = float(0)
+
+        vehicle_command_msg.target_system = 1
+        vehicle_command_msg.target_component = 1
+
+        vehicle_command_msg.source_system = 1
+        vehicle_command_msg.source_component = 1
+
+        vehicle_command_msg.from_external = True
+        vehicle_command_msg.timestamp = int(
+            timestamp / 1000)  # microseconds
+
+    # TODO
+    # listen topic to update __is_loaded (not from camera)
+
+    @property
+    def is_loaded(self) -> bool:
+        return self.__is_loaded
+
+    def activate_magnet(self) -> None:
+        grab_status_msg = Bool()
+        grab_status_msg.data = True
+        self.grab_status_pub.publish(grab_status_msg)
+
+    def deactivate_magnet(self) -> None:
+        grab_status_msg = Bool()
+        grab_status_msg.data = False
+        self.grab_status_pub.publish(grab_status_msg)
+
+    # TODO refactor
     def publish_goto_setpoint(self,
                               coord: NEDCoordinate,
                               heading: Optional[float] = None,
@@ -252,93 +322,3 @@ class DroneApi(Api):
         if max_heading_rate is not None:
             self.__node.get_logger().info(
                 f"With max heading rate: {max_heading_rate} rad/s")
-
-    def reset_start_position(self) -> None:
-        """
-        Resets the starting position to the current local position.
-        """
-        self.__start_position = self.local_position
-
-    @ property
-    def start_position(self) -> NEDCoordinate:
-        return self.__start_position
-
-    def maintain_offboard_control(self, timestamp: int) -> None:
-        """
-        Keeps the drone in offboard control mode by sending periodic updates.
-
-        This method publishes an `OffboardControlMode` message with the current timestamp,
-        ensuring the drone stays in offboard control mode by setting the position control flag.
-        It must be continuously called to prevent the system from switching back to another mode.
-        """
-        offboard_control_mode_msg = OffboardControlMode()
-        offboard_control_mode_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
-        offboard_control_mode_msg.position = True
-        self.offboard_control_mode_pub.publish(offboard_control_mode_msg)
-
-    def set_armed_status(self, armed: bool) -> None:
-        self.__armed = armed
-
-    def set_home_coord(self, coord: VehicleLocalPosition) -> None:
-        self.__home_coord.x = coord.x
-        self.__home_coord.y = coord.y
-        self.__home_coord.z = coord.z
-    
-    def set_preload(self, status: bool) -> None:
-        self.__preload = status
-
-    def set_altitude_reached(self, status) -> None:
-        self.__altitude_reached = status
-
-    def activate_offboard_control_mode(self, timestamp: int) -> None:
-        """
-        Activates the offboard control mode for the drone.
-
-        This method sends a `VehicleCommand` message to switch the drone to offboard mode 
-        by setting the appropriate control mode flags. The mode is switched by using the
-        `VEHICLE_CMD_DO_SET_MODE` command.
-        """
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_DO_SET_MODE
-        vehicle_command_msg.param1 = float(1)
-        vehicle_command_msg.param2 = float(6)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
-
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
-
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
-
-    def is_payload_dropped(self) -> bool:
-        # TODO: decide whether ths payload is dropped
-        return True
-
-    def drop_payload(self) -> None:
-        grab_status_msg = Bool()
-        grab_status_msg.data = False
-        self.grab_status_pub.publish(grab_status_msg)
-
-    def is_grabbed(self) -> bool:
-        # TODO: decide whether ths payload is grabbed
-        return True
-
-    def is_loaded(self) -> bool:
-        return self.__is_loaded
-    
-    def has_loaded(self) -> bool:
-        self.__is_loaded = True
-
-    def grab_payload(self) -> None:
-        grab_status_msg = Bool()
-        grab_status_msg.data = True
-        self.grab_status_pub.publish(grab_status_msg)
