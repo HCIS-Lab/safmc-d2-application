@@ -2,7 +2,7 @@ from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 from enum import Enum
 from transitions import Machine
-from agent.behavior import Behavior, WaitBehavior, IdleBehavior, DropBehavior
+from agent.behavior import Behavior, WaitBehavior, IdleBehavior, DropBehavior, TakeoffBehavior
 from agent.api import DroneApi, MediatorApi
 
 

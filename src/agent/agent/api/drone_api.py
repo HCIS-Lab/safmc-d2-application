@@ -15,6 +15,7 @@ from rclpy.qos import (
 
 from px4_msgs.msg import (
     OffboardControlMode,
+    GotoSetpoint,
     VehicleCommand,
     VehicleLocalPosition,
     VehicleStatus
@@ -48,6 +49,10 @@ class DroneApi(Api):
         self.__is_armed = False
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
+        self.__home_coord = NEDCoordinate(0.0, 0.0, 0.0)
+        self.__local_coord = NEDCoordinate(0.0, 0.0, 0.0)
+        self.__node = node
+        self.__altitude_reached = False
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -83,11 +88,18 @@ class DroneApi(Api):
             "/fmu/in/offboard_control_mode",
             qos_profile
         )
+
         self.grab_status_pub = node.create_publisher(
             Bool,
             # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
             "grab_status",
 
+            qos_profile
+        )
+
+        self.goto_setpoint_pub = node.create_publisher(
+            GotoSetpoint,
+            "/fmu/in/goto_setpoint",
             qos_profile
         )
 
@@ -120,6 +132,11 @@ class DroneApi(Api):
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
         )
+
+    def set_home_coord(self, coord: VehicleLocalPosition) -> None:
+        self.__home_coord.x = coord.x
+        self.__home_coord.y = coord.y
+        self.__home_coord.z = coord.z
 
     def vehicle_command_gen(self, command, timestamp: int, *params: float, **kwargs):
         '''
@@ -239,3 +256,70 @@ class DroneApi(Api):
         grab_status_msg = Bool()
         grab_status_msg.data = False
         self.grab_status_pub.publish(grab_status_msg)
+
+    def get_home_coord(self) -> NEDCoordinate:
+        return self.__home_coord
+
+    def get_altitude_reached(self) -> bool:
+        return self.__altitude_reached
+    
+    def goal_arrived(self, target : NEDCoordinate, thresh : float) -> bool:
+        return (self.__local_coord.x - target.x)**2 + \
+            (self.__local_coord.y - target.y)**2 + \
+            (self.__local_coord.z - target.z)**2 <= thresh
+    
+    def publish_goto_setpoint(self,
+                              coord: NEDCoordinate,
+                              heading: Optional[float] = None,
+                              max_horizontal_speed: Optional[float] = None,
+                              max_vertical_speed: Optional[float] = None,
+                              max_heading_rate: Optional[float] = None) -> None:
+
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = int(
+            self.__node.get_clock().now().nanoseconds / 1000)
+
+        goto_setpoint_msg.position[0] = coord.x
+        goto_setpoint_msg.position[1] = coord.y
+        goto_setpoint_msg.position[2] = coord.z
+
+        if heading is None:
+            goto_setpoint_msg.flag_control_heading = False
+            goto_setpoint_msg.heading = 0.0
+        else:
+            goto_setpoint_msg.flag_control_heading = True
+            goto_setpoint_msg.heading = heading
+
+        if max_horizontal_speed is None:
+            goto_setpoint_msg.flag_set_max_horizontal_speed = False
+            goto_setpoint_msg.max_horizontal_speed = 0.0
+        else:
+            goto_setpoint_msg.flag_set_max_horizontal_speed = False
+            goto_setpoint_msg.max_horizontal_speed = max_horizontal_speed
+
+        if max_vertical_speed is None:
+            goto_setpoint_msg.flag_set_max_vertical_speed = False
+            goto_setpoint_msg.max_vertical_speed = 0.0
+        else:
+            goto_setpoint_msg.flag_set_max_vertical_speed = False
+            goto_setpoint_msg.max_vertical_speed = max_vertical_speed
+
+        if max_heading_rate is None:
+            goto_setpoint_msg.flag_set_max_heading_rate = False
+            goto_setpoint_msg.max_heading_rate = 0.0
+        else:
+            goto_setpoint_msg.flag_set_max_heading_rate = False
+            goto_setpoint_msg.max_heading_rate = max_heading_rate
+
+        self.goto_setpoint_pub.publish(goto_setpoint_msg)
+        self.__node.get_logger().info(f"Publishing goto setpoint: {coord}")
+
+        if heading is not None:
+            self.__node.get_logger().info(f"With heading: {heading} rad")
+        if max_horizontal_speed is not None:
+            self.__node.get_logger().info(f"With max horizontal speed: {max_horizontal_speed} m/s")
+        if max_vertical_speed is not None:
+            self.__node.get_logger().info(f"With max vertical speed: {max_vertical_speed} m/s")
+        if max_heading_rate is not None:
+            self.__node.get_logger().info(f"With max heading rate: {max_heading_rate} rad/s")
+    

@@ -2,11 +2,13 @@ from .behavior import Behavior
 from agent.api import DroneApi, MediatorApi
 from agent.api.drone_api import NEDCoordinate
 from agent.constants import TAKEOFF_HEIGHT,NAV_THRESH
+from rclpy.impl.rcutils_logger import RcutilsLogger
+from rclpy.clock import Clock
 
 
 class TakeoffBehavior(Behavior):
     @staticmethod
-    def execute(drone_api: DroneApi, mediator_api: MediatorApi):
+    def execute(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
 
         takeoff_coord = drone_api.get_home_coord()
         takeoff_coord = NEDCoordinate(
