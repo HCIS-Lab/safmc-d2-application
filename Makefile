@@ -3,7 +3,7 @@ SHELL := /usr/bin/bash
 
 all:
 	git submodule update --init --recursive
-	colcon build --packages-select px4_msgs agent
+	colcon build --packages-select px4_msgs agent agent_msgs
 	source install/setup.bash
 	ros2 run agent agent
 
