@@ -1,10 +1,7 @@
-import math
 from .api import Api
-
 from typing import Optional
 from rclpy.node import Node
-from dataclasses import dataclass
-
+from agent.common.ned_coordinate import NEDCoordinate
 from agent.common.decorators import deprecated
 
 from rclpy.qos import (
@@ -23,46 +20,6 @@ from px4_msgs.msg import (
 )
 
 from std_msgs.msg import Bool
-
-
-@dataclass
-class NEDCoordinate:
-    # TODO: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Vector3.html
-
-    x: float
-    y: float
-    z: float
-
-    def __str__(self) -> str:
-        return f"NED(x={self.x}, y={self.y}, z={self.z})"
-
-    def __add__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
-        return NEDCoordinate(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    def __sub__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
-        return NEDCoordinate(self.x - other.x, self.y - other.y, self.z - other.z)
-
-    def __mul__(self, scalar: float) -> 'NEDCoordinate':
-        return NEDCoordinate(self.x * scalar, self.y * scalar, self.z * scalar)
-
-    @staticmethod
-    def distance(coord1: 'NEDCoordinate', coord2: 'NEDCoordinate') -> float:
-        return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2)
-
-    @staticmethod
-    @property
-    def north() -> 'NEDCoordinate':
-        return NEDCoordinate(1, 0, 0)
-
-    @staticmethod
-    @property
-    def east() -> 'NEDCoordinate':
-        return NEDCoordinate(0, 1, 0)
-
-    @staticmethod
-    @property
-    def down() -> 'NEDCoordinate':
-        return NEDCoordinate(0, 0, 1)
 
 
 class DroneApi(Api):
@@ -158,7 +115,7 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
-    def vehicle_command_gen(self, command, timestamp: int, *params: float, **kwargs):
+    def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
         '''
         Generate the vehicle command.\n
         defaults:\n
@@ -204,7 +161,7 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
         """
 
-        vehicle_command_msg = self.vehicle_command_gen(
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             timestamp,
             1
@@ -219,7 +176,7 @@ class DroneApi(Api):
         Sends a command to the vehicle to disarm it, ensuring it cannot take off.
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
-        vehicle_command_msg = self.vehicle_command_gen(
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             timestamp,
             0
@@ -259,7 +216,7 @@ class DroneApi(Api):
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = self.vehicle_command_gen(
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
             timestamp,
             1,
