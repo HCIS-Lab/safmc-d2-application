@@ -8,4 +8,4 @@ from rclpy.clock import Clock
 class DropBehavior(Behavior):
     @staticmethod
     def execute(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
-        drone_api.drop_payload()
+        drone_api.deactivate_magnet()

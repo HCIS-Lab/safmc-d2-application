@@ -2,7 +2,15 @@ from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 from enum import Enum
 from transitions import Machine
-from agent.behavior import Behavior, WaitBehavior, IdleBehavior, DropBehavior
+from agent.behavior import (
+    Behavior,
+    IdleBehavior,
+    TakeoffBehavior,
+    WalkToSupplyBehavior,
+    LoadBehavior,
+    WaitBehavior,
+    DropBehavior
+)
 from agent.api import DroneApi, MediatorApi
 
 
@@ -48,6 +56,9 @@ class AgentMachine(Machine):
         # init behaviors
         self.behaviors = {
             States.IDLE: IdleBehavior,
+            States.TAKEOFF: TakeoffBehavior,
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
+            States.LOAD: LoadBehavior,
             States.WAIT: WaitBehavior,
             States.DROP: DropBehavior
         }
@@ -70,18 +81,24 @@ class AgentMachine(Machine):
                 if self.drone_api.is_armed:
                     self.takeoff()
             case States.TAKEOFF:
-                pass
+                if self.drone_api.is_altitude_reached:
+                    if self.drone_api.is_loaded:
+                        self.walk_to_hotspot()
+                    else:
+                        self.walk_to_supply()
             case States.WALK_TO_SUPPLY:
-                pass
+                if self.drone_api.get_supply_reached():
+                    self.load()
             case States.LOAD:
-                pass
+                if self.drone_api.is_loaded:
+                    self.walk_to_hotspot()
             case States.WALK_TO_HOTSPOT:
                 pass
             case States.WAIT:
                 if self.mediator_api.signal():
                     self.drop()
             case States.DROP:
-                if self.drone_api.is_payload_dropped():
+                if not self.drone_api.is_loaded:
                     self.walk_to_supply()
             case _:
                 pass
