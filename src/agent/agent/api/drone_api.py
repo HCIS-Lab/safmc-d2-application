@@ -1,4 +1,5 @@
 from .api import Api
+from .utils import NEDCoordinate
 
 from typing import Optional
 from rclpy.node import Node
@@ -21,25 +22,6 @@ from px4_msgs.msg import (
 )
 
 from std_msgs.msg import Bool
-
-
-@dataclass
-class NEDCoordinate:
-    # TODO: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Vector3.html
-
-    x: float
-    y: float
-    z: float
-
-    def __str__(self) -> str:
-        return f"NED(x={self.x}, y={self.y}, z={self.z})"
-
-    def __add__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
-        return NEDCoordinate(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    def __sub__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
-        return NEDCoordinate(self.x - other.x, self.y - other.y, self.z - other.z)
-
 
 class DroneApi(Api):
     def __init__(self, node: Node):
@@ -121,7 +103,7 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
-    def vehicle_command_gen(self, command, timestamp: int, *params: float, **kwargs):
+    def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
         '''
         Generate the vehicle command.\n
         defaults:\n
@@ -167,7 +149,7 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
         """
 
-        vehicle_command_msg = self.vehicle_command_gen(
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             timestamp,
             1
@@ -182,9 +164,10 @@ class DroneApi(Api):
         Sends a command to the vehicle to disarm it, ensuring it cannot take off.
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
-        vehicle_command_msg = self.vehicle_command_gen(
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            timestamp
+            timestamp,
+            0
         )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
@@ -221,7 +204,7 @@ class DroneApi(Api):
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = self.vehicle_command_gen(
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 
             timestamp, 
             1, 
