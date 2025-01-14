@@ -1,17 +1,13 @@
+from enum import Enum
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
-from enum import Enum
 from transitions import Machine
-from agent.behavior import (
-    Behavior,
-    IdleBehavior,
-    TakeoffBehavior,
-    WalkToSupplyBehavior,
-    LoadBehavior,
-    WaitBehavior,
-    DropBehavior
-)
+
 from agent.api import DroneApi, MediatorApi
+from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+                            TakeoffBehavior, WaitBehavior,
+                            WalkToSupplyBehavior)
 
 
 class States(Enum):
