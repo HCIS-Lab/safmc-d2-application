@@ -1,8 +1,8 @@
 from .api import Api
 
-from agent.config import Config
 from rclpy.node import Node
 from std_msgs.msg import Empty, Int8
+from agent.common.parameters import get_parameter
 
 from rclpy.qos import (
     QoSProfile,
@@ -13,14 +13,12 @@ from rclpy.qos import (
 
 
 class MediatorApi(Api):
-    def __init__(self, node: Node, config: Config):
+    def __init__(self, node: Node):
 
-        # TODO: read from params.yaml
-        self.drone_id = config.get_int_parameter('drone_id')
-        self.group_id = config.get_int_parameter('group_id')
+        self.drone_id = get_parameter(node, 'drone_id', 0)
+        self.group_id = get_parameter(node, 'group_id', 0)
 
-        if self.drone_id == -1 or self.group_id == -1:
-            node.get_logger().error("Failed to import parameters from YAML!")
+        # TODO: check param (drone_id, group_id) is unique
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
