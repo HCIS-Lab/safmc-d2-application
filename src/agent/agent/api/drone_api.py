@@ -238,6 +238,3 @@ class DroneApi(Api):
         grab_status_msg = Bool()
         grab_status_msg.data = False
         self.grab_status_pub.publish(grab_status_msg)
-
-
-    
