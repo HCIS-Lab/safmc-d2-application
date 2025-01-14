@@ -3,7 +3,6 @@ from .utils import NEDCoordinate
 
 from typing import Optional
 from rclpy.node import Node
-from dataclasses import dataclass
 
 from agent.common.decorators import deprecated
 
