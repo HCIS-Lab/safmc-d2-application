@@ -96,7 +96,12 @@ class DroneApi(Api):
             Bool,
             # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
             "grab_status",
+            qos_profile
+        )
 
+        self.goto_setpoint_pub = node.create_publisher(
+            GotoSetpoint,
+            "/fmu/in/goto_setpoint",
             qos_profile
         )
 
@@ -246,7 +251,6 @@ class DroneApi(Api):
 
     # TODO
     # listen topic to update __is_loaded (not from camera)
-
     def activate_magnet(self) -> None:
         # TODO change msg type (custom)
         grab_status_msg = Bool()
