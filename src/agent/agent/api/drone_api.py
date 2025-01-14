@@ -55,6 +55,13 @@ class DroneApi(Api):
             self.__set_vehicle_status,
             qos_profile
         )
+
+        # self.supply_coordinate_sub = node.create_subscription(
+        #     SupplyCoordinate,
+        #     "/agent/in/supply_coordinate",
+        #     self.__set_supply_coord,
+        #     qos_profile
+        # )
         
         # publishers
         self.vehicle_command_pub = node.create_publisher(
@@ -94,6 +101,12 @@ class DroneApi(Api):
         self.__preload = False
         self.__altitude_reached = False
 
+        self.__supply_reached = False
+        self.__supply_coord = NEDCoordinate(0.0, 0.0, 0.0)
+
+        # For testing fuctionality you can preset the target
+        # self.__supply_coord = NEDCoordinate(5.0, -5.0, -2.0)
+
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition) -> None:
         self.__vehicle_local_position = vehicle_local_position_msg
         self.__local_coord.x = vehicle_local_position_msg.x
@@ -102,6 +115,14 @@ class DroneApi(Api):
 
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
         self.__vehicle_status = vehicle_status_msg
+
+    # def __set_supply_coord(self, supply_coord_msg: SupplyCoordinate) -> None:
+    #     self.__supply_coord.x = supply_coord_msg.x
+    #     self.__supply_coord.y = supply_coord_msg.y
+    #     self.__supply_coord.z = supply_coord_msg.z
+    #     self.__node.get_logger().info(
+    #         f"Received supply coordinate: {self.__supply_coord}"
+    #     )
 
     def set_armed_status(self, armed: bool) -> None:
         self.__armed = armed
@@ -116,6 +137,9 @@ class DroneApi(Api):
 
     def set_altitude_reached(self, status) -> None:
         self.__altitude_reached = status
+    
+    def set_supply_reached(self, status) -> None:
+        self.__supply_reached = status
 
     def publish_vehicle_command(self, command, **params) -> None:
 
@@ -253,6 +277,12 @@ class DroneApi(Api):
         
     def get_altitude_reached(self) -> bool:
         return self.__altitude_reached
+    
+    def get_supply_reached(self) -> bool:
+        return self.__supply_reached
+    
+    def get_supply_coord(self) -> NEDCoordinate:
+        return self.__supply_coord
 
     # utility functions
 

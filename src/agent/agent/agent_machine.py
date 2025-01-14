@@ -1,7 +1,7 @@
 from enum import Enum
 from transitions import Machine
 from .api import DroneApi, MediatorApi
-from .behavior import WaitBehavior, IdleBehavior, TakeoffBehavior
+from .behavior import WaitBehavior, IdleBehavior, TakeoffBehavior,WalkToSupplyBehavior
 
 
 class States(Enum):
@@ -46,6 +46,7 @@ class AgentMachine(Machine):
             States.IDLE: IdleBehavior,
             States.TAKEOFF : TakeoffBehavior,
             States.WAIT: WaitBehavior,
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
         }
 
     def execute(self):
@@ -68,7 +69,8 @@ class AgentMachine(Machine):
                     else:
                         self.walk_to_supply()
             case States.WALK_TO_SUPPLY:
-                pass
+                if self.drone_api.get_supply_reached():
+                    self.load()
             case States.LOAD:
                 pass
             case States.WALK_TO_HOTSPOT:
