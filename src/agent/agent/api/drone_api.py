@@ -121,6 +121,44 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
+    def vehicle_command_gen(self, command, timestamp: int, *params: float, **kwargs):
+        '''
+        Generate the vehicle command.\n
+        defaults:\n
+            params[0:7] = 0
+            target_system = 1\n
+            target_component = 1\n
+            source_system = 1\n
+            source_component = 1\n
+            from_external = True\n
+            timestamp = int(timestamp / 1000)
+        '''
+        vehicle_command_msg = VehicleCommand()
+        vehicle_command_msg.command = command
+        
+        # params
+        params = list(params) + [0] * (7 - len(params))
+        for i, param in enumerate(params[:7], start = 1):
+            setattr(vehicle_command_msg, f'param{i}', float(param))
+
+        # defaults
+        vehicle_command_msg.target_system = 1
+        vehicle_command_msg.target_component = 1
+        vehicle_command_msg.source_system = 1
+        vehicle_command_msg.source_component = 1
+        vehicle_command_msg.from_external = True
+        vehicle_command_msg.timestamp = int(
+            timestamp / 1000)  # microseconds
+        
+        # other kwargs
+        for attr, value in kwargs.items():
+            try:
+                setattr(vehicle_command_msg, attr, value)
+            except Exception as e:
+                print(e)
+
+        return vehicle_command_msg
+
     def arm(self, timestamp: int) -> None:
         """
         Arms the drone for flight.
@@ -129,26 +167,11 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
         """
 
-        # TODO: vehicle command 封裝
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM
-        vehicle_command_msg.param1 = float(1)  # 1 to arm, 0 to disarm
-        vehicle_command_msg.param2 = float(0)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
-
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
-
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
+        vehicle_command_msg = self.vehicle_command_gen(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
+            timestamp,
+            1
+        )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
@@ -159,26 +182,10 @@ class DroneApi(Api):
         Sends a command to the vehicle to disarm it, ensuring it cannot take off.
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
-        # TODO: vehicle command 封裝
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM
-        vehicle_command_msg.param1 = float(0)  # 1 to arm, 0 to disarm
-        vehicle_command_msg.param2 = float(0)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
-
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
-
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
+        vehicle_command_msg = self.vehicle_command_gen(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
+            timestamp
+        )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
@@ -214,25 +221,14 @@ class DroneApi(Api):
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_DO_SET_MODE
-        vehicle_command_msg.param1 = float(1)
-        vehicle_command_msg.param2 = float(6)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
-
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
-
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
+        vehicle_command_msg = self.vehicle_command_gen(
+            VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 
+            timestamp, 
+            1, 
+            6
+        )
+        
+        self.vehicle_command_pub.publish(vehicle_command_msg)
 
     def is_payload_dropped(self) -> bool:
         # TODO: decide whether ths payload is dropped
@@ -242,3 +238,6 @@ class DroneApi(Api):
         grab_status_msg = Bool()
         grab_status_msg.data = False
         self.grab_status_pub.publish(grab_status_msg)
+
+
+    
