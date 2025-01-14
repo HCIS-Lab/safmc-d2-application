@@ -5,18 +5,28 @@ from agent.constants import DELTA_TIME
 from agent.agent_machine import AgentMachine
 from .config import Config
 
+
 class Agent(Node):
     def __init__(self):
         super().__init__('agent')
 
-        # TODO: QoS
+        # TODO: QoS?
+
+        # config
         config = Config(self)
+
+        # logging
+        logger = self.get_logger()
+
+        # clock
+        clock = self.get_clock()
+
         # context
         drone_api = DroneApi(self)
         mediator_api = MediatorApi(self)
 
         # machine
-        self.machine = AgentMachine(drone_api, mediator_api)
+        self.machine = AgentMachine(drone_api, mediator_api, logger, clock)
 
         self.timer = self.create_timer(DELTA_TIME, self.update)
 
