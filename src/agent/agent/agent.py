@@ -1,22 +1,28 @@
 import rclpy
 from rclpy.node import Node
-from .api import DroneApi, MediatorApi
-from .constants import DELTA_TIME
-from .agent_machine import AgentMachine
+from agent.api import DroneApi, MediatorApi
+from agent.constants import DELTA_TIME
+from agent.agent_machine import AgentMachine
 
 
 class Agent(Node):
     def __init__(self):
         super().__init__('agent')
 
-        # TODO: QoS
+        # TODO: QoS?
+
+        # logging
+        logger = self.get_logger()
+
+        # clock
+        clock = self.get_clock()
 
         # context
         drone_api = DroneApi(self)
         mediator_api = MediatorApi(self)
 
         # machine
-        self.machine = AgentMachine(drone_api, mediator_api)
+        self.machine = AgentMachine(drone_api, mediator_api, logger, clock)
 
         self.timer = self.create_timer(DELTA_TIME, self.update)
 
