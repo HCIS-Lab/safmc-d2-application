@@ -21,7 +21,7 @@ class Context():
             return None
     
     def current_timestamp(self) -> int:
-        return self._clock.now().nanoseconds
+        return self.clock.now().nanoseconds
 
     # setters
     def api_setter(self, new_api_name: str, new_api: Type[Api]):

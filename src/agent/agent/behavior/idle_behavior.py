@@ -12,7 +12,7 @@ from .behavior import Behavior
 class IdleBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
-        drone_api = context.drone_api
+        drone_api: DroneApi = context.drone_api
         if (not drone_api.is_armed) and drone_api.vehicle_timestamp > 10000000 and drone_api.is_each_pre_flight_check_passed:
             # TODO: self.drone.get_vehicle_status().nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD: why?
             drone_api.reset_start_position()
@@ -21,6 +21,6 @@ class IdleBehavior(Behavior):
             drone_api.arm(context.current_timestamp())
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
-        if drone_api.is_armed:
+    def proceed(context: Context, agent_machine: AgentMachine):
+        if context.drone_api.is_armed:
             agent_machine.takeoff()
