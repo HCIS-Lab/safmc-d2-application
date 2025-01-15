@@ -21,6 +21,14 @@ class DroneApi(Api):
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
         self.__is_loaded = False
+        self.__hotspot_reached = False
+        
+        self.hotspot_coord = [
+            NEDCoordinate(-6.2135, 5.65797),
+            NEDCoordinate(-4.98951, -4.52046),
+            NEDCoordinate(7.21815, 0.43991)
+        ]
+        
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -276,3 +284,12 @@ class DroneApi(Api):
         return (self.__local_position.x - target.x)**2 + \
             (self.__local_position.y - target.y)**2 + \
             (self.__local_position.z - target.z)**2 <= thresh
+
+    def set_hotspot_reached(self, reached: bool) -> None:
+        self.__hotspot_reached = reached
+        
+    def get_hotspot_reached(self) -> bool:
+        return self.__hotspot_reached
+    
+    def get_hotspot_coord(self) -> NEDCoordinate:
+        return self.hotspot_coord
