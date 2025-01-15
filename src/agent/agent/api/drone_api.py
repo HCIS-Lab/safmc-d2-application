@@ -3,7 +3,6 @@ from typing import Optional
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
-from std_msgs.msg import Bool
 
 from agent.common.decorators import deprecated
 from agent.common.ned_coordinate import NEDCoordinate
