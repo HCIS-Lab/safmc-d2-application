@@ -1,8 +1,10 @@
-from .behavior import Behavior
-from agent.api.drone_api import DroneApi
-from agent.constants import NAV_THRESH
-from agent.common.context import Context
 from typing import Optional
+
+from agent.api.drone_api import DroneApi
+from agent.common.context import Context
+from agent.constants import NAV_THRESH
+
+from .behavior import Behavior
 
 
 class WalkToHotspotBehavior(Behavior):
