@@ -1,3 +1,4 @@
+from agent_machine import AgentMachine
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -37,3 +38,8 @@ class LoadBehavior(Behavior):
         else:
             drone_api.publish_goto_setpoint(
                 clock.now().nanoseconds, load_coord)
+
+    @staticmethod
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
+        if drone_api.is_loaded:
+            agent_machine.walk_to_hotspot()
