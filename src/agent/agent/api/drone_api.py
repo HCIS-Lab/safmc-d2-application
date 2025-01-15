@@ -21,6 +21,9 @@ class DroneApi(Api):
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
         self.__is_loaded = False
+        self.__is_altitude_reached = False
+        self.__supply_reached = False
+        self.__supply_coord = False
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -98,6 +101,9 @@ class DroneApi(Api):
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
         )
+
+    def set_altitude_reached(self, status : bool) -> None:
+        self.is_altitude_reached = status
 
     def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
         '''
