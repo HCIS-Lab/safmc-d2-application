@@ -19,19 +19,17 @@ class DroneApi(Api):
         self.__is_armed = False
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
-        self.__is_loaded = False
         self.__hotspot_reached = False
-        
+
         self.hotspot_coord = [
             NEDCoordinate(-6.2135, 5.65797, 0.6),
             NEDCoordinate(-4.98951, -4.52046, 0.6),
             NEDCoordinate(7.21815, 0.43991, 0.6)
         ]
-        
+
         self.__is_altitude_reached = False
         self.__supply_reached = False
         self.__supply_coord = False
-        
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -84,7 +82,7 @@ class DroneApi(Api):
             GotoSetpoint,
             '/fmu/in/goto_setpoint',
             qos_profile)
-        
+
     @ property
     def is_each_pre_flight_check_passed(self) -> bool:
         return self.__is_each_pre_flight_check_passed
@@ -115,7 +113,7 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
-    def set_altitude_reached(self, status : bool) -> None:
+    def set_altitude_reached(self, status: bool) -> None:
         self.__is_altitude_reached = status
 
     def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
@@ -293,9 +291,9 @@ class DroneApi(Api):
 
     def set_hotspot_reached(self, reached: bool) -> None:
         self.__hotspot_reached = reached
-        
+
     def get_hotspot_reached(self) -> bool:
         return self.__hotspot_reached
-    
+
     def get_hotspot_coord(self) -> NEDCoordinate:
         return self.hotspot_coord
