@@ -4,6 +4,7 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool
+
 from agent_msgs.msg import MagnetControl
 
 from .api import Api
