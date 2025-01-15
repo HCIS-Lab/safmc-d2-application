@@ -72,29 +72,7 @@ class AgentMachine(Machine):
 
     def proceed(self):
         # 根據條件判斷是否要 transition
-        match self.state:
-            case States.IDLE:
-                if self.drone_api.is_armed:
-                    self.takeoff()
-            case States.TAKEOFF:
-                if self.drone_api.is_altitude_reached:
-                    if self.drone_api.is_loaded:
-                        self.walk_to_hotspot()
-                    else:
-                        self.walk_to_supply()
-            case States.WALK_TO_SUPPLY:
-                if self.drone_api.get_supply_reached():
-                    self.load()
-            case States.LOAD:
-                if self.drone_api.is_loaded:
-                    self.walk_to_hotspot()
-            case States.WALK_TO_HOTSPOT:
-                pass
-            case States.WAIT:
-                if self.mediator_api.signal():
-                    self.drop()
-            case States.DROP:
-                if not self.drone_api.is_loaded:
-                    self.walk_to_supply()
-            case _:
-                pass
+        behavior: Behavior = self.behaviors.get(self.state)
+        if behavior:
+            behavior.proceed(self.drone_api, self.mediator_api,
+                             self.logger, self.clock)

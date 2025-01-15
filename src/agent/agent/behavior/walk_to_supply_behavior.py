@@ -18,3 +18,9 @@ class WalkToSupplyBehavior(Behavior):
         else:
             drone_api.publish_goto_setpoint(
                 clock.now().nanoseconds, supply_coord)
+
+    @staticmethod
+    @abstractmethod
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+        if drone_api.get_supply_reached():
+            load()

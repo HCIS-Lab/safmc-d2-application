@@ -24,3 +24,12 @@ class TakeoffBehavior(Behavior):
         else:
             drone_api.publish_goto_setpoint(
                 clock.now().nanoseconds, takeoff_coord)
+
+    @staticmethod
+    @abstractmethod
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+        if drone_api.is_altitude_reached:
+            if drone_api.is_loaded:
+                walk_to_hotspot()
+            else:
+                walk_to_supply()

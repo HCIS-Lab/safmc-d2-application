@@ -16,3 +16,9 @@ class IdleBehavior(Behavior):
             drone_api.reset_start_position()
             drone_api.activate_offboard_control_mode(clock.now().nanoseconds)
             drone_api.arm(clock.now().nanoseconds)
+
+    @staticmethod
+    @abstractmethod
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+        if drone_api.is_armed:
+            takeoff()
