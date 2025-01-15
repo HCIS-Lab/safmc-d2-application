@@ -76,5 +76,4 @@ class AgentMachine(Machine):
         # 根據條件判斷是否要 transition
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
-            behavior.proceed(self.drone_api, self.mediator_api,
-                             self.logger, self.clock, self)
+            behavior.proceed(self.context, self)

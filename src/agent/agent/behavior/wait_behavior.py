@@ -15,6 +15,6 @@ class WaitBehavior(Behavior):
         mediator_api.wait_to_drop()
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
-        if mediator_api.signal():
+    def proceed(context: Context, agent_machine: AgentMachine):
+        if context.mediator_api.signal():
             agent_machine.drop()

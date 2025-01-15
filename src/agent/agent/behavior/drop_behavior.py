@@ -16,6 +16,6 @@ class DropBehavior(Behavior):
         drone_api.drop_payload()
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
-        if not drone_api.is_loaded:
+    def proceed(context: Context, agent_machine: AgentMachine):
+        if not context.drone_api.is_loaded:
             agent_machine.walk_to_supply()
