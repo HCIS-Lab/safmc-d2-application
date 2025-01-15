@@ -117,7 +117,7 @@ class DroneApi(Api):
         )
 
     def set_altitude_reached(self, status : bool) -> None:
-        self.is_altitude_reached = status
+        self.__is_altitude_reached = status
 
     def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
         '''
