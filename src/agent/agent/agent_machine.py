@@ -65,10 +65,16 @@ class AgentMachine(Machine):
 
     def proceed(self):
         # 根據條件判斷是否要 transition
+        clock = Clock()
+        timestamp = clock.now().nanoseconds
         match self.state:
             case States.IDLE:
                 if self.drone_api.is_armed:
+                    print(f"armed: {self.drone_api.is_armed}")
                     self.takeoff()
+                else:
+                    self.drone_api.arm(timestamp)
+                    
             case States.TAKEOFF:
                 pass
             case States.WALK_TO_SUPPLY:

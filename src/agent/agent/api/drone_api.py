@@ -17,7 +17,8 @@ from px4_msgs.msg import (
     OffboardControlMode,
     VehicleCommand,
     VehicleLocalPosition,
-    VehicleStatus
+    VehicleStatus,
+    GotoSetpoint
 )
 
 from std_msgs.msg import Bool
@@ -91,6 +92,11 @@ class DroneApi(Api):
             qos_profile
         )
 
+        self.goto_setpoint_pub = node.create_publisher(
+            GotoSetpoint,
+            '/fmu/in/goto_setpoint',
+            qos_profile)
+        
     @ property
     def is_each_pre_flight_check_passed(self) -> bool:
         return self.__is_each_pre_flight_check_passed
@@ -242,3 +248,51 @@ class DroneApi(Api):
         grab_status_msg = Bool()
         grab_status_msg.data = False
         self.grab_status_pub.publish(grab_status_msg)
+
+    #去到一個點
+    def publish_goto_setpoint(
+            self,
+            coord: NEDCoordinate,
+            heading: Optional[float] = None,
+            max_horizontal_speed: Optional[float] = None,
+            max_vertical_speed: Optional[float] = None,
+            max_heading_rate: Optional[float] = None
+        ):
+            
+        msg = GotoSetpoint()
+        msg.position = [coord.x, coord.y, coord.z]
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+
+        if heading is not None:
+            msg.flag_control_heading = True
+            msg.heading = heading
+        else:
+            msg.flag_control_heading = False
+            msg.heading = 0.0
+
+        if max_horizontal_speed is not None:
+            msg.flag_set_max_horizontal_speed = True
+            msg.max_horizontal_speed = max_horizontal_speed
+        else:
+            msg.flag_set_max_horizontal_speed = False
+            msg.max_horizontal_speed = 0.0
+
+        if max_vertical_speed is not None:
+            msg.flag_set_max_vertical_speed = True
+            msg.max_vertical_speed = max_vertical_speed
+        else:
+            msg.flag_set_max_vertical_speed = False
+            msg.max_vertical_speed = 0.0
+
+        if max_heading_rate is not None:
+            msg.flag_set_max_heading_rate = True
+            msg.max_heading_rate = max_heading_rate
+        else:
+            msg.flag_set_max_heading_rate = False
+            msg.max_heading_rate = 0.0
+
+
+        self.goto_setpoint_pub.publish(msg)
+        self.get_logger().info(f"Publishing goto setpoint: {coord}")
+        
+    
