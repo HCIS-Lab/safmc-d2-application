@@ -1,44 +1,17 @@
-from .api import Api
-
 from typing import Optional
+
 from rclpy.node import Node
-from dataclasses import dataclass
+from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
+                       QoSReliabilityPolicy)
+from std_msgs.msg import Bool
+from agent_msgs.msg import MagnetControl
 
 from agent.common.decorators import deprecated
+from agent.common.ned_coordinate import NEDCoordinate
+from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
+                          VehicleLocalPosition, VehicleStatus)
 
-from rclpy.qos import (
-    QoSProfile,
-    QoSReliabilityPolicy,
-    QoSHistoryPolicy,
-    QoSDurabilityPolicy
-)
-
-from px4_msgs.msg import (
-    OffboardControlMode,
-    VehicleCommand,
-    VehicleLocalPosition,
-    VehicleStatus
-)
-
-from std_msgs.msg import Bool
-
-
-@dataclass
-class NEDCoordinate:
-    # TODO: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Vector3.html
-
-    x: float
-    y: float
-    z: float
-
-    def __str__(self) -> str:
-        return f"NED(x={self.x}, y={self.y}, z={self.z})"
-
-    def __add__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
-        return NEDCoordinate(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    def __sub__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
-        return NEDCoordinate(self.x - other.x, self.y - other.y, self.z - other.z)
+from .api import Api
 
 
 class DroneApi(Api):
@@ -48,6 +21,7 @@ class DroneApi(Api):
         self.__is_armed = False
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
+        self.__is_loaded = False
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -71,6 +45,13 @@ class DroneApi(Api):
             qos_profile
         )
 
+        self.is_loaded_sub = node.create_subscription(
+            Bool,
+            "is_loaded",
+            self.__set_is_loaded,
+            qos_profile
+        )
+
         # Publishers
         self.vehicle_command_pub = node.create_publisher(
             VehicleCommand,
@@ -83,11 +64,23 @@ class DroneApi(Api):
             "/fmu/in/offboard_control_mode",
             qos_profile
         )
-        self.grab_status_pub = node.create_publisher(
-            Bool,
-            # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
-            "grab_status",
 
+        self.goto_setpoint_pub = node.create_publisher(
+            GotoSetpoint,
+            "/fmu/in/goto_setpoint",
+            qos_profile
+        )
+
+        self.magnet_control_pub = node.create_publisher(  
+            MagnetControl,
+            # payload system subscribe to /drone_{i}/magnet_control, for i from 0 to 3
+            "magnet_control",
+            qos_profile
+        )
+
+        self.goto_setpoint_pub = node.create_publisher(
+            GotoSetpoint,
+            "/fmu/in/goto_setpoint",
             qos_profile
         )
 
@@ -121,6 +114,44 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
+    def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
+        '''
+        Generate the vehicle command.\n
+        defaults:\n
+            params[0:7] = 0
+            target_system = 1\n
+            target_component = 1\n
+            source_system = 1\n
+            source_component = 1\n
+            from_external = True\n
+            timestamp = int(timestamp / 1000)
+        '''
+        vehicle_command_msg = VehicleCommand()
+        vehicle_command_msg.command = command
+
+        # params
+        params = list(params) + [0] * (7 - len(params))
+        for i, param in enumerate(params[:7], start=1):
+            setattr(vehicle_command_msg, f'param{i}', float(param))
+
+        # defaults
+        vehicle_command_msg.target_system = 1
+        vehicle_command_msg.target_component = 1
+        vehicle_command_msg.source_system = 1
+        vehicle_command_msg.source_component = 1
+        vehicle_command_msg.from_external = True
+        vehicle_command_msg.timestamp = int(
+            timestamp / 1000)  # microseconds
+
+        # other kwargs
+        for attr, value in kwargs.items():
+            try:
+                setattr(vehicle_command_msg, attr, value)
+            except Exception as e:
+                print(e)
+
+        return vehicle_command_msg
+
     def arm(self, timestamp: int) -> None:
         """
         Arms the drone for flight.
@@ -129,26 +160,11 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
         """
 
-        # TODO: vehicle command 封裝
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM
-        vehicle_command_msg.param1 = float(1)  # 1 to arm, 0 to disarm
-        vehicle_command_msg.param2 = float(0)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
-
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
-
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
+            timestamp,
+            1
+        )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
@@ -159,26 +175,11 @@ class DroneApi(Api):
         Sends a command to the vehicle to disarm it, ensuring it cannot take off.
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
-        # TODO: vehicle command 封裝
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM
-        vehicle_command_msg.param1 = float(0)  # 1 to arm, 0 to disarm
-        vehicle_command_msg.param2 = float(0)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
-
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
-
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
+            timestamp,
+            0
+        )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
@@ -214,31 +215,95 @@ class DroneApi(Api):
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.command = VehicleCommand.VEHICLE_CMD_DO_SET_MODE
-        vehicle_command_msg.param1 = float(1)
-        vehicle_command_msg.param2 = float(6)
-        vehicle_command_msg.param3 = float(0)
-        vehicle_command_msg.param4 = float(0)
-        vehicle_command_msg.param5 = float(0)
-        vehicle_command_msg.param6 = float(0)
-        vehicle_command_msg.param7 = float(0)
+        vehicle_command_msg = self.get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
+            timestamp,
+            1,
+            6
+        )
 
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
+        self.vehicle_command_pub.publish(vehicle_command_msg)
 
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
+    @property
+    def is_loaded(self) -> bool:
+        return self.__is_loaded
+    
+    def __set_is_loaded(self, is_loaded_msg: Bool):
+        self.__is_loaded = is_loaded_msg.data
 
-        vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
+    def activate_magnet(self) -> None:
+        magnet_control_msg = MagnetControl()
+        magnet_control_msg.magnet1 = True
+        magnet_control_msg.magnet2 = False
+        magnet_control_msg.magnet3 = False
+        self.magnet_control_pub.publish(magnet_control_msg)
+
+    def deactivate_magnet(self) -> None:
+        magnet_control_msg = MagnetControl()
+        magnet_control_msg.magnet1 = False
+        magnet_control_msg.magnet2 = False
+        magnet_control_msg.magnet3 = False
+        self.magnet_control_pub.publish(magnet_control_msg)
+
+    # TODO refactor
+    def publish_goto_setpoint(self,
+                              timestamp: int,
+                              coord: NEDCoordinate,
+                              heading: Optional[float] = None,
+                              max_horizontal_speed: Optional[float] = None,
+                              max_vertical_speed: Optional[float] = None,
+                              max_heading_rate: Optional[float] = None) -> None:
+
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = int(
             timestamp / 1000)  # microseconds
 
-    def is_payload_dropped(self) -> bool:
-        # TODO: decide whether ths payload is dropped
-        return True
+        goto_setpoint_msg.position[0] = coord.x
+        goto_setpoint_msg.position[1] = coord.y
+        goto_setpoint_msg.position[2] = coord.z
 
-    def drop_payload(self) -> None:
-        grab_status_msg = Bool()
-        grab_status_msg.data = False
-        self.grab_status_pub.publish(grab_status_msg)
+        if heading is None:
+            goto_setpoint_msg.flag_control_heading = False
+            goto_setpoint_msg.heading = 0.0
+        else:
+            goto_setpoint_msg.flag_control_heading = True
+            goto_setpoint_msg.heading = heading
+
+        if max_horizontal_speed is None:
+            goto_setpoint_msg.flag_set_max_horizontal_speed = False
+            goto_setpoint_msg.max_horizontal_speed = 0.0
+        else:
+            goto_setpoint_msg.flag_set_max_horizontal_speed = False
+            goto_setpoint_msg.max_horizontal_speed = max_horizontal_speed
+
+        if max_vertical_speed is None:
+            goto_setpoint_msg.flag_set_max_vertical_speed = False
+            goto_setpoint_msg.max_vertical_speed = 0.0
+        else:
+            goto_setpoint_msg.flag_set_max_vertical_speed = False
+            goto_setpoint_msg.max_vertical_speed = max_vertical_speed
+
+        if max_heading_rate is None:
+            goto_setpoint_msg.flag_set_max_heading_rate = False
+            goto_setpoint_msg.max_heading_rate = 0.0
+        else:
+            goto_setpoint_msg.flag_set_max_heading_rate = False
+            goto_setpoint_msg.max_heading_rate = max_heading_rate
+
+        self.goto_setpoint_pub.publish(goto_setpoint_msg)
+
+    @property
+    def is_altitude_reached(self) -> bool:
+        return self.__is_altitude_reached
+
+    def get_supply_reached(self) -> bool:
+        return self.__supply_reached
+
+    def get_supply_coord(self) -> NEDCoordinate:
+        return self.__supply_coord
+
+    @deprecated
+    def goal_arrived(self, target: NEDCoordinate, thresh: float) -> bool:
+        return (self.__local_position.x - target.x)**2 + \
+            (self.__local_position.y - target.y)**2 + \
+            (self.__local_position.z - target.z)**2 <= thresh

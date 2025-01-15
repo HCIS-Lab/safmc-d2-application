@@ -1,10 +1,14 @@
+from enum import Enum
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
-from enum import Enum
 from transitions import Machine
-from agent.behavior import Behavior, WaitBehavior, IdleBehavior, DropBehavior
+
 from agent.api import DroneApi, MediatorApi
 from agent.common.context import Context
+from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+                            TakeoffBehavior, WaitBehavior,
+                            WalkToSupplyBehavior)
 
 
 class States(Enum):
@@ -50,6 +54,9 @@ class AgentMachine(Machine):
         # init behaviors
         self.behaviors = {
             States.IDLE: IdleBehavior,
+            States.TAKEOFF: TakeoffBehavior,
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
+            States.LOAD: LoadBehavior,
             States.WAIT: WaitBehavior,
             States.DROP: DropBehavior
         }
@@ -67,23 +74,7 @@ class AgentMachine(Machine):
 
     def proceed(self):
         # 根據條件判斷是否要 transition
-        match self.state:
-            case States.IDLE:
-                if self.context.drone_api.is_armed:
-                    self.takeoff()
-            case States.TAKEOFF:
-                pass
-            case States.WALK_TO_SUPPLY:
-                pass
-            case States.LOAD:
-                pass
-            case States.WALK_TO_HOTSPOT:
-                pass
-            case States.WAIT:
-                if self.context.mediator_api.signal():
-                    self.drop()
-            case States.DROP:
-                if self.context.drone_api.is_payload_dropped():
-                    self.walk_to_supply()
-            case _:
-                pass
+        behavior: Behavior = self.behaviors.get(self.state)
+        if behavior:
+            behavior.proceed(self.drone_api, self.mediator_api,
+                             self.logger, self.clock)

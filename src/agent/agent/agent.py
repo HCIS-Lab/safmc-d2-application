@@ -1,5 +1,7 @@
 import rclpy
 from rclpy.node import Node
+
+from agent.agent_machine import AgentMachine
 from agent.api import DroneApi, MediatorApi
 from agent.constants import DELTA_TIME
 from agent.agent_machine import AgentMachine
@@ -13,8 +15,8 @@ class Agent(Node):
         # TODO: QoS?
 
         self.context = Context(
-            self.get_logger(), 
-            self.get_clock(), 
+            self.get_logger(),
+            self.get_clock(),
             drone_api=DroneApi(self),
             mediator_api=MediatorApi(self)
         )
