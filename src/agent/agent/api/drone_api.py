@@ -4,10 +4,10 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool
-from agent_msgs.msg import MagnetControl
 
 from agent.common.decorators import deprecated
 from agent.common.ned_coordinate import NEDCoordinate
+from agent_msgs.msg import MagnetControl
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 
