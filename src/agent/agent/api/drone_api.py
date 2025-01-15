@@ -63,13 +63,6 @@ class DroneApi(Api):
             qos_profile
         )
 
-        self.grab_status_pub = node.create_publisher(  # TODO change topic name
-            Bool,
-            # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
-            "grab_status",
-            qos_profile
-        )
-
         self.goto_setpoint_pub = node.create_publisher(
             GotoSetpoint,
             "/fmu/in/goto_setpoint",
@@ -215,24 +208,6 @@ class DroneApi(Api):
         )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
-
-    @property
-    def is_loaded(self) -> bool:
-        return self.__is_loaded
-
-    # TODO
-    # listen topic to update __is_loaded (not from camera)
-    def activate_magnet(self) -> None:
-        # TODO change msg type (custom)
-        grab_status_msg = Bool()
-        grab_status_msg.data = True
-        self.grab_status_pub.publish(grab_status_msg)
-
-    def deactivate_magnet(self) -> None:
-        # TODO change msg type (custom)
-        grab_status_msg = Bool()
-        grab_status_msg.data = False
-        self.grab_status_pub.publish(grab_status_msg)
 
     # TODO refactor
     def publish_goto_setpoint(self,
