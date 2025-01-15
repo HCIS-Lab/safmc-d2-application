@@ -5,10 +5,10 @@ from rclpy.impl.rcutils_logger import RcutilsLogger
 from transitions import Machine
 
 from agent.api import DroneApi, MediatorApi
-from agent.common.context import Context
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToSupplyBehavior)
+from agent.common.context import Context
 
 
 class States(Enum):

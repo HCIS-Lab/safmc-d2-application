@@ -1,3 +1,4 @@
+from agent_machine import AgentMachine
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -6,7 +7,6 @@ from agent.api.drone_api import NEDCoordinate
 from agent.constants import NAV_THRESH, TAKEOFF_HEIGHT
 
 from .behavior import Behavior
-from agent_machine import AgentMachine
 
 
 class TakeoffBehavior(Behavior):

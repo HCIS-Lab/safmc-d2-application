@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
-from rclpy.clock import Clock
-from agent.common.context import Context
-from rclpy.impl.rcutils_logger import RcutilsLogger
-from agent.api import DroneApi, MediatorApi
-
 # TODO: come up with a solution - avoid passing agent_machine directly
 from agent_machine import AgentMachine
+from rclpy.clock import Clock
+from rclpy.impl.rcutils_logger import RcutilsLogger
+
+from agent.api import DroneApi, MediatorApi
+from agent.common.context import Context
 
 
 class Behavior(ABC):

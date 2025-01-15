@@ -1,8 +1,9 @@
+from typing import Optional, Type
+
+from api.api import Api
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
-from api.api import Api
 
-from typing import Type, Optional
 
 class Context():
     def __init__(self, logger: RcutilsLogger, clock: Clock, **apis):
