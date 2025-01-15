@@ -1,5 +1,5 @@
 
-from agent_machine import AgentMachine
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -21,6 +21,6 @@ class IdleBehavior(Behavior):
             drone_api.arm(context.current_timestamp())
 
     @staticmethod
-    def proceed(context: Context, agent_machine: AgentMachine):
+    def proceed(context: Context, agent_machine):
         if context.drone_api.is_armed:
             agent_machine.takeoff()

@@ -1,4 +1,4 @@
-from agent_machine import AgentMachine
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -42,6 +42,6 @@ class LoadBehavior(Behavior):
                 context.current_timestamp(), load_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine: AgentMachine):
+    def proceed(context: Context, agent_machine):
         if context.drone_api.is_loaded:
             agent_machine.walk_to_hotspot()
