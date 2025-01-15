@@ -17,5 +17,5 @@ class Behavior(ABC):
 
     @staticmethod
     @abstractmethod
-    def proceed(context: Context, clock: Clock, agent_machine: AgentMachine):
+    def proceed(context: Context, agent_machine: AgentMachine):
         pass
