@@ -1,4 +1,4 @@
-from agent_machine import AgentMachine
+from agent.agent_machine import AgentMachine
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
