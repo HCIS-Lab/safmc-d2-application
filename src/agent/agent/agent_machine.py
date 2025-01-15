@@ -1,10 +1,8 @@
 from enum import Enum
 
-from rclpy.clock import Clock
-from rclpy.impl.rcutils_logger import RcutilsLogger
 from transitions import Machine
 
-from agent.api import DroneApi, MediatorApi
+from agent.api import DroneApi
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToSupplyBehavior)
@@ -65,7 +63,7 @@ class AgentMachine(Machine):
         drone_api: DroneApi = self.context.drone_api
         if True:  # TODO why?
             drone_api.maintain_offboard_control(
-                self.context.current_timestamp())
+                self.context.get_current_timestamp())
 
         # 執行當前 state 任務 (一步)
         behavior: Behavior = self.behaviors.get(self.state)

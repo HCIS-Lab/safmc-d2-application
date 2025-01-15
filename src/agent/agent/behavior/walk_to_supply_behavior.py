@@ -1,11 +1,6 @@
-
-from rclpy.clock import Clock
-from rclpy.impl.rcutils_logger import RcutilsLogger
-
-from agent.api import DroneApi, MediatorApi
-from agent.api.drone_api import NEDCoordinate
-from agent.constants import NAV_THRESH
+from agent.api import DroneApi
 from agent.common.context import Context
+from agent.constants import NAV_THRESH
 
 from .behavior import Behavior
 
@@ -21,7 +16,7 @@ class WalkToSupplyBehavior(Behavior):
             drone_api.set_supply_reached(True)
         else:
             drone_api.publish_goto_setpoint(
-                context.current_timestamp(), supply_coord)
+                context.get_current_timestamp(), supply_coord)
 
     @staticmethod
     def proceed(context: Context, agent_machine):

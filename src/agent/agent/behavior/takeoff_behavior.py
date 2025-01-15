@@ -1,11 +1,7 @@
-
-from rclpy.clock import Clock
-from rclpy.impl.rcutils_logger import RcutilsLogger
-
-from agent.api import DroneApi, MediatorApi
+from agent.api import DroneApi
 from agent.api.drone_api import NEDCoordinate
-from agent.constants import NAV_THRESH, TAKEOFF_HEIGHT
 from agent.common.context import Context
+from agent.constants import NAV_THRESH, TAKEOFF_HEIGHT
 
 from .behavior import Behavior
 
@@ -26,7 +22,7 @@ class TakeoffBehavior(Behavior):
             drone_api.set_altitude_reached(True)
         else:
             drone_api.publish_goto_setpoint(
-                context.current_timestamp(), takeoff_coord)
+                context.get_current_timestamp(), takeoff_coord)
 
     @staticmethod
     def proceed(context: Context, agent_machine):

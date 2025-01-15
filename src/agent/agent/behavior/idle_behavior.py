@@ -1,9 +1,4 @@
-
-
-from rclpy.clock import Clock
-from rclpy.impl.rcutils_logger import RcutilsLogger
-
-from agent.api import DroneApi, MediatorApi
+from agent.api import DroneApi
 from agent.common.context import Context
 
 from .behavior import Behavior
@@ -17,8 +12,8 @@ class IdleBehavior(Behavior):
             # TODO: self.drone.get_vehicle_status().nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD: why?
             drone_api.reset_start_position()
             drone_api.activate_offboard_control_mode(
-                context.current_timestamp())
-            drone_api.arm(context.current_timestamp())
+                context.get_current_timestamp())
+            drone_api.arm(context.get_current_timestamp())
 
     @staticmethod
     def proceed(context: Context, agent_machine):

@@ -1,6 +1,6 @@
 from typing import Any
 
-from rclpy.node import Node, Parameter
+from rclpy.node import Node
 
 
 def get_parameter(node: Node, name: str, default_value: Any) -> Any:
