@@ -8,5 +8,5 @@ from rclpy.clock import Clock
 class WaitBehavior(Behavior):
     @staticmethod
     def execute(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
-        target_coord = NEDCoordinate(5.0, 5.0, 1.0)
+        target_coord = drone_api.get_hotspot_coord()
         drone_api.publish_goto_setpoint(target_coord)

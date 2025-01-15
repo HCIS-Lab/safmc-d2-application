@@ -292,7 +292,4 @@ class DroneApi(Api):
             msg.max_heading_rate = 0.0
 
 
-        self.goto_setpoint_pub.publish(msg)
-        self.get_logger().info(f"Publishing goto setpoint: {coord}")
-        
-    
+
