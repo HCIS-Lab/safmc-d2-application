@@ -4,6 +4,7 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool
+from agent_msgs.msg import MagnetControl
 
 from agent.common.decorators import deprecated
 from agent.common.ned_coordinate import NEDCoordinate
@@ -44,6 +45,13 @@ class DroneApi(Api):
             qos_profile
         )
 
+        self.is_loaded_sub = node.create_subscription(
+            Bool,
+            "is_loaded",
+            self.__set_is_loaded,
+            qos_profile
+        )
+
         # Publishers
         self.vehicle_command_pub = node.create_publisher(
             VehicleCommand,
@@ -63,10 +71,10 @@ class DroneApi(Api):
             qos_profile
         )
 
-        self.grab_status_pub = node.create_publisher(  # TODO change topic name
-            Bool,
-            # payload system subscribe to /drone_{i}/grab_status, for i from 0 to 3
-            "grab_status",
+        self.magnet_control_pub = node.create_publisher(  
+            MagnetControl,
+            # payload system subscribe to /drone_{i}/magnet_control, for i from 0 to 3
+            "magnet_control",
             qos_profile
         )
 
@@ -219,20 +227,23 @@ class DroneApi(Api):
     @property
     def is_loaded(self) -> bool:
         return self.__is_loaded
+    
+    def __set_is_loaded(self, is_loaded_msg: Bool):
+        self.__is_loaded = is_loaded_msg.data
 
-    # TODO
-    # listen topic to update __is_loaded (not from camera)
     def activate_magnet(self) -> None:
-        # TODO change msg type (custom)
-        grab_status_msg = Bool()
-        grab_status_msg.data = True
-        self.grab_status_pub.publish(grab_status_msg)
+        magnet_control_msg = MagnetControl()
+        magnet_control_msg.magnet1 = True
+        magnet_control_msg.magnet2 = False
+        magnet_control_msg.magnet3 = False
+        self.magnet_control_pub.publish(magnet_control_msg)
 
     def deactivate_magnet(self) -> None:
-        # TODO change msg type (custom)
-        grab_status_msg = Bool()
-        grab_status_msg.data = False
-        self.grab_status_pub.publish(grab_status_msg)
+        magnet_control_msg = MagnetControl()
+        magnet_control_msg.magnet1 = False
+        magnet_control_msg.magnet2 = False
+        magnet_control_msg.magnet3 = False
+        self.magnet_control_pub.publish(magnet_control_msg)
 
     # TODO refactor
     def publish_goto_setpoint(self,
