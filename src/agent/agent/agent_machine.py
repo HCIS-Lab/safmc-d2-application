@@ -77,29 +77,3 @@ class AgentMachine(Machine):
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
             behavior.proceed(self.context, self)
-        clock = Clock()
-        timestamp = clock.now().nanoseconds
-        match self.state:
-            case States.IDLE:
-                if self.drone_api.is_armed:
-                    print(f"armed: {self.drone_api.is_armed}")
-                    self.takeoff()
-                else:
-                    self.drone_api.arm(timestamp)
-                    
-            case States.TAKEOFF:
-                pass
-            case States.WALK_TO_SUPPLY:
-                pass
-            case States.LOAD:
-                pass
-            case States.WALK_TO_HOTSPOT:
-                pass
-            case States.WAIT:
-                if self.mediator_api.signal():
-                    self.drop()
-            case States.DROP:
-                if self.drone_api.is_payload_dropped():
-                    self.walk_to_supply()
-            case _:
-                pass
