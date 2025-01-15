@@ -1,9 +1,14 @@
+from enum import Enum
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
-from enum import Enum
 from transitions import Machine
-from agent.behavior import Behavior, WaitBehavior, IdleBehavior, DropBehavior
+
 from agent.api import DroneApi, MediatorApi
+from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+                            TakeoffBehavior, WaitBehavior,
+                            WalkToSupplyBehavior)
+from agent.common.context import Context
 
 
 class States(Enum):
@@ -29,8 +34,8 @@ transitions = [
 
 
 class AgentMachine(Machine):
-    def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
-
+    # def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def __init__(self, context: Context):
         # TODO: refactor function
         def populate_triggers(transitions):
             for transition in transitions:
@@ -40,31 +45,38 @@ class AgentMachine(Machine):
         super().__init__(self, states=States,
                          transitions=populate_triggers(transitions), initial=States.IDLE)
 
-        self.drone_api = drone_api
-        self.mediator_api = mediator_api
-        self.logger = logger
-        self.clock = clock
+        # self.drone_api = drone_api
+        # self.mediator_api = mediator_api
+        # self.logger = logger
+        # self.clock = clock
+        self.context = context
 
         # init behaviors
         self.behaviors = {
             States.IDLE: IdleBehavior,
+            States.TAKEOFF: TakeoffBehavior,
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
+            States.LOAD: LoadBehavior,
             States.WAIT: WaitBehavior,
             States.DROP: DropBehavior
         }
 
     def execute(self):
+        drone_api: DroneApi = self.context.drone_api
         if True:  # TODO why?
-            self.drone_api.maintain_offboard_control(
-                self.clock.now().nanoseconds)
+            drone_api.maintain_offboard_control(
+                self.context.current_timestamp())
 
         # 執行當前 state 任務 (一步)
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
-            behavior.execute(self.drone_api, self.mediator_api,
-                             self.logger, self.clock)
+            behavior.execute(self.context)
 
     def proceed(self):
         # 根據條件判斷是否要 transition
+        behavior: Behavior = self.behaviors.get(self.state)
+        if behavior:
+            behavior.proceed(self.context, self)
         clock = Clock()
         timestamp = clock.now().nanoseconds
         match self.state:
