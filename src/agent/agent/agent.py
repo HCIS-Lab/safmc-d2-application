@@ -13,7 +13,7 @@ class Agent(Node):
 
         # TODO: QoS?
 
-        self.context = Context(
+        self.api_context = Context(
             self.get_logger(),
             self.get_clock(),
             drone_api=DroneApi(self),
@@ -21,7 +21,7 @@ class Agent(Node):
         )
 
         # machine
-        self.machine = AgentMachine(self.context)
+        self.machine = AgentMachine(self.api_context)
 
         self.timer = self.create_timer(DELTA_TIME, self.update)
 
