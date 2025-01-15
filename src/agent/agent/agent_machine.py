@@ -77,4 +77,4 @@ class AgentMachine(Machine):
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
             behavior.proceed(self.drone_api, self.mediator_api,
-                             self.logger, self.clock)
+                             self.logger, self.clock, self)

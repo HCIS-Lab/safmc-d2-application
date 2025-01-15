@@ -5,6 +5,7 @@ from rclpy.clock import Clock
 from agent.common.context import Context
 
 from .behavior import Behavior
+from agent_machine import AgentMachine
 
 
 class DropBehavior(Behavior):
@@ -14,6 +15,6 @@ class DropBehavior(Behavior):
         drone_api.drop_payload()
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
         if not drone_api.is_loaded:
-            walk_to_supply()
+            agent_machine.walk_to_supply()

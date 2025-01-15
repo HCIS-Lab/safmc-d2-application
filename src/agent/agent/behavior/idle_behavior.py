@@ -6,6 +6,8 @@ from agent.common.context import Context
 
 from .behavior import Behavior
 
+from agent_machine import AgentMachine
+
 
 class IdleBehavior(Behavior):
     @staticmethod
@@ -19,6 +21,6 @@ class IdleBehavior(Behavior):
             drone_api.arm(context.current_timestamp())
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
         if drone_api.is_armed:
-            takeoff()
+            agent_machine.takeoff()

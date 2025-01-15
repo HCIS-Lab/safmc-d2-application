@@ -6,6 +6,7 @@ from agent.api.drone_api import NEDCoordinate
 from agent.constants import NAV_THRESH
 
 from .behavior import Behavior
+from agent_machine import AgentMachine
 
 
 class WalkToSupplyBehavior(Behavior):
@@ -20,6 +21,6 @@ class WalkToSupplyBehavior(Behavior):
                 clock.now().nanoseconds, supply_coord)
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
         if drone_api.get_supply_reached():
-            load()
+            agent_machine.load()

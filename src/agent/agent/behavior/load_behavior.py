@@ -6,6 +6,7 @@ from agent.api.drone_api import NEDCoordinate
 from agent.constants import LOAD_HEIGHT, NAV_THRESH, TAKEOFF_HEIGHT
 
 from .behavior import Behavior
+from agent_machine import AgentMachine
 
 
 class LoadBehavior(Behavior):
@@ -39,6 +40,6 @@ class LoadBehavior(Behavior):
                 clock.now().nanoseconds, load_coord)
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
         if drone_api.is_loaded:
-            walk_to_hotspot()
+            agent_machine.walk_to_hotspot()

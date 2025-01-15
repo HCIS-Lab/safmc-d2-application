@@ -4,6 +4,7 @@ from rclpy.clock import Clock
 from agent.common.context import Context
 
 from .behavior import Behavior
+from agent_machine import AgentMachine
 
 
 class WaitBehavior(Behavior):
@@ -13,6 +14,6 @@ class WaitBehavior(Behavior):
         mediator_api.wait_to_drop()
 
     @staticmethod
-    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock, agent_machine: AgentMachine):
         if mediator_api.signal():
-            drop()
+            agent_machine.drop()
