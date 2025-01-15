@@ -11,6 +11,7 @@ from .behavior import Behavior
 class LoadBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
+        print("LoadBehavior")
         drone_api: DroneApi = context.drone_api
 
         load_coord = drone_api.local_position

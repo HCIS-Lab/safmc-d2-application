@@ -10,6 +10,7 @@ from .behavior import Behavior
 class WalkToSupplyBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
+        print ("WalkToSupplyBehavior execute")
         drone_api: DroneApi = context.drone_api
 
         supply_coord = drone_api.get_supply_coord()

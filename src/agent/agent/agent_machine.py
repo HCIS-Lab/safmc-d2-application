@@ -5,7 +5,7 @@ from transitions import Machine
 from agent.api import DroneApi
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-                            WalkToSupplyBehavior)
+                            WalkToSupplyBehavior, WalkToHotspotBehavior)
 from agent.common.context import Context
 
 
@@ -56,7 +56,8 @@ class AgentMachine(Machine):
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
             States.LOAD: LoadBehavior,
             States.WAIT: WaitBehavior,
-            States.DROP: DropBehavior
+            States.DROP: DropBehavior,
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior
         }
 
     def execute(self):

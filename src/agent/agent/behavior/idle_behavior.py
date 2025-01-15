@@ -9,6 +9,7 @@ from .behavior import Behavior
 class IdleBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
+        print("IdleBehavior")
         drone_api: DroneApi = context.drone_api
         if (not drone_api.is_armed) and drone_api.vehicle_timestamp > 10000000 and drone_api.is_each_pre_flight_check_passed:
             # TODO: self.drone.get_vehicle_status().nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD: why?

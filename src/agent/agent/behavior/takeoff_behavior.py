@@ -11,6 +11,7 @@ from .behavior import Behavior
 class TakeoffBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
+        print("TakeoffBehavior")
         drone_api: DroneApi = context.drone_api
 
         takeoff_coord = drone_api.start_position

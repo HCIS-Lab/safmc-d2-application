@@ -10,6 +10,7 @@ from .behavior import Behavior
 class WalkToHotspotBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
+        print ("WalkToHotspot")
 
         drone_api: DroneApi = context.drone_api
 

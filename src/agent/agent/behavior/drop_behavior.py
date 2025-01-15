@@ -9,6 +9,7 @@ from .behavior import Behavior
 class DropBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
+        print("DropBehavior")
         magnet_api: MagnetApi = context.magnet_api
         magnet_api.deactivate_magnet()
 
