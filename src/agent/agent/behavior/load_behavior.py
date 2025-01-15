@@ -1,11 +1,9 @@
+from typing import Optional
 
-from rclpy.clock import Clock
-from rclpy.impl.rcutils_logger import RcutilsLogger
-
-from agent.api import DroneApi, MediatorApi
+from agent.api import DroneApi
 from agent.api.drone_api import NEDCoordinate
-from agent.constants import LOAD_HEIGHT, NAV_THRESH, TAKEOFF_HEIGHT
 from agent.common.context import Context
+from agent.constants import LOAD_HEIGHT, NAV_THRESH, TAKEOFF_HEIGHT
 
 from .behavior import Behavior
 
@@ -36,12 +34,13 @@ class LoadBehavior(Behavior):
                     drone_api.has_loaded()
                 else:
                     drone_api.publish_goto_setpoint(
-                        context.current_timestamp(), load_coord)
+                        context.get_current_timestamp(), load_coord)
         else:
             drone_api.publish_goto_setpoint(
-                context.current_timestamp(), load_coord)
+                context.get_current_timestamp(), load_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine):
+    def proceed(context: Context) -> Optional[str]:
         if context.drone_api.is_loaded:
-            agent_machine.walk_to_hotspot()
+            return "walk_to_hotspot"
+        return None
