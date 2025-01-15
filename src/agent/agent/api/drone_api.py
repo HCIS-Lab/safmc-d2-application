@@ -24,9 +24,9 @@ class DroneApi(Api):
         self.__hotspot_reached = False
         
         self.hotspot_coord = [
-            NEDCoordinate(-6.2135, 5.65797),
-            NEDCoordinate(-4.98951, -4.52046),
-            NEDCoordinate(7.21815, 0.43991)
+            NEDCoordinate(-6.2135, 5.65797, 0.6),
+            NEDCoordinate(-4.98951, -4.52046, 0.6),
+            NEDCoordinate(7.21815, 0.43991, 0.6)
         ]
         
         self.__is_altitude_reached = False

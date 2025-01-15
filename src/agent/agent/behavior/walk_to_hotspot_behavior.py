@@ -5,7 +5,6 @@ from rclpy.impl.rcutils_logger import RcutilsLogger
 from rclpy.clock import Clock
 from agent.constants import NAV_THRESH
 from agent.common.context import Context
-from agent_machine import AgentMachine
 
 class ToHotspotBehavior(Behavior):
     @staticmethod
@@ -19,10 +18,8 @@ class ToHotspotBehavior(Behavior):
             drone_api.set_hotspot_reached(False)
     
     @staticmethod
-    def proceed(context: Context, agent_machine: AgentMachine):
-        drone_api: DroneApi = context.drone_api
-        if drone_api.is_altitude_reached:
-            if drone_api.get_hotspot_reached():
-                agent_machine.walk_to_hotspot()
+    def proceed(context: Context, agent_machine):
+        if context.drone_api.get_hotspot_reached():
+            agent_machine.walk_to_hotspot()
             
     
