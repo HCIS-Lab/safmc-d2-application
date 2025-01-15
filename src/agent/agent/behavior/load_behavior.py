@@ -39,7 +39,6 @@ class LoadBehavior(Behavior):
                 clock.now().nanoseconds, load_coord)
 
     @staticmethod
-    @abstractmethod
     def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
         if drone_api.is_loaded:
             walk_to_hotspot()

@@ -18,7 +18,6 @@ class IdleBehavior(Behavior):
             drone_api.arm(clock.now().nanoseconds)
 
     @staticmethod
-    @abstractmethod
     def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
         if drone_api.is_armed:
             takeoff()

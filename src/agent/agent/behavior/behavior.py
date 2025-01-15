@@ -11,3 +11,8 @@ class Behavior(ABC):
     @abstractmethod
     def execute(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
         pass
+
+    @staticmethod
+    @abstractmethod
+    def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+        pass

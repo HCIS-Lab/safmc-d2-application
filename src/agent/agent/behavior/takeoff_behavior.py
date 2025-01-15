@@ -26,7 +26,6 @@ class TakeoffBehavior(Behavior):
                 clock.now().nanoseconds, takeoff_coord)
 
     @staticmethod
-    @abstractmethod
     def proceed(drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
         if drone_api.is_altitude_reached:
             if drone_api.is_loaded:
