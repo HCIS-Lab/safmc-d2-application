@@ -1,4 +1,4 @@
-from agent.agent_machine import AgentMachine
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -15,6 +15,6 @@ class WaitBehavior(Behavior):
         mediator_api.wait_to_drop()
 
     @staticmethod
-    def proceed(context: Context, agent_machine: AgentMachine):
+    def proceed(context: Context, agent_machine):
         if context.mediator_api.signal():
             agent_machine.drop()

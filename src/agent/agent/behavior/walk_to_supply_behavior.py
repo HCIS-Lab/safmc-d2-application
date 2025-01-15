@@ -1,4 +1,4 @@
-from agent.agent_machine import AgentMachine
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -24,6 +24,6 @@ class WalkToSupplyBehavior(Behavior):
                 context.current_timestamp(), supply_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine: AgentMachine):
+    def proceed(context: Context, agent_machine):
         if context.drone_api.get_supply_reached():
             agent_machine.load()

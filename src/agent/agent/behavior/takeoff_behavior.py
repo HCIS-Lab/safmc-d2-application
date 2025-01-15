@@ -1,4 +1,4 @@
-from agent.agent_machine import AgentMachine
+
 from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -29,7 +29,7 @@ class TakeoffBehavior(Behavior):
                 context.current_timestamp(), takeoff_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine: AgentMachine):
+    def proceed(context: Context, agent_machine):
         drone_api: DroneApi = context.drone_api
         if drone_api.is_altitude_reached:
             if drone_api.is_loaded:
