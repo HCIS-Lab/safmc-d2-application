@@ -1,3 +1,5 @@
+from typing import Optional
+
 from agent.api import DroneApi
 from agent.api.drone_api import NEDCoordinate
 from agent.common.context import Context
@@ -25,10 +27,10 @@ class TakeoffBehavior(Behavior):
                 context.get_current_timestamp(), takeoff_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine):
+    def proceed(context: Context) -> Optional[str]:
         drone_api: DroneApi = context.drone_api
         if drone_api.is_altitude_reached:
             if drone_api.is_loaded:
-                agent_machine.walk_to_hotspot()
+                return "walk_to_hotspot"
             else:
-                agent_machine.walk_to_supply()
+                return "walk_to_supply"

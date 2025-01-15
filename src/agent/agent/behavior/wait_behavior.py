@@ -1,3 +1,5 @@
+from typing import Optional
+
 from agent.common.context import Context
 
 from .behavior import Behavior
@@ -10,6 +12,6 @@ class WaitBehavior(Behavior):
         mediator_api.wait_to_drop()
 
     @staticmethod
-    def proceed(context: Context, agent_machine):
+    def proceed(context: Context) -> Optional[str]:
         if context.mediator_api.signal():
-            agent_machine.drop()
+            return "drop"

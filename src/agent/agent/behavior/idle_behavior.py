@@ -1,3 +1,5 @@
+from typing import Optional
+
 from agent.api import DroneApi
 from agent.common.context import Context
 
@@ -16,6 +18,7 @@ class IdleBehavior(Behavior):
             drone_api.arm(context.get_current_timestamp())
 
     @staticmethod
-    def proceed(context: Context, agent_machine):
+    def proceed(context: Context) -> Optional[str]:
         if context.drone_api.is_armed:
-            agent_machine.takeoff()
+            return "takeoff"
+        return None

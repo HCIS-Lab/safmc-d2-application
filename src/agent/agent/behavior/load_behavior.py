@@ -1,3 +1,5 @@
+from typing import Optional
+
 from agent.api import DroneApi
 from agent.api.drone_api import NEDCoordinate
 from agent.common.context import Context
@@ -38,6 +40,7 @@ class LoadBehavior(Behavior):
                 context.get_current_timestamp(), load_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine):
+    def proceed(context: Context) -> Optional[str]:
         if context.drone_api.is_loaded:
-            agent_machine.walk_to_hotspot()
+            return "walk_to_hotspot"
+        return None

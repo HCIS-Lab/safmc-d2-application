@@ -1,3 +1,5 @@
+from typing import Optional
+
 from agent.api import DroneApi
 from agent.common.context import Context
 from agent.constants import NAV_THRESH
@@ -19,6 +21,6 @@ class WalkToSupplyBehavior(Behavior):
                 context.get_current_timestamp(), supply_coord)
 
     @staticmethod
-    def proceed(context: Context, agent_machine):
+    def proceed(context: Context) -> Optional[str]:
         if context.drone_api.get_supply_reached():
-            agent_machine.load()
+            return "load"

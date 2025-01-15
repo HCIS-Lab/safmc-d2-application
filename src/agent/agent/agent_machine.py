@@ -74,4 +74,6 @@ class AgentMachine(Machine):
         # 根據條件判斷是否要 transition
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
-            behavior.proceed(self.context, self)
+            trigger: str = behavior.proceed(self.context)
+            if trigger:  # transition
+                self.trigger(trigger)
