@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.api import DroneApi
+from agent.api import DroneApi, MagnetApi
 from agent.api.drone_api import NEDCoordinate
 from agent.common.context import Context
 from agent.constants import NAV_THRESH, TAKEOFF_HEIGHT
@@ -29,8 +29,9 @@ class TakeoffBehavior(Behavior):
     @staticmethod
     def proceed(context: Context) -> Optional[str]:
         drone_api: DroneApi = context.drone_api
+        magnet_api: MagnetApi = context.magnet_api
         if drone_api.is_altitude_reached:
-            if drone_api.is_loaded:
+            if magnet_api.is_loaded:
                 return "walk_to_hotspot"
             else:
                 return "walk_to_supply"
