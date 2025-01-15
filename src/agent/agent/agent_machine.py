@@ -4,6 +4,7 @@ from enum import Enum
 from transitions import Machine
 from agent.behavior import Behavior, WaitBehavior, IdleBehavior, DropBehavior
 from agent.api import DroneApi, MediatorApi
+from agent.common.context import Context
 
 
 class States(Enum):
@@ -29,8 +30,8 @@ transitions = [
 
 
 class AgentMachine(Machine):
-    def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
-
+    # def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
+    def __init__(self, context: Context):
         # TODO: refactor function
         def populate_triggers(transitions):
             for transition in transitions:
@@ -40,10 +41,11 @@ class AgentMachine(Machine):
         super().__init__(self, states=States,
                          transitions=populate_triggers(transitions), initial=States.IDLE)
 
-        self.drone_api = drone_api
-        self.mediator_api = mediator_api
-        self.logger = logger
-        self.clock = clock
+        # self.drone_api = drone_api
+        # self.mediator_api = mediator_api
+        # self.logger = logger
+        # self.clock = clock
+        self.context = context
 
         # init behaviors
         self.behaviors = {
@@ -53,21 +55,21 @@ class AgentMachine(Machine):
         }
 
     def execute(self):
+        drone_api: DroneApi = self.context.drone_api
         if True:  # TODO why?
-            self.drone_api.maintain_offboard_control(
-                self.clock.now().nanoseconds)
+            drone_api.maintain_offboard_control(
+                self.context.current_timestamp())
 
         # 執行當前 state 任務 (一步)
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
-            behavior.execute(self.drone_api, self.mediator_api,
-                             self.logger, self.clock)
+            behavior.execute(self.context)
 
     def proceed(self):
         # 根據條件判斷是否要 transition
         match self.state:
             case States.IDLE:
-                if self.drone_api.is_armed:
+                if self.context.drone_api.is_armed:
                     self.takeoff()
             case States.TAKEOFF:
                 pass
@@ -78,10 +80,10 @@ class AgentMachine(Machine):
             case States.WALK_TO_HOTSPOT:
                 pass
             case States.WAIT:
-                if self.mediator_api.signal():
+                if self.context.mediator_api.signal():
                     self.drop()
             case States.DROP:
-                if self.drone_api.is_payload_dropped():
+                if self.context.drone_api.is_payload_dropped():
                     self.walk_to_supply()
             case _:
                 pass
