@@ -20,6 +20,6 @@ class ToHotspotBehavior(Behavior):
     @staticmethod
     def proceed(context: Context, agent_machine):
         if context.drone_api.get_hotspot_reached():
-            agent_machine.walk_to_hotspot()
+            agent_machine.drop()
             
     
