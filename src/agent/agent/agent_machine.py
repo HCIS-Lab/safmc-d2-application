@@ -45,10 +45,10 @@ class AgentMachine(Machine):
 
         # self.drone_api = drone_api
         # self.mediator_api = mediator_api
-        # self.logger = logger
+        
         # self.clock = clock
         self.context = context
-
+        self.logger = context.logger
         # init behaviors
         self.behaviors = {
             States.IDLE: IdleBehavior,
@@ -66,6 +66,7 @@ class AgentMachine(Machine):
                 self.context.get_current_timestamp())
 
         # 執行當前 state 任務 (一步)
+        self.logger.info(f"Executing behavior for state: {self.state}")
         behavior: Behavior = self.behaviors.get(self.state)
         if behavior:
             behavior.execute(self.context)
