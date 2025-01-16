@@ -35,9 +35,9 @@ class LoadBehavior(Behavior):
 
         if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESH:
             
-            # drone_api.activate_magnet()
+            drone_api.activate_magnet()
             
-            if drone_api.is_loaded or True:
+            if drone_api.is_loaded:
                 logger.info("Payload successfully loaded. Ascending to takeoff height.")
                 load_position = NEDCoordinate(
                     load_position.x,
