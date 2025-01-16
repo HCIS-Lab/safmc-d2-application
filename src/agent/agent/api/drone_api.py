@@ -20,9 +20,7 @@ class DroneApi(Api):
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
         self.__is_loaded = False
-        self.__is_altitude_reached = False
-        self.__supply_reached = False
-        self.__supply_coord = False
+        self.__supply_position = NEDCoordinate(0.0 ,0.0 ,-2.0)
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -82,7 +80,11 @@ class DroneApi(Api):
     @ property
     def is_armed(self) -> bool:
         return self.__is_armed
-
+    
+    @ property
+    def is_loaded(self) -> bool:
+        return self.__is_loaded
+    
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
         self.__is_each_pre_flight_check_passed = vehicle_status_msg.pre_flight_checks_pass
         self.__vehicle_timestamp = vehicle_status_msg.timestamp
@@ -100,10 +102,7 @@ class DroneApi(Api):
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
         )
-
-    def set_altitude_reached(self, status : bool) -> None:
-        self.is_altitude_reached = status
-
+        
     def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
         '''
         Generate the vehicle command.\n
@@ -260,16 +259,9 @@ class DroneApi(Api):
             goto_setpoint_msg.max_heading_rate = max_heading_rate
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
-
-    @property
-    def is_altitude_reached(self) -> bool:
-        return self.__is_altitude_reached
-
-    def get_supply_reached(self) -> bool:
-        return self.__supply_reached
-
-    def get_supply_coord(self) -> NEDCoordinate:
-        return self.__supply_coord
+        
+    def get_supply_position(self) -> NEDCoordinate:
+        return self.__supply_position
 
     @deprecated
     def goal_arrived(self, target: NEDCoordinate, thresh: float) -> bool:
