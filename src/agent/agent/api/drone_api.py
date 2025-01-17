@@ -263,8 +263,3 @@ class DroneApi(Api):
     def get_supply_position(self) -> NEDCoordinate:
         return self.__supply_position
 
-    @deprecated
-    def goal_arrived(self, target: NEDCoordinate, thresh: float) -> bool:
-        return (self.__local_position.x - target.x)**2 + \
-            (self.__local_position.y - target.y)**2 + \
-            (self.__local_position.z - target.z)**2 <= thresh

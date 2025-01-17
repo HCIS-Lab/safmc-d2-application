@@ -25,6 +25,10 @@ class NEDCoordinate:
     @staticmethod
     def distance(coord1: 'NEDCoordinate', coord2: 'NEDCoordinate') -> float:
         return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2)
+    
+    @staticmethod
+    def goal_arrived(source : 'NEDCoordinate', target: 'NEDCoordinate', thresh: float) -> bool:
+        return NEDCoordinate.distance(source, target) <= thresh
 
     @staticmethod
     @property

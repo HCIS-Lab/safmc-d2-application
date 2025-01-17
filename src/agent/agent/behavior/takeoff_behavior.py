@@ -26,7 +26,7 @@ class TakeoffBehavior(Behavior):
         logger.info(f"Target takeoff position: z={takeoff_coord.z}")
         logger.info(f"Current position: z={drone_api.local_position.z}")
         TakeoffBehavior.altitude_reached = (
-            NEDCoordinate.distance(drone_api.local_position, takeoff_coord) <= NAV_THRESH
+            NEDCoordinate.goal_arrived(drone_api.local_position, takeoff_coord, NAV_THRESH)
         )
         if TakeoffBehavior.altitude_reached:
             logger.info("Takeoff altitude reached.")
