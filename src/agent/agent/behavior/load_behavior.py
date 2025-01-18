@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.api import DroneApi
+from agent.api import DroneApi, MagnetApi
 from agent.api.drone_api import NEDCoordinate
 from agent.common.context import Context
 from agent.constants import LOAD_HEIGHT, NAV_THRESH, TAKEOFF_HEIGHT
@@ -13,6 +13,7 @@ class LoadBehavior(Behavior):
     @staticmethod
     def execute(context: Context):
         drone_api: DroneApi = context.drone_api
+        magnet_api: MagnetApi = context.magnet_api
         logger = context.logger
 
         load_position = drone_api.local_position
@@ -22,21 +23,27 @@ class LoadBehavior(Behavior):
         else:
             load_position.z = drone_api.start_position.z - LOAD_HEIGHT
 
-        logger.info(f"Target load position: ({load_position.x}, {load_position.y}, {load_position.z})")
-        logger.info(f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
+        logger.info(
+            f"Target load position: ({load_position.x}, {load_position.y}, {load_position.z})")
+        logger.info(
+            f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
 
         if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESH:
-            
-            drone_api.activate_magnet()
-            
+
+            magnet_api.activate_magnet()
+
             if drone_api.is_loaded:
-                logger.info("Payload successfully loaded. Ascending to takeoff height.")
+                logger.info(
+                    "Payload successfully loaded. Ascending to takeoff height.")
                 load_position.z = drone_api.start_position.z - TAKEOFF_HEIGHT
 
-                logger.info(f"Target load position: ({load_position.x}, {load_position.y}, {load_position.z})")
-                logger.info(f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
-                
-                drone_api.publish_goto_setpoint(context.get_current_timestamp(), load_position)
+                logger.info(
+                    f"Target load position: ({load_position.x}, {load_position.y}, {load_position.z})")
+                logger.info(
+                    f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
+
+                drone_api.publish_goto_setpoint(
+                    context.get_current_timestamp(), load_position)
             else:
                 logger.info("Reached loading position. Activating magnet.")
         else:
