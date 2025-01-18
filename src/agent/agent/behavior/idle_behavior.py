@@ -14,8 +14,10 @@ class IdleBehavior(Behavior):
         logger = context.logger
         logger.info(f"Armed status: {drone_api.is_armed}")
         logger.info(f"Vehicle timestamp: {drone_api.vehicle_timestamp}")
-        logger.info(f"Preflight checks passed: {drone_api.is_each_pre_flight_check_passed}")
+        logger.info(
+            f"Preflight checks passed: {drone_api.is_each_pre_flight_check_passed}")
 
+        # TODO 10000000 寫成 constant
         if (not drone_api.is_armed) and drone_api.vehicle_timestamp > 10000000 and drone_api.is_each_pre_flight_check_passed:
             # TODO: self.drone.get_vehicle_status().nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD: why?
             logger.info("Drone is ready to arm and start offboard control.")
@@ -26,6 +28,8 @@ class IdleBehavior(Behavior):
 
     @staticmethod
     def proceed(context: Context) -> Optional[str]:
-        if context.drone_api.is_armed:
+        drone_api: DroneApi = context.drone_api
+
+        if drone_api.is_armed:
             return "takeoff"
         return None

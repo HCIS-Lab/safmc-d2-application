@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-
+from agent.common.decorators import staticproperty
 
 @dataclass
 class NEDCoordinate:
@@ -26,17 +26,14 @@ class NEDCoordinate:
     def distance(coord1: 'NEDCoordinate', coord2: 'NEDCoordinate') -> float:
         return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2)
 
-    @staticmethod
-    @property
+    @staticproperty
     def north() -> 'NEDCoordinate':
         return NEDCoordinate(1, 0, 0)
 
-    @staticmethod
-    @property
+    @staticproperty
     def east() -> 'NEDCoordinate':
         return NEDCoordinate(0, 1, 0)
 
-    @staticmethod
-    @property
+    @staticproperty
     def down() -> 'NEDCoordinate':
         return NEDCoordinate(0, 0, 1)
