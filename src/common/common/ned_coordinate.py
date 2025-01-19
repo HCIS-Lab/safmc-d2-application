@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from agent.common.decorators import staticproperty
+from common.decorators import staticproperty
 
 @dataclass
 class NEDCoordinate:

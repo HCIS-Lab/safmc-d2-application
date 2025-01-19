@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from agent.common.context import Context
+from common.context import Context
 
 
 class Behavior(ABC):

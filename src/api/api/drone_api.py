@@ -4,8 +4,8 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
-from agent.common.decorators import deprecated
-from agent.common.ned_coordinate import NEDCoordinate
+from common.decorators import deprecated
+from common.ned_coordinate import NEDCoordinate
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 

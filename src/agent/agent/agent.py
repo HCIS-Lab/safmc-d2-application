@@ -2,8 +2,8 @@ import rclpy
 from rclpy.node import Node
 
 from agent.agent_machine import AgentMachine
-from agent.api import DroneApi, MediatorApi
-from agent.common.context import Context
+from api import DroneApi, MediatorApi
+from common.context import Context
 from agent.constants import DELTA_TIME
 
 

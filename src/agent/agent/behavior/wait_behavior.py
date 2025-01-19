@@ -1,7 +1,7 @@
 from typing import Optional
 
-from agent.common.context import Context
-from agent.api import MediatorApi
+from common.context import Context
+from api import MediatorApi
 
 
 from .behavior import Behavior
