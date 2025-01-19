@@ -9,35 +9,29 @@ from .behavior import Behavior
 
 
 class TakeoffBehavior(Behavior):
+
     @staticmethod
     def execute(context: Context):
         print("TakeoffBehavior")
         drone_api: DroneApi = context.drone_api
+        logger = context.logger
 
-        takeoff_coord = drone_api.start_position
-        takeoff_coord = NEDCoordinate(
-            takeoff_coord.x,
-            takeoff_coord.y,
-            takeoff_coord.z - TAKEOFF_HEIGHT
-        )
-        
-        print("takeoff_coord:", takeoff_coord)
-        
-        print("local:", drone_api.local_position)
-        drone_api.maintain_offboard_control(context.get_current_timestamp())
-        
-        if (drone_api.goal_arrived(takeoff_coord, NAV_THRESH)):
-            drone_api.set_altitude_reached(True)
-        else:
-            drone_api.publish_goto_setpoint(
-                context.get_current_timestamp(), takeoff_coord)
+        takeoff_position = drone_api.start_position - NEDCoordinate.down * TAKEOFF_HEIGHT
+
+        logger.info(f"Target takeoff position: z={takeoff_position.z}")
+        logger.info(f"Current position: z={drone_api.local_position.z}")
+        drone_api.publish_goto_setpoint(
+            context.get_current_timestamp(), takeoff_position)
 
     @staticmethod
     def proceed(context: Context) -> Optional[str]:
         drone_api: DroneApi = context.drone_api
-        magnet_api: MagnetApi = context.magnet_api
-        if drone_api.is_altitude_reached:
-            if magnet_api.is_loaded:
-                return "walk_to_hotspot"
-            else:
-                return "walk_to_supply"
+        logger = context.logger
+
+        takeoff_position = drone_api.start_position - NEDCoordinate.down * TAKEOFF_HEIGHT
+
+        if NEDCoordinate.distance(drone_api.local_position, takeoff_position) <= NAV_THRESH:
+            logger.info("Takeoff altitude reached.")
+            return "walk_to_hotspot" if drone_api.is_loaded else "walk_to_supply"
+
+        return None
