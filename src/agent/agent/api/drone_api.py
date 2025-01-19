@@ -1,3 +1,4 @@
+import math
 from typing import Optional
 
 from rclpy.node import Node
@@ -7,7 +8,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 from agent.common.decorators import deprecated
 from agent.common.ned_coordinate import NEDCoordinate
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
-                          VehicleLocalPosition, VehicleStatus)
+                          VehicleLocalPosition, VehicleStatus, TrajectorySetpoint)
 
 from .api import Api
 
@@ -29,7 +30,7 @@ class DroneApi(Api):
 
         self.__is_altitude_reached = False
         self.__supply_reached = False
-        self.__supply_coord = False
+        self.__supply_coord = NEDCoordinate(-8, -9, -0.6)
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -72,17 +73,10 @@ class DroneApi(Api):
             qos_profile
         )
 
-        self.goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint,
-            "/fmu/in/goto_setpoint",
-            qos_profile
-        )
-
-        self.goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint,
-            '/fmu/in/goto_setpoint',
+        self.trajectory_setpoint_pub = node.create_publisher(
+            TrajectorySetpoint,
+            '/fmu/in/trajectory_setpoint',
             qos_profile)
-
     @ property
     def is_each_pre_flight_check_passed(self) -> bool:
         return self.__is_each_pre_flight_check_passed
@@ -193,6 +187,7 @@ class DroneApi(Api):
 
     @ property
     def start_position(self) -> NEDCoordinate:
+        
         return self.__start_position
 
     def maintain_offboard_control(self, timestamp: int) -> None:
@@ -280,6 +275,9 @@ class DroneApi(Api):
     def get_supply_reached(self) -> bool:
         return self.__supply_reached
 
+    def set_supply_reached(self, reached: bool) -> None:
+        self.__supply_reached = reached
+        
     def get_supply_coord(self) -> NEDCoordinate:
         return self.__supply_coord
 
@@ -297,3 +295,21 @@ class DroneApi(Api):
 
     def get_hotspot_coord(self) -> NEDCoordinate:
         return self.hotspot_coord
+
+    def publish_position_setpoint(self, x: float, y: float, z: float, timestemp: int) -> None:
+        """Publish a trajectory setpoint. A basic offboard control setpoint type."""
+        msg = TrajectorySetpoint()
+        msg.position = [x, y, z]
+        msg.yaw = self.calculate_yaw(float(self.__local_position.x), float(self.__local_position.y), x, y)
+        msg.timestamp = int(timestemp/ 1000)
+        self.trajectory_setpoint_pub.publish(msg)
+        
+        print(f"Current Position: ({self.__local_position.x}, {self.__local_position.y})")
+        print(f"Target Position: ({x}, {y})")
+        
+        
+    def calculate_yaw(self, current_x, current_y, target_x, target_y):
+        delta_x = target_x - current_x
+        delta_y = target_y - current_y
+        yaw = math.atan2(delta_y, delta_x)  # atan2 gives the angle in the correct quadrant
+        return yaw

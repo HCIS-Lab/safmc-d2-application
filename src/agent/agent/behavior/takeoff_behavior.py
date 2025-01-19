@@ -20,7 +20,12 @@ class TakeoffBehavior(Behavior):
             takeoff_coord.y,
             takeoff_coord.z - TAKEOFF_HEIGHT
         )
-
+        
+        print("takeoff_coord:", takeoff_coord)
+        
+        print("local:", drone_api.local_position)
+        drone_api.maintain_offboard_control(context.get_current_timestamp())
+        
         if (drone_api.goal_arrived(takeoff_coord, NAV_THRESH)):
             drone_api.set_altitude_reached(True)
         else:
