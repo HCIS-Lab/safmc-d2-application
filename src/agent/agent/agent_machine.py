@@ -2,10 +2,10 @@ from enum import Enum
 
 from transitions import Machine
 
-from api import DroneApi
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToSupplyBehavior)
+from api import DroneApi
 from common.context import Context
 
 

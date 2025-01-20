@@ -1,8 +1,7 @@
 from typing import Optional
 
-from common.context import Context
 from api import MediatorApi
-
+from common.context import Context
 
 from .behavior import Behavior
 

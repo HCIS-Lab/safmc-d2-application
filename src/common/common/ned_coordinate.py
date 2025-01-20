@@ -1,6 +1,8 @@
 import math
 from dataclasses import dataclass
+
 from common.decorators import staticproperty
+
 
 @dataclass
 class NEDCoordinate:
