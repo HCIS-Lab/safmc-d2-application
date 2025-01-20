@@ -1,9 +1,9 @@
 from typing import Optional
 
-from agent.api import DroneApi, MagnetApi
-from agent.api.drone_api import NEDCoordinate
-from agent.common.context import Context
 from agent.constants import LOAD_HEIGHT, NAV_THRESH, TAKEOFF_HEIGHT
+from api import DroneApi, MagnetApi
+from common.context import Context
+from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 

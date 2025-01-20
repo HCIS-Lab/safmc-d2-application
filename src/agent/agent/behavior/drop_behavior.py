@@ -1,7 +1,7 @@
 from typing import Optional
 
-from agent.api import MagnetApi
-from agent.common.context import Context
+from api import MagnetApi
+from common.context import Context
 
 from .behavior import Behavior
 

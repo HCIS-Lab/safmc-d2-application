@@ -2,11 +2,11 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.api import DroneApi
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToSupplyBehavior)
-from agent.common.context import Context
+from api import DroneApi
+from common.context import Context
 
 
 class States(Enum):

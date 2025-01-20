@@ -1,9 +1,9 @@
 from typing import Optional
 
-from agent.api import DroneApi
-from agent.api.drone_api import NEDCoordinate
-from agent.common.context import Context
 from agent.constants import NAV_THRESH
+from api import DroneApi
+from common.context import Context
+from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 

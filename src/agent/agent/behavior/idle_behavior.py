@@ -1,7 +1,7 @@
 from typing import Optional
 
-from agent.api import DroneApi
-from agent.common.context import Context
+from api import DroneApi
+from common.context import Context
 
 from .behavior import Behavior
 
