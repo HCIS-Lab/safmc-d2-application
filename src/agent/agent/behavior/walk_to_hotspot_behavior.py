@@ -27,8 +27,9 @@ class WalkToHotspotBehavior(Behavior):
             f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
 
       
-        drone_api.walk_with_avoidence(float(hotspot_position.x), float(hotspot_position.y), -1.5, context.get_current_timestamp())
-        
+        #drone_api.walk_with_avoidence(float(hotspot_position.x), float(hotspot_position.y), -1.5, context.get_current_timestamp())
+        drone_api.publish_goto_setpoint(
+            context.get_current_timestamp(), hotspot_position)
 
         if (drone_api.goal_arrived(hotspot_position, NAV_THRESH)):
             drone_api.set_hotspot_reached(True)
