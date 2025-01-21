@@ -32,6 +32,6 @@ class TakeoffBehavior(Behavior):
 
         if NEDCoordinate.distance(drone_api.local_position, takeoff_position) <= NAV_THRESH:
             logger.info("Takeoff altitude reached.")
-            return "walk_to_hotspot" if drone_api.is_loaded else "walk_to_supply"
+            return "walk_to_hotspot" #if drone_api.is_loaded else "walk_to_supply"
 
         return None

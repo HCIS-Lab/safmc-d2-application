@@ -1,5 +1,8 @@
 import math
+import time
 from typing import Optional
+
+from sympy import false
 
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
@@ -12,6 +15,8 @@ from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
 
 from .api import Api
 
+from agent.constants import HOTSPOTS, SUPPLY, OBSTACLES, LARGE_OBSTACLE
+
 
 class DroneApi(Api):
     def __init__(self, node: Node):
@@ -23,7 +28,9 @@ class DroneApi(Api):
         self.__is_loaded = False
         self.__is_altitude_reached = False
         self.__supply_reached = False
-        self.__supply_coord = False
+        
+        self.__hotspot_reached= False
+        self.__hotspot_num= int(0)
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -70,6 +77,7 @@ class DroneApi(Api):
             TrajectorySetpoint,
             '/fmu/in/trajectory_setpoint',
             qos_profile)
+        
     @ property
     def is_each_pre_flight_check_passed(self) -> bool:
         return self.__is_each_pre_flight_check_passed
@@ -246,14 +254,14 @@ class DroneApi(Api):
             goto_setpoint_msg.flag_set_max_horizontal_speed = False
             goto_setpoint_msg.max_horizontal_speed = 0.0
         else:
-            goto_setpoint_msg.flag_set_max_horizontal_speed = False
+            goto_setpoint_msg.flag_set_max_horizontal_speed = True
             goto_setpoint_msg.max_horizontal_speed = max_horizontal_speed
 
         if max_vertical_speed is None:
             goto_setpoint_msg.flag_set_max_vertical_speed = False
             goto_setpoint_msg.max_vertical_speed = 0.0
         else:
-            goto_setpoint_msg.flag_set_max_vertical_speed = False
+            goto_setpoint_msg.flag_set_max_vertical_speed = True
             goto_setpoint_msg.max_vertical_speed = max_vertical_speed
 
         if max_heading_rate is None:
@@ -273,9 +281,9 @@ class DroneApi(Api):
         return self.__supply_reached
 
     def get_supply_position(self) -> NEDCoordinate:
-        return self.__supply_coord
+        return self.SUPPLY
 
-    @deprecated
+    
     def goal_arrived(self, target: NEDCoordinate, thresh: float) -> bool:
         return (self.__local_position.x - target.x)**2 + \
             (self.__local_position.y - target.y)**2 + \
@@ -283,27 +291,85 @@ class DroneApi(Api):
 
     def set_hotspot_reached(self, reached: bool) -> None:
         self.__hotspot_reached = reached
+        if reached:
+            if self.__hotspot_num<2:
+                self.__hotspot_num+=1
+            else:
+                self.__hotspot_num=0
 
     def get_hotspot_reached(self) -> bool:
         return self.__hotspot_reached
 
     def get_hotspot_coord(self) -> NEDCoordinate:
-        return self.hotspot_coord
+        return HOTSPOTS[self.__hotspot_num]
 
-    def publish_position_setpoint(self, x: float, y: float, z: float, timestemp: int) -> None:
-        """Publish a trajectory setpoint. A basic offboard control setpoint type."""
-        msg = TrajectorySetpoint()
-        msg.position = [x, y, z]
-        msg.yaw = self.calculate_yaw(float(self.__local_position.x), float(self.__local_position.y), x, y)
-        msg.timestamp = int(timestemp/ 1000)
-        self.trajectory_setpoint_pub.publish(msg)
+    def distance_to_line(self, px, py, x1, y1, x2, y2): 
+        numerator = abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) 
+        denominator = math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2) 
+        return numerator / denominator
+    
+    def is_between(self ,px, py, x1, y1, x2, y2): 
         
-        print(f"Current Position: ({self.__local_position.x}, {self.__local_position.y})")
-        print(f"Target Position: ({x}, {y})")
+        if x2>x1:
+            if px<x1:
+                return False
+        else:
+            if px>x1:
+                return False
+        if y2>y1:
+            if py< y1:
+                return False
+        else:
+            if py>y1:
+                return False
+            
         
+        return True
         
-    def calculate_yaw(self, current_x, current_y, target_x, target_y):
-        delta_x = target_x - current_x
-        delta_y = target_y - current_y
-        yaw = math.atan2(delta_y, delta_x)  # atan2 gives the angle in the correct quadrant
-        return yaw
+    
+    
+    def walk_with_avoidence(self, target_x, target_y, target_z, timestamp):
+        obstacles = OBSTACLES
+        current_x, current_y = self.__local_position.x, self.__local_position.y
+        safe_radius = 1.5 
+        detour_distance = 1.5
+
+        closest_obstacle = None
+        closest_distance = float('inf')
+        
+        #小障礙物
+        for obs_x, obs_y in obstacles:
+            distance_to_path = self.distance_to_line(obs_x, obs_y, current_x, current_y, target_x, target_y)
+            
+            if distance_to_path < safe_radius:
+                distance_to_obstacle = math.sqrt((obs_x - current_x) ** 2 + (obs_y - current_y) ** 2)
+                if distance_to_obstacle < closest_distance and self.is_between(obs_x, obs_y, current_x, current_y, target_x, target_y):
+                    closest_obstacle = (obs_x, obs_y)
+                    closest_distance = distance_to_obstacle
+        #大障礙物
+        distance_to_path = self.distance_to_line(LARGE_OBSTACLE[0], LARGE_OBSTACLE[1], current_x, current_y, target_x, target_y)
+        if distance_to_path < 2:
+            distance_to_obstacle = math.sqrt((obs_x - current_x) ** 2 + (obs_y - current_y) ** 2)
+            if distance_to_obstacle < closest_distance and self.is_between(obs_x, obs_y, current_x, current_y, target_x, target_y):
+                closest_obstacle = (obs_x, obs_y)
+                closest_distance = distance_to_obstacle  
+                detour_distance=2 
+
+        if closest_obstacle:
+            obs_x, obs_y = closest_obstacle
+            print(f"Obstacle detected at ({obs_x}, {obs_y}). Adjusting trajectory.")
+
+            path_angle = math.atan2(target_y - current_y, target_x - current_x)
+
+            detour_x = obs_x +  detour_distance * math.sin(path_angle)
+            
+            detour_y = obs_y - detour_distance * math.cos(path_angle)
+            
+            target = NEDCoordinate(detour_x, detour_y, target_z)
+            self.publish_goto_setpoint(timestamp, target, None, 1.0, 1.0)
+        else:
+            print("No obstacles nearby.")
+            target = NEDCoordinate(target_x, target_y, target_z)
+            self.publish_goto_setpoint(timestamp, target, None, 1.0 , 1.0)
+
+        print(f"Current position: ({current_x}, {current_y})\nTarget position: ({target.x}, {target.y})")
