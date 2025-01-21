@@ -3,7 +3,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import MagnetControl
+from agent_msgs.msg import Magnet
 
 from .api import Api
 
@@ -22,16 +22,16 @@ class MagnetApi(Api):
         # Subscriptions
         self.is_loaded_sub = node.create_subscription(
             Bool,
-            "is_loaded",
+            "payload",
             self.__set_is_loaded,
             qos_profile
         )
 
         # Publishers
         self.magnet_control_pub = node.create_publisher(
-            MagnetControl,
+            Magnet,
             # payload system subscribe to /drone_{i}/magnet_control, for i from 0 to 3
-            "magnet_control",
+            "magnet",
             qos_profile
         )
 
@@ -43,14 +43,14 @@ class MagnetApi(Api):
         self.__is_loaded = is_loaded_msg.data
 
     def activate_magnet(self) -> None:
-        magnet_control_msg = MagnetControl()
-        magnet_control_msg.magnet1 = True
-        magnet_control_msg.magnet2 = False
-        magnet_control_msg.magnet3 = False
-        self.magnet_control_pub.publish(magnet_control_msg)
+        magnet_msg = Magnet()
+        magnet_msg.magnet1 = True
+        magnet_msg.magnet2 = False
+        magnet_msg.magnet3 = False
+        self.magnet_control_pub.publish(magnet_msg)
 
     def deactivate_magnet(self) -> None:
-        magnet_control_msg = MagnetControl()
+        magnet_control_msg = Magnet()
         magnet_control_msg.magnet1 = False
         magnet_control_msg.magnet2 = False
         magnet_control_msg.magnet3 = False
