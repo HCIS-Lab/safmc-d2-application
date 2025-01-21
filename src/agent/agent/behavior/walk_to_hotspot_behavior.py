@@ -40,5 +40,5 @@ class WalkToHotspotBehavior(Behavior):
 
         if drone_api.get_hotspot_reached():
             logger.info("hotspot reached.")
-            drone_api.set_hotspot_reached(False)
+            return "drop"
             
