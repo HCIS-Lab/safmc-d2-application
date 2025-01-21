@@ -40,7 +40,7 @@ class MagnetApi(Api):
         return self.__is_loaded
 
     def __set_is_loaded(self, is_loaded_msg: Bool):
-        self.__is_loaded = is_loaded_msg.slot1
+        self.__is_loaded = is_loaded_msg.payload1
 
     def activate_magnet(self) -> None:
         magnet_msg = Magnet()
