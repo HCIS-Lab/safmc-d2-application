@@ -3,7 +3,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import Magnet
+from agent_msgs.msg import Magnet, Payload
 
 from .api import Api
 
@@ -21,7 +21,7 @@ class MagnetApi(Api):
 
         # Subscriptions
         self.is_loaded_sub = node.create_subscription(
-            Bool,
+            Payload,
             "payload",
             self.__set_is_loaded,
             qos_profile
@@ -40,7 +40,7 @@ class MagnetApi(Api):
         return self.__is_loaded
 
     def __set_is_loaded(self, is_loaded_msg: Bool):
-        self.__is_loaded = is_loaded_msg.data
+        self.__is_loaded = is_loaded_msg.slot1
 
     def activate_magnet(self) -> None:
         magnet_msg = Magnet()
