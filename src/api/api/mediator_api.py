@@ -3,18 +3,14 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Empty, Int8
 
-from common.parameters import get_parameter
-
 from .api import Api
 
 
 class MediatorApi(Api):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, drone_id: int, group_id: int):
 
-        self.drone_id = get_parameter(node, 'drone_id', 0)
-        self.group_id = get_parameter(node, 'group_id', 0)
-
-        # TODO: check param (drone_id, group_id) is unique
+        self.drone_id = drone_id
+        self.group_id = group_id
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(

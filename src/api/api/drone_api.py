@@ -1,13 +1,13 @@
 from typing import Optional
 
+from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
+                          VehicleLocalPosition, VehicleStatus)
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
-from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
-                          VehicleLocalPosition, VehicleStatus)
 
 from .api import Api
 

@@ -5,6 +5,7 @@ from agent.agent_machine import AgentMachine
 from agent.constants import DELTA_TIME
 from api import DroneApi, MagnetApi, MediatorApi
 from common.context import Context
+from common.parameters import get_parameter
 
 
 class Agent(Node):
@@ -13,11 +14,17 @@ class Agent(Node):
 
         # TODO: QoS?
 
+        drone_id = get_parameter(self, 'drone_id', 0)
+        group_id = get_parameter(self, 'group_id', 0)
+
+        # TODO: check param (drone_id, group_id) is unique
+
+
         self.api_context = Context(
             self.get_logger(),
             self.get_clock(),
             drone_api=DroneApi(self),
-            mediator_api=MediatorApi(self),
+            mediator_api=MediatorApi(self, drone_id, group_id),
             magnet_api=MagnetApi(self)
         )
 
