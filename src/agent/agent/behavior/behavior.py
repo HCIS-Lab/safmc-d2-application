@@ -5,12 +5,22 @@ from common.context import Context
 
 
 class Behavior(ABC):
-    @staticmethod
     @abstractmethod
-    def execute(context: Context):
+    def execute(self, context: Context):
         pass
 
-    @staticmethod
     @abstractmethod
-    def proceed(context: Context) -> Optional[str]:
+    def get_next_state(self, context: Context) -> Optional[str]:
+        pass
+
+    def on_enter(self):
+        """
+        進入狀態時的 callback function
+        """
+        pass
+
+    def on_exit(self):
+        """
+        離開狀態時的 callback function
+        """
         pass

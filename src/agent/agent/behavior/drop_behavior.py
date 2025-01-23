@@ -7,16 +7,14 @@ from .behavior import Behavior
 
 
 class DropBehavior(Behavior):
-    @staticmethod
-    def execute(context: Context):
+    def execute(self, context: Context):
         magnet_api: MagnetApi = context.magnet_api
         logger = context.logger
 
         logger.info("Deactivating magnet to drop payload.")
         magnet_api.deactivate_magnet()
 
-    @staticmethod
-    def proceed(context: Context) -> Optional[str]:
+    def get_next_state(self, context: Context) -> Optional[str]:
         magnet_api: MagnetApi = context.magnet_api
         logger = context.logger
 

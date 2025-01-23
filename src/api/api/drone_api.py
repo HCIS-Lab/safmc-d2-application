@@ -1,13 +1,13 @@
 from typing import Optional
 
-from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
-                          VehicleLocalPosition, VehicleStatus)
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
+from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
+                          VehicleLocalPosition, VehicleStatus)
 
 from .api import Api
 
@@ -69,19 +69,19 @@ class DroneApi(Api):
             qos_profile
         )
 
-    @ property
+    @property
     def is_each_pre_flight_check_passed(self) -> bool:
         return self.__is_each_pre_flight_check_passed
 
-    @ property
+    @property
     def vehicle_timestamp(self) -> int:
         return self.__vehicle_timestamp  # microseconds
 
-    @ property
+    @property
     def is_armed(self) -> bool:
         return self.__is_armed
 
-    @ property
+    @property
     def is_loaded(self) -> bool:
         return self.__is_loaded
 
@@ -92,7 +92,7 @@ class DroneApi(Api):
             vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
         )
 
-    @ property
+    @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position
 
@@ -178,7 +178,7 @@ class DroneApi(Api):
         """
         self.__start_position = self.local_position
 
-    @ property
+    @property
     def start_position(self) -> NEDCoordinate:
         return self.__start_position
 

@@ -19,7 +19,6 @@ class Agent(Node):
 
         # TODO: check param (drone_id, group_id) is unique
 
-
         self.api_context = Context(
             self.get_logger(),
             self.get_clock(),

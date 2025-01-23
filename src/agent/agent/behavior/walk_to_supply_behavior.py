@@ -10,8 +10,7 @@ from .behavior import Behavior
 
 class WalkToSupplyBehavior(Behavior):
 
-    @staticmethod
-    def execute(context: Context):
+    def execute(self, context: Context):
         drone_api: DroneApi = context.drone_api
         logger = context.logger
 
@@ -26,8 +25,7 @@ class WalkToSupplyBehavior(Behavior):
         drone_api.publish_goto_setpoint(
             context.get_current_timestamp(), supply_position)
 
-    @staticmethod
-    def proceed(context: Context) -> Optional[str]:
+    def get_next_state(self, context: Context) -> Optional[str]:
         drone_api: DroneApi = context.drone_api
         logger = context.logger
 

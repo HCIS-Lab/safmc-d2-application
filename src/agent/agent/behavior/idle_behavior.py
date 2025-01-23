@@ -7,8 +7,7 @@ from .behavior import Behavior
 
 
 class IdleBehavior(Behavior):
-    @staticmethod
-    def execute(context: Context):
+    def execute(self, context: Context):
         drone_api: DroneApi = context.drone_api
 
         logger = context.logger
@@ -26,8 +25,7 @@ class IdleBehavior(Behavior):
                 context.get_current_timestamp())
             drone_api.arm(context.get_current_timestamp())
 
-    @staticmethod
-    def proceed(context: Context) -> Optional[str]:
+    def get_next_state(self, context: Context) -> Optional[str]:
         drone_api: DroneApi = context.drone_api
 
         if drone_api.is_armed:

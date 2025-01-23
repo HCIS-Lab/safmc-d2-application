@@ -32,7 +32,6 @@ transitions = [
 
 
 class AgentMachine(Machine):
-    # def __init__(self, drone_api: DroneApi, mediator_api: MediatorApi, logger: RcutilsLogger, clock: Clock):
     def __init__(self, context: Context):
         # TODO: refactor function
         def populate_triggers(transitions):
@@ -40,41 +39,55 @@ class AgentMachine(Machine):
                 transition['trigger'] = transition['dest'].name.lower()
             return transitions
 
-        super().__init__(self, states=States,
-                         transitions=populate_triggers(transitions), initial=States.IDLE)
-
-        # self.drone_api = drone_api
-        # self.mediator_api = mediator_api
-        
         # self.clock = clock
         self.context = context
         self.logger = context.logger
         # init behaviors
-        self.behaviors = {
-            States.IDLE: IdleBehavior,
-            States.TAKEOFF: TakeoffBehavior,
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior,
-            States.LOAD: LoadBehavior,
-            States.WAIT: WaitBehavior,
-            States.DROP: DropBehavior
+        self.state_behavior_map = {
+            States.IDLE: IdleBehavior(),
+            States.TAKEOFF: TakeoffBehavior(),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(),
+            States.LOAD: LoadBehavior(),
+            States.WAIT: WaitBehavior(),
+            States.DROP: DropBehavior()
         }
+
+        # TODO
+
+        states = []
+        for state_name, behavior in self.state_behavior_map.items():
+            # Initialize behavior instance
+            self.state_behavior_map[state_name] = behavior
+            states.append({
+                'name': state_name,
+                'on_enter': behavior.on_enter,
+                'on_exit': behavior.on_exit
+            })
+            state = {'name': state_name}
+            if behavior.on_enter is not Behavior.on_enter:
+                state['on_enter'] = behavior.on_enter
+            if behavior.on_exit is not Behavior.on_exit:
+                state['on_exit'] = behavior.on_exit
+            states.append(state)
+
+        super().__init__(self, states=states,
+                         transitions=populate_triggers(transitions), initial=States.IDLE)
 
     def execute(self):
         drone_api: DroneApi = self.context.drone_api
-        if True:  # TODO why?
-            drone_api.maintain_offboard_control(
-                self.context.get_current_timestamp())
+
+        drone_api.maintain_offboard_control(
+            self.context.get_current_timestamp())
 
         # 執行當前 state 任務 (一步)
-        self.logger.info(f"Executing behavior for state: {self.state}")
-        behavior: Behavior = self.behaviors.get(self.state)
+        self.logger.info(f"Current state: {self.state.name}")
+        behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             behavior.execute(self.context)
 
     def proceed(self):
         # 根據條件判斷是否要 transition
-        behavior: Behavior = self.behaviors.get(self.state)
+        behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
-            trigger: str = behavior.proceed(self.context)
-            if trigger:  # transition
-                self.trigger(trigger)
+            if (next_state := behavior.get_next_state(self.context)):
+                self.trigger(next_state)

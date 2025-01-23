@@ -7,16 +7,14 @@ from .behavior import Behavior
 
 
 class WaitBehavior(Behavior):
-    @staticmethod
-    def execute(context: Context):
+    def execute(self, context: Context):
         mediator_api: MediatorApi = context.mediator_api
         logger = context.logger
 
         logger.info("Waiting for drop signal.")
         mediator_api.wait_to_drop()
 
-    @staticmethod
-    def proceed(context: Context) -> Optional[str]:
+    def get_next_state(self, context: Context) -> Optional[str]:
         mediator_api: MediatorApi = context.mediator_api
         logger = context.logger
 
