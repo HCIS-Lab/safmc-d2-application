@@ -1,7 +1,7 @@
 from enum import Enum
+from functools import partial
 
 from transitions import Machine
-from functools import partial
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
@@ -65,11 +65,11 @@ class AgentMachine(Machine):
             if hasattr(behavior, 'on_exit'):
                 state['on_exit'] = partial(behavior.on_exit, context)
             states.append(state)
-        
+
         print(states)
         super().__init__(self, states=states,
                          transitions=populate_triggers(transitions), initial=States.IDLE)
-        
+
         # exit(0)
 
     def execute(self):

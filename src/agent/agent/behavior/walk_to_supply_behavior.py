@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.constants import NAV_THRESH
+from agent.constants import NAV_THRESHOLD
 from api import DroneApi
 from common.context import Context
 from common.ned_coordinate import NEDCoordinate
@@ -32,6 +32,6 @@ class WalkToSupplyBehavior(Behavior):
         supply_position = drone_api.get_supply_position()
         supply_position.z = drone_api.local_position.z
 
-        if NEDCoordinate.distance(drone_api.local_position, supply_position) <= NAV_THRESH:
+        if NEDCoordinate.distance(drone_api.local_position, supply_position) <= NAV_THRESHOLD:
             logger.info("Supply reached.")
             return "load"

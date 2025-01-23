@@ -8,8 +8,9 @@ from .behavior import Behavior
 
 class IdleBehavior(Behavior):
     def execute(self, ctx: Context):
+
         drone_api: DroneApi = ctx.drone_api
-        logger = ctx.logger # TODO log 限流
+        logger = ctx.logger  # TODO log 限流
 
         logger.info(f"Armed status: {drone_api.is_armed}")
         logger.info(f"Vehicle timestamp: {drone_api.vehicle_timestamp}")

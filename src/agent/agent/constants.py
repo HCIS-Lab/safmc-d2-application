@@ -1,9 +1,19 @@
 DELTA_TIME = 0.2
+'''
+Time step interval (seconds) for updates.
+'''
 
 TAKEOFF_HEIGHT = 0.6
 '''
-起飛高度
+Altitude (meters) for takeoff.
 '''
 
-NAV_THRESH = 0.2
+NAV_THRESHOLD = 0.2
+'''
+Minimum distance (meters) to target for navigation completion.
+'''
+
 LOAD_HEIGHT = 0.3
+'''
+Altitude (meters) for the drone to descend to in order to pick up the payload.
+'''

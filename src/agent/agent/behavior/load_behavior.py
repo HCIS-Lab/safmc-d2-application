@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.constants import LOAD_HEIGHT, NAV_THRESH, TAKEOFF_HEIGHT
+from agent.constants import LOAD_HEIGHT, NAV_THRESHOLD, TAKEOFF_HEIGHT
 from api import DroneApi, MagnetApi
 from common.context import Context
 from common.ned_coordinate import NEDCoordinate
@@ -27,7 +27,7 @@ class LoadBehavior(Behavior):
         logger.info(
             f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
 
-        if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESH:
+        if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESHOLD:
 
             magnet_api.activate_magnet()
 
@@ -58,7 +58,7 @@ class LoadBehavior(Behavior):
         load_position = drone_api.local_position
         load_position.z = drone_api.start_position.z - TAKEOFF_HEIGHT
 
-        if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESH and drone_api.is_loaded:
+        if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESHOLD and drone_api.is_loaded:
             logger.info("Load process complete.")
             return "walk_to_hotspot"
         return None

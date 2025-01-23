@@ -6,7 +6,8 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
-from px4_msgs.msg import (GotoSetpoint,TrajectorySetpoint, OffboardControlMode, VehicleCommand,
+from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
+                          TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 
 from .api import Api
@@ -109,7 +110,7 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
-    def get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
+    def __get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
         '''
         Generate the vehicle command.\n
         defaults:\n
@@ -155,7 +156,7 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
         """
 
-        vehicle_command_msg = self.get_default_vehicle_command_msg(
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             timestamp,
             1
@@ -170,7 +171,7 @@ class DroneApi(Api):
         Sends a command to the vehicle to disarm it, ensuring it cannot take off.
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
-        vehicle_command_msg = self.get_default_vehicle_command_msg(
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
             timestamp,
             0
@@ -210,7 +211,7 @@ class DroneApi(Api):
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = self.get_default_vehicle_command_msg(
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
             timestamp,
             1,
@@ -226,8 +227,8 @@ class DroneApi(Api):
         trajectory_setpoint_msg.velocity[2] = velocity.z
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
-
     # TODO refactor
+
     def publish_goto_setpoint(self,
                               timestamp: int,
                               coord: NEDCoordinate,
