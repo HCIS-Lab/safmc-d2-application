@@ -1,4 +1,9 @@
 DELTA_TIME = 0.2
+
 TAKEOFF_HEIGHT = 0.6
+'''
+起飛高度
+'''
+
 NAV_THRESH = 0.2
 LOAD_HEIGHT = 0.3

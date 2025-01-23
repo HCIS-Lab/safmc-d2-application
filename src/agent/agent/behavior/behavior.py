@@ -12,15 +12,3 @@ class Behavior(ABC):
     @abstractmethod
     def get_next_state(self, context: Context) -> Optional[str]:
         pass
-
-    def on_enter(self):
-        """
-        進入狀態時的 callback function
-        """
-        pass
-
-    def on_exit(self):
-        """
-        離開狀態時的 callback function
-        """
-        pass

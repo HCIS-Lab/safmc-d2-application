@@ -1,6 +1,7 @@
 from enum import Enum
 
 from transitions import Machine
+from functools import partial
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
@@ -57,21 +58,19 @@ class AgentMachine(Machine):
         states = []
         for state_name, behavior in self.state_behavior_map.items():
             # Initialize behavior instance
-            self.state_behavior_map[state_name] = behavior
-            states.append({
-                'name': state_name,
-                'on_enter': behavior.on_enter,
-                'on_exit': behavior.on_exit
-            })
             state = {'name': state_name}
-            if behavior.on_enter is not Behavior.on_enter:
-                state['on_enter'] = behavior.on_enter
-            if behavior.on_exit is not Behavior.on_exit:
-                state['on_exit'] = behavior.on_exit
+            print(behavior)
+            if hasattr(behavior, 'on_enter'):
+                state['on_enter'] = partial(behavior.on_enter, context)
+            if hasattr(behavior, 'on_exit'):
+                state['on_exit'] = partial(behavior.on_exit, context)
             states.append(state)
-
+        
+        print(states)
         super().__init__(self, states=states,
                          transitions=populate_triggers(transitions), initial=States.IDLE)
+        
+        # exit(0)
 
     def execute(self):
         drone_api: DroneApi = self.context.drone_api
@@ -80,7 +79,7 @@ class AgentMachine(Machine):
             self.context.get_current_timestamp())
 
         # 執行當前 state 任務 (一步)
-        self.logger.info(f"Current state: {self.state.name}")
+        self.context.log_info(f"Current state: {self.state.name}")
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             behavior.execute(self.context)

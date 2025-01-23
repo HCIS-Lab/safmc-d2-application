@@ -7,6 +7,7 @@ from .behavior import Behavior
 
 
 class DropBehavior(Behavior):
+    
     def execute(self, context: Context):
         magnet_api: MagnetApi = context.magnet_api
         logger = context.logger

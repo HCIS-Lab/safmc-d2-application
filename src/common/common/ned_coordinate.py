@@ -23,6 +23,17 @@ class NEDCoordinate:
 
     def __mul__(self, scalar: float) -> 'NEDCoordinate':
         return NEDCoordinate(self.x * scalar, self.y * scalar, self.z * scalar)
+    
+    def __div__(self, scalar: float) -> 'NEDCoordinate':
+        return NEDCoordinate(self.x / scalar, self.y / scalar, self.z / scalar)
+    
+    @property
+    def magnitude(self) -> float:
+        return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
+    
+    @property
+    def normalized(self) -> 'NEDCoordinate':
+        return self / self.magnitude
 
     @staticmethod
     def distance(coord1: 'NEDCoordinate', coord2: 'NEDCoordinate') -> float:

@@ -6,7 +6,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
-from px4_msgs.msg import (GotoSetpoint, OffboardControlMode, VehicleCommand,
+from px4_msgs.msg import (GotoSetpoint,TrajectorySetpoint, OffboardControlMode, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 
 from .api import Api
@@ -66,6 +66,12 @@ class DroneApi(Api):
         self.goto_setpoint_pub = node.create_publisher(
             GotoSetpoint,
             "/fmu/in/goto_setpoint",
+            qos_profile
+        )
+
+        self.trajectory_setpoint_pub = node.create_publisher(
+            TrajectorySetpoint,
+            "/fmu/in/trajectory_setpoint",
             qos_profile
         )
 
@@ -212,6 +218,14 @@ class DroneApi(Api):
         )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
+
+    def add_velocity(self, velocity: NEDCoordinate):
+        trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.velocity[0] = velocity.x
+        trajectory_setpoint_msg.velocity[1] = velocity.y
+        trajectory_setpoint_msg.velocity[2] = velocity.z
+        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+
 
     # TODO refactor
     def publish_goto_setpoint(self,
