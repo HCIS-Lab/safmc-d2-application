@@ -220,11 +220,17 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    def add_velocity(self, velocity: NEDCoordinate):
+    def add_velocity(self, velocity: NEDCoordinate, delta_time: float):
         trajectory_setpoint_msg = TrajectorySetpoint()
+
+        trajectory_setpoint_msg.positions[0] = self.local_position + delta_time * velocity.x
+        trajectory_setpoint_msg.positions[1] = self.local_position + delta_time * velocity.y
+        trajectory_setpoint_msg.positions[2] = self.local_position + delta_time * velocity.z
+        
         trajectory_setpoint_msg.velocity[0] = velocity.x
         trajectory_setpoint_msg.velocity[1] = velocity.y
         trajectory_setpoint_msg.velocity[2] = velocity.z
+
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     # TODO refactor

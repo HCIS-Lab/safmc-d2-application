@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from common.context import Context
-from api import DroneApi
-
 
 class Behavior(ABC):
 
