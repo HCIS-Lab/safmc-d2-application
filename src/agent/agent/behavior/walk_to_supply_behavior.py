@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.constants import NAV_THRESHOLD
+from agent.constants import DELTA_TIME, NAV_THRESHOLD
 from api import DroneApi
 from common.context import Context
 from common.ned_coordinate import NEDCoordinate
@@ -10,28 +10,37 @@ from .behavior import Behavior
 
 class WalkToSupplyBehavior(Behavior):
 
-    def execute(self, context: Context):
-        drone_api: DroneApi = context.drone_api
-        logger = context.logger
+    def __init__(self):
+        self.velocity: float = 0.5
 
-        supply_position = drone_api.get_supply_position()  # TODO move to constants.py
-        supply_position.z = drone_api.local_position.z
+    def on_enter(self, ctx: Context):
+        drone_api: DroneApi = ctx.drone_api
 
-        logger.info(
-            f"Supply position: ({supply_position.x}, {supply_position.y}, {supply_position.z})")
-        logger.info(
-            f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
+        self.point_a: NEDCoordinate = NEDCoordinate(
+            1, 1, drone_api.local_position.z)
+        self.point_b: NEDCoordinate = NEDCoordinate(
+            7, 1, drone_api.local_position.z)
 
-        drone_api.publish_goto_setpoint(
-            context.get_current_timestamp(), supply_position)
+        self.target_position: NEDCoordinate = self.point_a
+
+    def execute(self, ctx: Context):
+        drone_api: DroneApi = ctx.drone_api
+        current_position = drone_api.local_position
+
+        ctx.log_info(f"Current position: {current_position}")
+
+        direction = (self.target_position - current_position).normalized
+        drone_api.add_velocity(direction * self.velocity, DELTA_TIME)
+
+        if NEDCoordinate.distance(current_position, self.target_position) <= NAV_THRESHOLD:
+            # 回頭 (A to B or B to A)
+            ctx.log_info(
+                f"Reached target {self.target_position}. Changing direction.")
+            self.target_position = self.point_b if self.target_position == self.point_a else self.point_a
 
     def get_next_state(self, context: Context) -> Optional[str]:
         drone_api: DroneApi = context.drone_api
-        logger = context.logger
 
-        supply_position = drone_api.get_supply_position()
-        supply_position.z = drone_api.local_position.z
-
-        if NEDCoordinate.distance(drone_api.local_position, supply_position) <= NAV_THRESHOLD:
-            logger.info("Supply reached.")
+        if False:
             return "load"
+        return None

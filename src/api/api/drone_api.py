@@ -283,6 +283,3 @@ class DroneApi(Api):
             goto_setpoint_msg.max_heading_rate = max_heading_rate
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
-
-    def get_supply_position(self) -> NEDCoordinate:
-        return self.__supply_position  # TODO move to constants.py

@@ -17,22 +17,26 @@ class NEDCoordinate:
 
     def __add__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
         if not isinstance(other, NEDCoordinate):
-            raise TypeError(f"Unsupported operand type(s) for +: 'NEDCoordinate' and '{type(other).__name__}'")
+            raise TypeError(
+                f"Unsupported operand type(s) for +: 'NEDCoordinate' and '{type(other).__name__}'")
         return NEDCoordinate(self.x + other.x, self.y + other.y, self.z + other.z)
 
     def __sub__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
         if not isinstance(other, NEDCoordinate):
-            raise TypeError(f"Unsupported operand type(s) for +: 'NEDCoordinate' and '{type(other).__name__}'")
+            raise TypeError(
+                f"Unsupported operand type(s) for +: 'NEDCoordinate' and '{type(other).__name__}'")
         return NEDCoordinate(self.x - other.x, self.y - other.y, self.z - other.z)
 
     def __mul__(self, scalar: float) -> 'NEDCoordinate':
         if not isinstance(scalar, (int, float)):
-            raise TypeError(f"Unsupported operand type(s) for *: 'NEDCoordinate' and '{type(scalar).__name__}'")
+            raise TypeError(
+                f"Unsupported operand type(s) for *: 'NEDCoordinate' and '{type(scalar).__name__}'")
         return NEDCoordinate(self.x * scalar, self.y * scalar, self.z * scalar)
 
     def __truediv__(self, scalar: float) -> 'NEDCoordinate':
         if not isinstance(scalar, (int, float)):
-            raise TypeError(f"Unsupported operand type(s) for *: 'NEDCoordinate' and '{type(scalar).__name__}'")
+            raise TypeError(
+                f"Unsupported operand type(s) for *: 'NEDCoordinate' and '{type(scalar).__name__}'")
         if scalar == 0:
             raise ValueError("Division by zero is not allowed.")
         return NEDCoordinate(self.x / scalar, self.y / scalar, self.z / scalar)
