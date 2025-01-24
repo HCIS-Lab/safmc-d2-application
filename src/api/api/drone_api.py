@@ -223,11 +223,11 @@ class DroneApi(Api):
     def add_velocity(self, velocity: NEDCoordinate, delta_time: float):
         trajectory_setpoint_msg = TrajectorySetpoint()
 
-        trajectory_setpoint_msg.positions[0] = self.local_position + \
+        trajectory_setpoint_msg.position[0] = self.local_position.x + \
             delta_time * velocity.x
-        trajectory_setpoint_msg.positions[1] = self.local_position + \
+        trajectory_setpoint_msg.position[1] = self.local_position.y + \
             delta_time * velocity.y
-        trajectory_setpoint_msg.positions[2] = self.local_position + \
+        trajectory_setpoint_msg.position[2] = self.local_position.z + \
             delta_time * velocity.z
 
         trajectory_setpoint_msg.velocity[0] = velocity.x
