@@ -1,12 +1,11 @@
 from typing import Optional
 
-from agent.constants import NAV_THRESHOLD, TAKEOFF_HEIGHT
+from agent.constants import DELTA_TIME, NAV_THRESHOLD, TAKEOFF_HEIGHT
 from api import DroneApi
 from common.context import Context
 from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
-from agent.constants import DELTA_TIME
 
 
 class TakeoffBehavior(Behavior):
@@ -23,7 +22,8 @@ class TakeoffBehavior(Behavior):
 
         ctx.log_info(f"Current position: {drone_api.local_position}")
 
-        vel = (self.takeoff_position - drone_api.local_position).normalized * 0.2 # 0.2 m/s
+        vel = (self.takeoff_position -
+               drone_api.local_position).normalized * 0.2  # 0.2 m/s
         drone_api.add_velocity(vel, DELTA_TIME)
 
     def get_next_state(self, ctx: Context) -> Optional[str]:

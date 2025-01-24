@@ -3,6 +3,7 @@ from typing import Optional
 
 from common.context import Context
 
+
 class Behavior(ABC):
 
     @abstractmethod
