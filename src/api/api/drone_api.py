@@ -20,8 +20,6 @@ class DroneApi(Api):
         self.__is_armed = False
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
-        self.__is_loaded = False
-        self.__supply_position = NEDCoordinate(0.0, 0.0, -2.0)
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -88,10 +86,6 @@ class DroneApi(Api):
     def is_armed(self) -> bool:
         return self.__is_armed
 
-    @property
-    def is_loaded(self) -> bool:
-        return self.__is_loaded
-
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
         self.__is_each_pre_flight_check_passed = vehicle_status_msg.pre_flight_checks_pass
         self.__vehicle_timestamp = vehicle_status_msg.timestamp
@@ -99,9 +93,12 @@ class DroneApi(Api):
             vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
         )
 
+    def reset_origin(self, origin: NEDCoordinate):
+        self.__origin = origin
+
     @property
     def local_position(self) -> NEDCoordinate:
-        return self.__local_position
+        return self.__local_position - self.__origin
 
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
         self.__local_position = NEDCoordinate(
@@ -179,12 +176,14 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
+    # TODO: 存在的意義?
     def reset_start_position(self) -> None:
         """
         Resets the starting position to the current local position.
         """
         self.__start_position = self.local_position
 
+    # TODO: 存在的意義?
     @property
     def start_position(self) -> NEDCoordinate:
         return self.__start_position
@@ -283,19 +282,3 @@ class DroneApi(Api):
             goto_setpoint_msg.max_heading_rate = max_heading_rate
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
-
-    # TODO: ???
-    def reset_origin(self, timestamp: int) -> None:
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_SET_GPS_GLOBAL_ORIGIN,
-            timestamp,
-            0,  # Empty
-            0,  # Empty
-            0,  # Empty
-            0,  # Empty
-            -10,  # Latitude
-            -1,  # Longitude
-            0,  # Altitude
-        )
-
-        self.vehicle_command_pub.publish(vehicle_command_msg)
