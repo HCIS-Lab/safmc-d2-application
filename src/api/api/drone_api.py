@@ -219,6 +219,29 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
+    def move(self, position: NEDCoordinate, timestamp: int):
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = int(timestamp / 1000)  # microseconds
+
+        goto_setpoint_msg.position[0] = position.x
+        goto_setpoint_msg.position[1] = position.y
+        goto_setpoint_msg.position[2] = position.z
+
+        goto_setpoint_msg.flag_control_heading = False
+        goto_setpoint_msg.heading = 0.0
+
+        goto_setpoint_msg.flag_set_max_horizontal_speed = False
+        goto_setpoint_msg.max_horizontal_speed = 0.0
+
+        goto_setpoint_msg.flag_set_max_vertical_speed = False
+        goto_setpoint_msg.max_vertical_speed = 0.0
+
+        goto_setpoint_msg.flag_set_max_heading_rate = False
+        goto_setpoint_msg.max_heading_rate = 0.0
+
+        self.goto_setpoint_pub.publish(goto_setpoint_msg)
+
+
     def add_velocity(self, velocity: NEDCoordinate, delta_time: float):
         trajectory_setpoint_msg = TrajectorySetpoint()
 

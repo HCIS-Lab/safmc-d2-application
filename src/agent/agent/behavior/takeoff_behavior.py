@@ -27,7 +27,9 @@ class TakeoffBehavior(Behavior):
         ctx.log_info(f"current position: {drone_api.local_position}")
 
         direction = (self.target_position - current_position).normalized
-        drone_api.add_velocity(direction * self.velocity, DELTA_TIME)
+        # drone_api.add_velocity(direction * self.velocity, DELTA_TIME)
+
+        drone_api.move(current_position + 0.5 * DELTA_TIME * direction, ctx.get_current_timestamp())
 
     def get_next_state(self, ctx: Context) -> Optional[str]:
         drone_api: DroneApi = ctx.drone_api
