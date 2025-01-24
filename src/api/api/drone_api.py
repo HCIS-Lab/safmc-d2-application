@@ -283,3 +283,19 @@ class DroneApi(Api):
             goto_setpoint_msg.max_heading_rate = max_heading_rate
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
+
+    # TODO: ???
+    def reset_origin(self, timestamp: int) -> None:
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_SET_GPS_GLOBAL_ORIGIN,
+            timestamp,
+            0,  # Empty
+            0,  # Empty
+            0,  # Empty
+            0,  # Empty
+            -10,  # Latitude
+            -1,  # Longitude
+            0,  # Altitude
+        )
+
+        self.vehicle_command_pub.publish(vehicle_command_msg)

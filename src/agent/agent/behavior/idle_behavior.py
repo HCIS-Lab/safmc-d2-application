@@ -20,6 +20,7 @@ class IdleBehavior(Behavior):
         # TODO 改成 mediator 來控制
         if (not drone_api.is_armed) and drone_api.is_each_pre_flight_check_passed:
             logger.info("Drone is ready to arm and start offboard control.")
+            drone_api.reset_origin(ctx.get_current_timestamp()) # TODO
             drone_api.reset_start_position()
             drone_api.activate_offboard_control_mode(
                 ctx.get_current_timestamp())
