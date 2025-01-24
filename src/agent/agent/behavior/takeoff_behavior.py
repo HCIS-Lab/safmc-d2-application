@@ -31,7 +31,8 @@ class TakeoffBehavior(Behavior):
 
     def get_next_state(self, ctx: Context) -> Optional[str]:
         drone_api: DroneApi = ctx.drone_api
-
+        return None
+    
         if self.__has_reached_final_position(ctx):
             ctx.log_info("Takeoff altitude reached.")
             return "walk_to_hotspot" if drone_api.is_loaded else "walk_to_supply"

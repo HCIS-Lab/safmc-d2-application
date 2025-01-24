@@ -35,5 +35,5 @@ class IdleBehavior(Behavior):
     def on_exit(self, ctx: Context):
         drone_api: DroneApi = ctx.drone_api
 
-        drone_api.reset_origin(NEDCoordinate(-10, -1, 0))
+        drone_api.reset_origin(NEDCoordinate(0, 0, 0))
         drone_api.reset_start_position()
