@@ -75,8 +75,7 @@ class AgentMachine(Machine):
     def execute(self):
         drone_api: DroneApi = self.context.drone_api
 
-        drone_api.maintain_offboard_control(
-            self.context.get_current_timestamp())
+        drone_api.set_offboard_control_mode() # 要 2 Hz 發送, 否則會退出 offboard control mode
 
         # 執行當前 state 任務 (一步)
         self.context.log_info(f"Current state: {self.state.name}")

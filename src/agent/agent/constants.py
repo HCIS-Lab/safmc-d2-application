@@ -3,7 +3,7 @@ DELTA_TIME = 0.2
 Time step interval (seconds) for updates.
 '''
 
-TAKEOFF_HEIGHT = 0.6
+TAKEOFF_HEIGHT = 1.5
 '''
 Altitude (meters) for takeoff.
 '''

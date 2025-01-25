@@ -1,5 +1,8 @@
+# TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
+
 from typing import Optional
 
+from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
@@ -15,6 +18,8 @@ from .api import Api
 
 class DroneApi(Api):
     def __init__(self, node: Node):
+        
+        self.__clock: Clock = node.get_clock()
 
         # Initial Values
         self.__is_armed = False
@@ -107,7 +112,7 @@ class DroneApi(Api):
             z=vehicle_local_position_msg.z
         )
 
-    def __get_default_vehicle_command_msg(self, command, timestamp: int, *params: float, **kwargs):
+    def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs):
         '''
         Generate the vehicle command.\n
         defaults:\n
@@ -120,6 +125,9 @@ class DroneApi(Api):
             timestamp = int(timestamp / 1000)
         '''
         vehicle_command_msg = VehicleCommand()
+        vehicle_command_msg.timestamp = self.__get_timestamp()
+        
+        # command
         vehicle_command_msg.command = command
 
         # params
@@ -133,8 +141,6 @@ class DroneApi(Api):
         vehicle_command_msg.source_system = 1
         vehicle_command_msg.source_component = 1
         vehicle_command_msg.from_external = True
-        vehicle_command_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
 
         # other kwargs
         for attr, value in kwargs.items():
@@ -145,7 +151,7 @@ class DroneApi(Api):
 
         return vehicle_command_msg
 
-    def arm(self, timestamp: int) -> None:
+    def arm(self) -> None:
         """
         Arms the drone for flight.
 
@@ -155,13 +161,12 @@ class DroneApi(Api):
 
         vehicle_command_msg = self.__get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            timestamp,
             1
         )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    def disarm(self, timestamp: int) -> None:
+    def disarm(self) -> None:
         """
         Disarms the drone, preventing flight.
 
@@ -170,7 +175,6 @@ class DroneApi(Api):
         """
         vehicle_command_msg = self.__get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            timestamp,
             0
         )
 
@@ -187,22 +191,27 @@ class DroneApi(Api):
     @property
     def start_position(self) -> NEDCoordinate:
         return self.__start_position
+    
+    def __get_timestamp(self) -> int:
+        return int(self.__clock.now().nanoseconds / 1000) # microseconds
 
-    def maintain_offboard_control(self, timestamp: int) -> None:
+    def set_offboard_control_mode(self) -> None:
         """
-        Keeps the drone in offboard control mode by sending periodic updates.
-
-        This method publishes an `OffboardControlMode` message with the current timestamp,
-        ensuring the drone stays in offboard control mode by setting the position control flag.
-        It must be continuously called to prevent the system from switching back to another mode.
+        TODO
         """
         offboard_control_mode_msg = OffboardControlMode()
-        offboard_control_mode_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
+        
         offboard_control_mode_msg.position = True
+        offboard_control_mode_msg.velocity = True
+        offboard_control_mode_msg.acceleration = False
+        offboard_control_mode_msg.attitude = False
+        offboard_control_mode_msg.body_rate = False
+        offboard_control_mode_msg.timestamp = self.__get_timestamp()
+        
         self.offboard_control_mode_pub.publish(offboard_control_mode_msg)
 
-    def activate_offboard_control_mode(self, timestamp: int) -> None:
+
+    def activate_offboard_control_mode(self) -> None:
         """
         Activates the offboard control mode for the drone.
 
@@ -212,38 +221,31 @@ class DroneApi(Api):
         """
         vehicle_command_msg = self.__get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
-            timestamp,
             1,
             6
         )
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    def move(self, position: NEDCoordinate, timestamp: int):
-        goto_setpoint_msg = GotoSetpoint()
-        goto_setpoint_msg.timestamp = int(timestamp / 1000)  # microseconds
-
-        goto_setpoint_msg.position[0] = position.x
-        goto_setpoint_msg.position[1] = position.y
-        goto_setpoint_msg.position[2] = position.z
-
-        goto_setpoint_msg.flag_control_heading = False
-        goto_setpoint_msg.heading = 0.0
-
-        goto_setpoint_msg.flag_set_max_horizontal_speed = False
-        goto_setpoint_msg.max_horizontal_speed = 0.0
-
-        goto_setpoint_msg.flag_set_max_vertical_speed = False
-        goto_setpoint_msg.max_vertical_speed = 0.0
-
-        goto_setpoint_msg.flag_set_max_heading_rate = False
-        goto_setpoint_msg.max_heading_rate = 0.0
-
-        self.goto_setpoint_pub.publish(goto_setpoint_msg)
-
-
-    def add_velocity(self, velocity: NEDCoordinate, delta_time: float):
+    def move(self, position: NEDCoordinate):
+        
         trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+
+        trajectory_setpoint_msg.position[0] = position.x
+        trajectory_setpoint_msg.position[1] = position.y
+        trajectory_setpoint_msg.position[2] = position.z
+
+        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+
+
+    def add_velocity(self, velocity: NEDCoordinate, delta_time: float): # TODO: rename
+        trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+
+        trajectory_setpoint_msg.velocity[0] = velocity.x
+        trajectory_setpoint_msg.velocity[1] = velocity.y
+        trajectory_setpoint_msg.velocity[2] = velocity.z
 
         trajectory_setpoint_msg.position[0] = self.local_position.x + \
             delta_time * velocity.x
@@ -252,14 +254,9 @@ class DroneApi(Api):
         trajectory_setpoint_msg.position[2] = self.local_position.z + \
             delta_time * velocity.z
 
-        trajectory_setpoint_msg.velocity[0] = velocity.x
-        trajectory_setpoint_msg.velocity[1] = velocity.y
-        trajectory_setpoint_msg.velocity[2] = velocity.z
-
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
-    # TODO refactor
-
+    @deprecated
     def publish_goto_setpoint(self,
                               timestamp: int,
                               coord: NEDCoordinate,

@@ -16,26 +16,21 @@ class WalkToSupplyBehavior(Behavior):
     def on_enter(self, ctx: Context):
         drone_api: DroneApi = ctx.drone_api
 
-        self.point_a: NEDCoordinate = NEDCoordinate(
-            1, 1, drone_api.local_position.z)
-        self.point_b: NEDCoordinate = NEDCoordinate(
-            7, 1, drone_api.local_position.z)
+        self.point_a: NEDCoordinate = NEDCoordinate(1, 1, drone_api.local_position.z)
+        self.point_b: NEDCoordinate = NEDCoordinate(1, 7, drone_api.local_position.z)
 
         self.target_position: NEDCoordinate = self.point_a
 
     def execute(self, ctx: Context):
         drone_api: DroneApi = ctx.drone_api
-        current_position = drone_api.local_position
 
-        ctx.log_info(f"Current position: {current_position}")
+        ctx.log_info(f"target position: {self.target_position}")
+        ctx.log_info(f"current position: {drone_api.local_position}")
+        drone_api.move(self.target_position)
 
-        direction = (self.target_position - current_position).normalized
-        drone_api.add_velocity(direction * self.velocity, DELTA_TIME)
-
-        if NEDCoordinate.distance(current_position, self.target_position) <= NAV_THRESHOLD:
+        if NEDCoordinate.distance(drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
             # 回頭 (A to B or B to A)
-            ctx.log_info(
-                f"Reached target {self.target_position}. Changing direction.")
+            ctx.log_info(f"Reached target {self.target_position}. Changing direction.")
             self.target_position = self.point_b if self.target_position == self.point_a else self.point_a
 
     def get_next_state(self, context: Context) -> Optional[str]:

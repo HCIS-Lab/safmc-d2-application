@@ -13,7 +13,7 @@ class NEDCoordinate:
     z: float
 
     def __str__(self) -> str:
-        return f"NED(x={self.x}, y={self.y}, z={self.z})"
+        return f"NED(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
     def __add__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
         if not isinstance(other, NEDCoordinate):
@@ -32,6 +32,9 @@ class NEDCoordinate:
             raise TypeError(
                 f"Unsupported operand type(s) for *: 'NEDCoordinate' and '{type(scalar).__name__}'")
         return NEDCoordinate(self.x * scalar, self.y * scalar, self.z * scalar)
+
+    def __rmul__(self, scalar: float) -> 'NEDCoordinate':
+        return self.__mul__(scalar)
 
     def __truediv__(self, scalar: float) -> 'NEDCoordinate':
         if not isinstance(scalar, (int, float)):
