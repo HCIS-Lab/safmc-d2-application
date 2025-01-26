@@ -1,13 +1,12 @@
 from enum import Enum
-from functools import partial
 
 from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToSupplyBehavior)
-from api import DroneApi
-from common.context import Context
+from api import DroneApi, MagnetApi, MediatorApi
+from common.logger import Logger
 
 
 class States(Enum):
@@ -33,24 +32,23 @@ transitions = [
 
 
 class AgentMachine(Machine):
-    def __init__(self, context: Context):
-        # TODO: refactor function
-        def populate_triggers(transitions):
+    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi):
+        
+        self.logger = logger
+
+        def populate_triggers(transitions): # TODO: refactor function
             for transition in transitions:
                 transition['trigger'] = transition['dest'].name.lower()
             return transitions
 
-        # self.clock = clock
-        self.context = context
-        self.logger = context.logger
         # init behaviors
         self.state_behavior_map = {
-            States.IDLE: IdleBehavior(),
-            States.TAKEOFF: TakeoffBehavior(),
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(),
-            States.LOAD: LoadBehavior(),
-            States.WAIT: WaitBehavior(),
-            States.DROP: DropBehavior()
+            States.IDLE: IdleBehavior(logger, drone_api),
+            States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api),
+            States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
+            States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
+            States.DROP: DropBehavior(logger, magnet_api)
         }
 
         # TODO
@@ -59,33 +57,25 @@ class AgentMachine(Machine):
         for state_name, behavior in self.state_behavior_map.items():
             # Initialize behavior instance
             state = {'name': state_name}
-            print(behavior)
             if hasattr(behavior, 'on_enter'):
-                state['on_enter'] = partial(behavior.on_enter, context)
+                state['on_enter'] = behavior.on_enter
             if hasattr(behavior, 'on_exit'):
-                state['on_exit'] = partial(behavior.on_exit, context)
+                state['on_exit'] = behavior.on_exit
             states.append(state)
 
-        print(states)
         super().__init__(self, states=states,
                          transitions=populate_triggers(transitions), initial=States.IDLE)
 
-        # exit(0)
-
     def execute(self):
-        drone_api: DroneApi = self.context.drone_api
-
-        drone_api.set_offboard_control_mode() # 要 2 Hz 發送, 否則會退出 offboard control mode
-
         # 執行當前 state 任務 (一步)
-        self.context.log_info(f"Current state: {self.state.name}")
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
-            behavior.execute(self.context)
+            behavior.execute()
 
     def proceed(self):
         # 根據條件判斷是否要 transition
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
-            if (next_state := behavior.get_next_state(self.context)):
+            if (next_state := behavior.get_next_state()):
                 self.trigger(next_state)
+                self.logger.ori.info(f"current state: {self.state}")

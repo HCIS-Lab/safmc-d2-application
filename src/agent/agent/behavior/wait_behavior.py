@@ -1,23 +1,21 @@
 from typing import Optional
 
-from api import MediatorApi
-from common.context import Context
+from api import DroneApi, MediatorApi
+from common.logger import Logger
 
 from .behavior import Behavior
 
 
 class WaitBehavior(Behavior):
-    def execute(self, context: Context):
-        mediator_api: MediatorApi = context.mediator_api
-        logger = context.logger
+    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi):
+        super().__init__(logger)
+        self.drone_api = drone_api
+        self.mediator_api = mediator_api
 
-        logger.info("Waiting for drop signal.")
-        mediator_api.wait_to_drop()
+    def execute(self):
+        self.logger.info("wait for drop signal")
+        self.mediator_api.wait_to_drop()
 
-    def get_next_state(self, context: Context) -> Optional[str]:
-        mediator_api: MediatorApi = context.mediator_api
-        logger = context.logger
-
-        if mediator_api.signal():
-            logger.info("Drop signal received. Transitioning to DROP.")
+    def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.signal:
             return "drop"

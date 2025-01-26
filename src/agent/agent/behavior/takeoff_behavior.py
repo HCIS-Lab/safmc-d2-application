@@ -2,7 +2,7 @@ from typing import Optional
 
 from agent.constants import NAV_THRESHOLD, TAKEOFF_HEIGHT
 from api import DroneApi, MagnetApi
-from common.context import Context
+from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
@@ -10,30 +10,25 @@ from .behavior import Behavior
 
 class TakeoffBehavior(Behavior):
 
-    def __init__(self):
-        self.velocity: float = 0.5
+    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi):
+        super().__init__(logger)
+        self.drone_api = drone_api
+        self.magnet_api = magnet_api
 
-    def on_enter(self, ctx: Context):
-        drone_api: DroneApi = ctx.drone_api
+    def on_enter(self):
+        self.target_position = self.drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
-        self.target_position = drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
+    def execute(self):
+        # TODO: log target/current position 蠻常用到, 可以直接在 Behavior base class 寫一個 method
+        self.logger.info(f"target position: {self.target_position}")
+        self.logger.info(f"current position: {self.drone_api.local_position}")
+        self.drone_api.move_to(self.target_position)
 
-    def execute(self, ctx: Context):
-        drone_api: DroneApi = ctx.drone_api
-
-        ctx.log_info(f"target position: {self.target_position}")
-        ctx.log_info(f"current position: {drone_api.local_position}")
-        drone_api.move_to(self.target_position)
-
-    def get_next_state(self, ctx: Context) -> Optional[str]:
-        drone_api: DroneApi = ctx.drone_api
-        magnet_api: MagnetApi = ctx.magnet_api
-    
-        if self.__has_reached_final_position(ctx):
-            ctx.log_info("Takeoff altitude reached.")
-            return "walk_to_hotspot" if magnet_api.is_loaded else "walk_to_supply"
+    def get_next_state(self) -> Optional[str]:
+        if self.__has_reached_final_position():
+            self.logger.info("takeoff altitude reached")
+            return "walk_to_hotspot" if self.magnet_api.is_loaded else "walk_to_supply"
         return None
 
-    def __has_reached_final_position(self, ctx: Context) -> bool:
-        drone_api: DroneApi = ctx.drone_api
-        return NEDCoordinate.distance(drone_api.local_position, self.target_position) <= NAV_THRESHOLD
+    def __has_reached_final_position(self) -> bool:
+        return NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD

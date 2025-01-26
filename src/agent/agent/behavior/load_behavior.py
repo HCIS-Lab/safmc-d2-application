@@ -1,8 +1,8 @@
 from typing import Optional
 
-from agent.constants import LOAD_HEIGHT, NAV_THRESHOLD, TAKEOFF_HEIGHT
+from agent.constants import LOAD_HEIGHT, NAV_THRESHOLD
 from api import DroneApi, MagnetApi
-from common.context import Context
+from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
@@ -10,55 +10,36 @@ from .behavior import Behavior
 
 class LoadBehavior(Behavior):
 
-    def execute(self, context: Context):
-        drone_api: DroneApi = context.drone_api
-        magnet_api: MagnetApi = context.magnet_api
-        logger = context.logger
+    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi):
+        super().__init__(logger)
+        self.drone_api = drone_api
+        self.magnet_api = magnet_api
 
-        load_position = drone_api.local_position
+    def on_enter(self):
 
-        if drone_api.is_loaded:
-            load_position.z = drone_api.start_position.z - TAKEOFF_HEIGHT
-        else:
-            load_position.z = drone_api.start_position.z - LOAD_HEIGHT
+        # TODO supply zone 的兩端點位置如何決定?
+        self.origin_position: NEDCoordinate = self.drone_api.local_position
+        
+        self.load_position: NEDCoordinate = self.drone_api.local_position
+        self.load_position.z = self.drone_api.start_position.z - LOAD_HEIGHT
 
-        logger.info(
-            f"Target load position: ({load_position.x}, {load_position.y}, {load_position.z})")
-        logger.info(
-            f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
+        self.target_position = self.load_position
 
-        if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESHOLD:
+    def execute(self):
 
-            magnet_api.activate_magnet()
+        self.logger.info(f"target position: {self.target_position}")
+        self.logger.info(f"current position: {self.drone_api.local_position}")
 
-            if drone_api.is_loaded:
-                logger.info(
-                    "Payload successfully loaded. Ascending to takeoff height.")
-                load_position.z = drone_api.start_position.z - TAKEOFF_HEIGHT
+        if NEDCoordinate.distance(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD:
+            self.magnet_api.activate_magnet()
 
-                logger.info(
-                    f"Target load position: ({load_position.x}, {load_position.y}, {load_position.z})")
-                logger.info(
-                    f"Current position: ({drone_api.local_position.x}, {drone_api.local_position.y}, {drone_api.local_position.z})")
+        if self.magnet_api.is_loaded:
+            self.logger.info("successfully loaded, reascending to takeoff height")
+            self.target_position = self.origin_position
 
-                drone_api.publish_goto_setpoint(
-                    context.get_current_timestamp(), load_position)
-            else:
-                logger.info("Reached loading position. Activating magnet.")
-        else:
-            logger.info("Descending to loading position.")
-            drone_api.publish_goto_setpoint(
-                context.get_current_timestamp(), load_position)
+        self.drone_api.move_to(self.target_position)
 
-    def get_next_state(self, context: Context) -> Optional[str]:
-
-        drone_api: DroneApi = context.drone_api
-        logger = context.logger
-
-        load_position = drone_api.local_position
-        load_position.z = drone_api.start_position.z - TAKEOFF_HEIGHT
-
-        if NEDCoordinate.distance(drone_api.local_position, load_position) <= NAV_THRESHOLD and drone_api.is_loaded:
-            logger.info("Load process complete.")
+    def get_next_state(self) -> Optional[str]:
+        if self.magnet_api.is_loaded and NEDCoordinate.distance(self.drone_api.local_position, self.origin_position) <= NAV_THRESHOLD:
             return "walk_to_hotspot"
         return None

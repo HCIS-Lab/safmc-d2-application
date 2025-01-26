@@ -25,6 +25,7 @@ class DroneApi(Api):
         self.__is_armed = False
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
+        self.__start_position = NEDCoordinate(0, 0, 0)
 
         # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
@@ -180,7 +181,6 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    # TODO: 存在的意義?
     def reset_start_position(self) -> None:
         """
         Resets the starting position to the current local position.

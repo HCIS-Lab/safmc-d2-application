@@ -1,27 +1,23 @@
 from typing import Optional
 
 from api import MagnetApi
-from common.context import Context
+from common.logger import Logger
 
 from .behavior import Behavior
 
 
 class DropBehavior(Behavior):
 
-    def execute(self, context: Context):
-        magnet_api: MagnetApi = context.magnet_api
-        logger = context.logger
+    def __init__(self, logger: Logger, magnet_api: MagnetApi):
+        super().__init__(logger)
+        self.magnet_api = magnet_api
 
-        logger.info("Deactivating magnet to drop payload.")
-        magnet_api.deactivate_magnet()
+    def execute(self):
+        self.logger.info("deactivating magnet to drop payload.")
+        self.logger.info(f"load status: {self.magnet_api.is_loaded}")
+        self.magnet_api.deactivate_magnet()
 
-    def get_next_state(self, context: Context) -> Optional[str]:
-        magnet_api: MagnetApi = context.magnet_api
-        logger = context.logger
-
-        logger.info(f"Payload loaded status: {magnet_api.is_loaded}")
-        if not magnet_api.is_loaded:
-            logger.info(
-                "Payload successfully dropped. Transitioning to WALK_TO_SUPPLY.")
+    def get_next_state(self) -> Optional[str]:
+        if not self.magnet_api.is_loaded:
             return "walk_to_supply"
         return None
