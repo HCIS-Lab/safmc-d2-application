@@ -3,7 +3,7 @@ from enum import Enum
 from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
-                            TakeoffBehavior, WaitBehavior,
+                            TakeoffBehavior, WaitBehavior, WalkToHotspotBehavior,
                             WalkToSupplyBehavior)
 from api import DroneApi, MagnetApi, MediatorApi
 from common.logger import Logger
@@ -47,6 +47,7 @@ class AgentMachine(Machine):
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api),
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
             States.DROP: DropBehavior(logger, magnet_api)
         }
