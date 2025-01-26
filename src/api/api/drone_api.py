@@ -227,7 +227,7 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    def move(self, position: NEDCoordinate):
+    def move_to(self, position: NEDCoordinate):
         
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
@@ -239,7 +239,7 @@ class DroneApi(Api):
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
 
-    def add_velocity(self, velocity: NEDCoordinate, delta_time: float): # TODO: rename
+    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float): # TODO: rename
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
@@ -255,6 +255,8 @@ class DroneApi(Api):
             delta_time * velocity.z
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+
+
 
     @deprecated
     def publish_goto_setpoint(self,

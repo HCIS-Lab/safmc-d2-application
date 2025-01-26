@@ -23,7 +23,7 @@ class TakeoffBehavior(Behavior):
 
         ctx.log_info(f"target position: {self.target_position}")
         ctx.log_info(f"current position: {drone_api.local_position}")
-        drone_api.move(self.target_position)
+        drone_api.move_to(self.target_position)
 
     def get_next_state(self, ctx: Context) -> Optional[str]:
         drone_api: DroneApi = ctx.drone_api
