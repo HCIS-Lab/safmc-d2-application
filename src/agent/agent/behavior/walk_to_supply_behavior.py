@@ -23,17 +23,14 @@ class WalkToSupplyBehavior(Behavior):
 
     def execute(self, ctx: Context):
         drone_api: DroneApi = ctx.drone_api
+        current_location = drone_api.local_position
 
         ctx.log_info(f"target position: {self.target_position}")
-        ctx.log_info(f"current position: {drone_api.local_position}")
-        # drone_api.move(self.target_position)
-        
-        diff = self.target_position - drone_api.local_position
-        direction = diff.normalized
-        if diff.magnitude < self.speed:
-            drone_api.add_velocity2(diff, DELTA_TIME)
-        else:
-            drone_api.add_velocity2(direction * self.speed, DELTA_TIME)
+        ctx.log_info(f"current position: {current_location}")
+
+        dist = NEDCoordinate.distance(current_location, self.target_position)
+        vel = (self.target_position - current_location).normalized * min(self.speed, dist)
+        drone_api.move_with_velocity(vel, DELTA_TIME)
 
         if NEDCoordinate.distance(drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
             # 回頭 (A to B or B to A)
