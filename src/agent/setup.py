@@ -15,8 +15,8 @@ setup(
     zip_safe=True,
     maintainer='root',
     maintainer_email='efliao@cs.nycu.edu.tw',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='ROS 2 package for controlling the drone in the SAFMC D2 competition. Runs on the drone\'s Raspberry Pi, handling flight control and mission execution.',
+    license='Internal Use Only',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

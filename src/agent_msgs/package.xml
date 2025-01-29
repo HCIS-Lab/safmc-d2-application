@@ -3,9 +3,9 @@
 <package format="3">
   <name>agent_msgs</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROS2 custom messages for agent</description>
   <maintainer email="jerry110030014@gapp.nthu.edu.tw">jerry</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Internal Use Only</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>

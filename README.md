@@ -1,6 +1,6 @@
 # SAFME D2 Application
 
-TODO: repo description
+ROS 2-based control system for the SAFMC D2, implementing the main flight logic.
 
 ## RUN
 

@@ -19,9 +19,7 @@ class TakeoffBehavior(Behavior):
         self.target_position = self.drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
     def execute(self):
-        # TODO: log target/current position 蠻常用到, 可以直接在 Behavior base class 寫一個 method
-        self.logger.info(f"target position: {self.target_position}")
-        self.logger.info(f"current position: {self.drone_api.local_position}")
+        self.log_position(self.target_position, self.drone_api.local_position)
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:

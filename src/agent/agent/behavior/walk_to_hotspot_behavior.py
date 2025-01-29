@@ -1,9 +1,12 @@
-from .behavior import Behavior
+from typing import Optional
+
+from agent.constants import DELTA_TIME, NAV_THRESHOLD
 from api import DroneApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
-from agent.constants import DELTA_TIME, NAV_THRESHOLD
-from typing import Optional
+
+from .behavior import Behavior
+
 
 class WalkToHotspotBehavior(Behavior):
 

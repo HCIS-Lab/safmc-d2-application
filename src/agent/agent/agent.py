@@ -15,20 +15,22 @@ class Agent(Node):
         drone_id = get_parameter(self, 'drone_id', 0)
         group_id = get_parameter(self, 'group_id', 0)
 
-        # TODO: check param (drone_id, group_id) is unique
-        
+        # TODO: check param (drone_id, group_id) is unique (from mediator?)
+
         self.logger = Logger(self.get_logger(), self.get_clock())
         self.drone_api = DroneApi(self)
         self.mediator_api = MediatorApi(self, drone_id, group_id)
         self.magnet_api = MagnetApi(self)
-        
+
         # machine
-        self.machine = AgentMachine(self.logger, self.drone_api, self.magnet_api, self.mediator_api)
+        self.machine = AgentMachine(
+            self.logger, self.drone_api, self.magnet_api, self.mediator_api)
 
         self.timer = self.create_timer(DELTA_TIME, self.update)
 
     def update(self):
-        self.drone_api.set_offboard_control_mode() # 要 2 Hz 發送, 否則會退出 offboard control mode
+        # 要 2 Hz 發送, 否則會退出 offboard control mode
+        self.drone_api.set_offboard_control_mode()
         self.machine.proceed()
         self.machine.execute()
 

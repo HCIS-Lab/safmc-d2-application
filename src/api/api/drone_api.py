@@ -18,7 +18,7 @@ from .api import Api
 
 class DroneApi(Api):
     def __init__(self, node: Node):
-        
+
         self.__clock: Clock = node.get_clock()
 
         # Initial Values
@@ -27,7 +27,6 @@ class DroneApi(Api):
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = NEDCoordinate(0, 0, 0)
 
-        # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -127,7 +126,7 @@ class DroneApi(Api):
         '''
         vehicle_command_msg = VehicleCommand()
         vehicle_command_msg.timestamp = self.__get_timestamp()
-        
+
         # command
         vehicle_command_msg.command = command
 
@@ -187,29 +186,30 @@ class DroneApi(Api):
         """
         self.__start_position = self.local_position
 
-    # TODO: 存在的意義?
     @property
     def start_position(self) -> NEDCoordinate:
+        """
+        The position of the drone at the moment of takeoff.
+        """
         return self.__start_position
-    
+
     def __get_timestamp(self) -> int:
-        return int(self.__clock.now().nanoseconds / 1000) # microseconds
+        return int(self.__clock.now().nanoseconds / 1000)  # microseconds
 
     def set_offboard_control_mode(self) -> None:
         """
-        TODO
+        Set the offboard control mode for the drone.
+
+        position = True
+        velocity = True
+        timestamp = current timestamp
+
+        ref: https://docs.px4.io/main/en/flight_modes/offboard.html#ros-2-messages
         """
         offboard_control_mode_msg = OffboardControlMode()
-        
-        offboard_control_mode_msg.position = True
-        offboard_control_mode_msg.velocity = True
-        offboard_control_mode_msg.acceleration = False
-        offboard_control_mode_msg.attitude = False
-        offboard_control_mode_msg.body_rate = False
         offboard_control_mode_msg.timestamp = self.__get_timestamp()
-        
+        offboard_control_mode_msg.position = True  # TrajectorySetpoint
         self.offboard_control_mode_pub.publish(offboard_control_mode_msg)
-
 
     def activate_offboard_control_mode(self) -> None:
         """
@@ -228,7 +228,7 @@ class DroneApi(Api):
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
     def move_to(self, position: NEDCoordinate):
-        
+
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
@@ -238,8 +238,7 @@ class DroneApi(Api):
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
-
-    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float): # TODO: rename
+    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float):
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
@@ -255,8 +254,6 @@ class DroneApi(Api):
             delta_time * velocity.z
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
-
-
 
     @deprecated
     def publish_goto_setpoint(self,

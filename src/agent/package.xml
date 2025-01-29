@@ -3,9 +3,10 @@
 <package format="3">
   <name>agent</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROS 2 package for controlling the drone in the SAFMC D2 competition. Runs on the
+    drone's Raspberry Pi, handling flight control and mission execution.</description>
   <maintainer email="efliao@cs.nycu.edu.tw">root</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Internal Use Only</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

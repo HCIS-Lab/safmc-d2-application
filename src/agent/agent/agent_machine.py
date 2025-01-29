@@ -3,8 +3,8 @@ from enum import Enum
 from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
-                            TakeoffBehavior, WaitBehavior, WalkToHotspotBehavior,
-                            WalkToSupplyBehavior)
+                            TakeoffBehavior, WaitBehavior,
+                            WalkToHotspotBehavior, WalkToSupplyBehavior)
 from api import DroneApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
@@ -33,15 +33,10 @@ transitions = [
 
 class AgentMachine(Machine):
     def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi):
-        
+
         self.logger = logger
 
-        def populate_triggers(transitions): # TODO: refactor function
-            for transition in transitions:
-                transition['trigger'] = transition['dest'].name.lower()
-            return transitions
-
-        # init behaviors
+        # behavior binding
         self.state_behavior_map = {
             States.IDLE: IdleBehavior(logger, drone_api),
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
@@ -52,31 +47,49 @@ class AgentMachine(Machine):
             States.DROP: DropBehavior(logger, magnet_api)
         }
 
-        # TODO
+        # add state on_enter/on_exit callback
+        states = [
+            {
+                'name': state_name,
+                'on_enter': getattr(behavior, 'on_enter', None),
+                'on_exit': getattr(behavior, 'on_exit', None)
+            }
+            for state_name, behavior in self.state_behavior_map.items()
+        ]
 
-        states = []
-        for state_name, behavior in self.state_behavior_map.items():
-            # Initialize behavior instance
-            state = {'name': state_name}
-            if hasattr(behavior, 'on_enter'):
-                state['on_enter'] = behavior.on_enter
-            if hasattr(behavior, 'on_exit'):
-                state['on_exit'] = behavior.on_exit
-            states.append(state)
+        def populate_triggers(transitions):
+            """
+            Adds a trigger for each transition based on the destination state.
+
+            The trigger name is the destination state converted to lowercase.
+
+            For example:
+            - States.TAKEOFF → "takeoff"
+            - States.WALK_TO_SUPPLY → "walk_to_supply"
+            """
+            return [
+                {**transition, 'trigger': transition['dest'].name.lower()}
+                for transition in transitions
+            ]
 
         super().__init__(self, states=states,
                          transitions=populate_triggers(transitions), initial=States.IDLE)
 
     def execute(self):
-        # 執行當前 state 任務 (一步)
+        """
+        Executes the behavior of the current state.
+        """
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             behavior.execute()
 
     def proceed(self):
-        # 根據條件判斷是否要 transition
+        """
+        Checks conditions and triggers state transitions.
+        """
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             if (next_state := behavior.get_next_state()):
                 self.trigger(next_state)
+                # TODO better log location?
                 self.logger.ori.info(f"current state: {self.state}")
