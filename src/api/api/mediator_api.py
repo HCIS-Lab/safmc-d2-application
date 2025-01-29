@@ -12,7 +12,6 @@ class MediatorApi(Api):
         self.drone_id = drone_id
         self.group_id = group_id
 
-        # TODO: qos_policy (Copied from autositter repo, might not fit this project)
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,

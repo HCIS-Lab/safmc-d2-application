@@ -1,6 +1,6 @@
-# SAFME D2 Application
+# SAFMC D2 Application
 
-ROS 2-based control system for the SAFMC D2, implementing the main flight logic.
+ROS 2-based control system for the SAFMC D2 competition, implementing the main flight logic.
 
 ## RUN
 
