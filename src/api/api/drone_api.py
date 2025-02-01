@@ -104,8 +104,13 @@ class DroneApi(Api):
     @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position - self.__origin
-
+    
+    @property
+    def heading(self) -> float:
+        return self.__heading
+    
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
+        self.__heading = vehicle_local_position_msg.heading
         self.__local_position = NEDCoordinate(
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
