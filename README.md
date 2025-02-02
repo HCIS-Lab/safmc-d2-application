@@ -5,6 +5,8 @@ ROS 2-based control system for the SAFMC D2 competition, implementing the main f
 ## RUN
 
 ```bash
+pip install -r requirements.txt
+
 git submodule update --init # px4_msgs
 
 colcon build

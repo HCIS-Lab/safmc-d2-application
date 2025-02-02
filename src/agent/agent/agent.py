@@ -12,13 +12,16 @@ class Agent(Node):
     def __init__(self):
         super().__init__('agent')
 
-        drone_id = get_parameter(self, 'drone_id', 0)
-        group_id = get_parameter(self, 'group_id', 0)
+        drone_id = get_parameter(self, 'drone_id', 1)
+        group_id = get_parameter(self, 'group_id', 1)
+        
+        print(drone_id)
+        print(group_id)
 
         # TODO: check param (drone_id, group_id) is unique (from mediator?)
 
         self.logger = Logger(self.get_logger(), self.get_clock())
-        self.drone_api = DroneApi(self)
+        self.drone_api = DroneApi(self, drone_id)
         self.mediator_api = MediatorApi(self, drone_id, group_id)
         self.magnet_api = MagnetApi(self)
 

@@ -17,7 +17,9 @@ from .api import Api
 
 
 class DroneApi(Api):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, drone_id: int):
+        
+        self.drone_id = drone_id
 
         self.__clock: Clock = node.get_clock()
 
@@ -35,15 +37,17 @@ class DroneApi(Api):
         )
 
         # Subscriptions
+        print(f"/px4_{self.drone_id}/fmu/out/vehicle_local_position")
+        
         self.vehicle_local_position_sub = node.create_subscription(
             VehicleLocalPosition,
-            "/fmu/out/vehicle_local_position",
+            f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
             self.__set_vehicle_local_position,
             qos_profile)
 
         self.vehicle_status_sub = node.create_subscription(
             VehicleStatus,
-            "/fmu/out/vehicle_status",
+            f"/px4_{self.drone_id}/fmu/out/vehicle_status",
             self.__set_vehicle_status,
             qos_profile
         )
@@ -51,31 +55,31 @@ class DroneApi(Api):
         # Publishers
         self.vehicle_command_pub = node.create_publisher(
             VehicleCommand,
-            "/fmu/in/vehicle_command",
+            f"/px4_{self.drone_id}/fmu/in/vehicle_command",
             qos_profile
         )
 
         self.offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode,
-            "/fmu/in/offboard_control_mode",
+            f"/px4_{self.drone_id}/fmu/in/offboard_control_mode",
             qos_profile
         )
 
         self.goto_setpoint_pub = node.create_publisher(
             GotoSetpoint,
-            "/fmu/in/goto_setpoint",
+            f"/px4_{self.drone_id}/fmu/in/goto_setpoint",
             qos_profile
         )
 
         self.goto_setpoint_pub = node.create_publisher(
             GotoSetpoint,
-            "/fmu/in/goto_setpoint",
+            f"/px4_{self.drone_id}/fmu/in/goto_setpoint",
             qos_profile
         )
 
         self.trajectory_setpoint_pub = node.create_publisher(
             TrajectorySetpoint,
-            "/fmu/in/trajectory_setpoint",
+            f"/px4_{self.drone_id}/fmu/in/trajectory_setpoint",
             qos_profile
         )
 
@@ -117,9 +121,9 @@ class DroneApi(Api):
         Generate the vehicle command.\n
         defaults:\n
             params[0:7] = 0
-            target_system = 1\n
+            target_system = self.drone_id - 1\n
             target_component = 1\n
-            source_system = 1\n
+            source_system = self.drone_id - 1\n
             source_component = 1\n
             from_external = True\n
             timestamp = int(timestamp / 1000)
@@ -136,10 +140,10 @@ class DroneApi(Api):
             setattr(vehicle_command_msg, f'param{i}', float(param))
 
         # defaults
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
+        vehicle_command_msg.target_system = self.drone_id - 1
+        vehicle_command_msg.target_component = 0 # all components
+        vehicle_command_msg.source_system = self.drone_id - 1
+        vehicle_command_msg.source_component = 0 # all components
         vehicle_command_msg.from_external = True
 
         # other kwargs
