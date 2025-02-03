@@ -5,8 +5,9 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from .api import Api
 
 class LidarApi(Api):
-    def __init__(self, node: Node, lidar_topic: str = '/lidar'):
+    def __init__(self, node: Node, drone_id: int):
         self.__node = node
+        self.drone_id = drone_id
         self.__lidar_ranges = []
         self.__angle_min = 0.0
         self.__angle_increment = 0.0
@@ -21,7 +22,7 @@ class LidarApi(Api):
 
         self.lidar_sub = node.create_subscription(
             LaserScan,
-            lidar_topic,
+            f"/world/safmc_d2/model/x500_safmc_d2_{self.drone_id}/link/lidar_2d_link/sensor/lidar_2d_sensor/scan",
             self.__set_lidar_status,
             qos_profile
         )

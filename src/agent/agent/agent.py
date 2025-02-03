@@ -21,7 +21,7 @@ class Agent(Node):
         self.drone_api = DroneApi(self)
         self.mediator_api = MediatorApi(self, drone_id, group_id)
         self.magnet_api = MagnetApi(self)
-        self.lidar_api = LidarApi(self)
+        self.lidar_api = LidarApi(self, drone_id)
         # machine
         self.machine = AgentMachine(
             self.logger, self.drone_api, self.magnet_api, self.mediator_api, self.lidar_api)
