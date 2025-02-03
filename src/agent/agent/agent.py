@@ -3,7 +3,7 @@ from rclpy.node import Node
 
 from agent.agent_machine import AgentMachine
 from agent.constants import DELTA_TIME
-from api import DroneApi, MagnetApi, MediatorApi
+from api import DroneApi, MagnetApi, MediatorApi, LidarApi
 from common.logger import Logger
 from common.parameters import get_parameter
 
@@ -24,10 +24,10 @@ class Agent(Node):
         self.drone_api = DroneApi(self, drone_id)
         self.mediator_api = MediatorApi(self, drone_id, group_id)
         self.magnet_api = MagnetApi(self)
-
+        self.lidar_api = LidarApi(self, drone_id)
         # machine
         self.machine = AgentMachine(
-            self.logger, self.drone_api, self.magnet_api, self.mediator_api)
+            self.logger, self.drone_api, self.magnet_api, self.mediator_api, self.lidar_api)
 
         self.timer = self.create_timer(DELTA_TIME, self.update)
 
