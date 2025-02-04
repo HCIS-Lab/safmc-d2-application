@@ -24,7 +24,7 @@ class ArucoTracker(Node):
         self.dist_coeffs = np.zeros((5, 1))
 
         # aruco實際大小
-        self.aruco_marker_size = 0.05
+        self.aruco_marker_size = 0.1
 
         # 距離誤差閾值
         self.target_tolerance = 0.1 
