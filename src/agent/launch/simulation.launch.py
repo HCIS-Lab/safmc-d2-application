@@ -22,7 +22,7 @@ def generate_launch_description():
         for i in range(NUM_DRONES)
     ]
 
-    # Node for the parameter_bridge
+    # Nodes for Gazebo-ROS2 bridge
     bridge_nodes = [
         Node(
             package='ros_gz_bridge',
