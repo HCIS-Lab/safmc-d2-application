@@ -2,9 +2,9 @@ from typing import Optional
 
 from agent.constants import DELTA_TIME, NAV_THRESHOLD
 from api import DroneApi, LidarApi
+from common.apf_navigator import ApfNavigator
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
-from common.apf_navigator import ApfNavigator
 
 from .behavior import Behavior
 

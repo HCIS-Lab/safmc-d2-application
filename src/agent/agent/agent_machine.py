@@ -5,7 +5,7 @@ from transitions import Machine
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToHotspotBehavior, WalkToSupplyBehavior)
-from api import DroneApi, MagnetApi, MediatorApi, LidarApi
+from api import DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
 

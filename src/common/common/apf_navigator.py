@@ -1,7 +1,9 @@
 # common/apf_navigator.py
 
 import math
+
 from common.ned_coordinate import NEDCoordinate
+
 
 class ApfNavigator:
 

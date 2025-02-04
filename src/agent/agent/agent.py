@@ -3,7 +3,7 @@ from rclpy.node import Node
 
 from agent.agent_machine import AgentMachine
 from agent.constants import DELTA_TIME
-from api import DroneApi, MagnetApi, MediatorApi, LidarApi
+from api import DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 from common.parameters import get_parameter
 
