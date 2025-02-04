@@ -26,6 +26,9 @@ class ArucoTracker(Node):
         # aruco實際大小
         self.aruco_marker_size = 0.05
 
+        # 距離誤差閾值
+        self.target_tolerance = 0.1 
+
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -36,10 +39,10 @@ class ArucoTracker(Node):
             target_x, target_y = tvecs[0][0][0], tvecs[0][0][1]
             twist_msg = Twist()
             
-            # 闕值內移動
-            if abs(target_x) > 0.1:
+            # 閾值內移動
+            if abs(target_x) > self.target_tolerance:
                 twist_msg.linear.x = -target_x  
-            if abs(target_y) > 0.1:
+            if abs(target_y) > self.target_tolerance:
                 twist_msg.linear.y = -target_y
             
             self.publisher.publish(twist_msg)
