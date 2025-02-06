@@ -39,6 +39,7 @@ class ApfNavigator:
         diff_3d = target_position - current_position
         f_att_x = self.k_att * diff_3d.x
         f_att_y = self.k_att * diff_3d.y
+        f_att_z = self.k_att * diff_3d.z
 
         # 2) 排斥力 F_rep (對每一點做疊加)
         f_rep_x = 0.0
@@ -64,13 +65,14 @@ class ApfNavigator:
         # 3) 合成速度並限幅
         fx = f_att_x + f_rep_x
         fy = f_att_y + f_rep_y
-        print("Attract Force:", f_att_x , f_att_y)
-        print("Repulse Force:", f_rep_x , f_rep_y)
-        speed_mag = math.sqrt(fx**2 + fy**2)
+        fz = f_att_z
+        print("Attract Force:", f_att_x , f_att_y, f_att_z)
+        print("Repulse Force:", f_rep_x , f_rep_y, 0.0)
+        speed_mag = math.sqrt(fx**2 + fy**2 + fz**2)
         if speed_mag > self.max_speed:
             scale = self.max_speed / speed_mag
             fx *= scale
             fy *= scale
+            # fz *= scale
 
-        # Z 軸暫時維持 0，不動垂直高度
-        return NEDCoordinate(fx, fy, 0.0)
+        return NEDCoordinate(fx, fy, fz)
