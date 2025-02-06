@@ -110,6 +110,10 @@ class DroneApi(Api):
         return self.__local_position - self.__origin
     
     @property
+    def home_position(self) -> NEDCoordinate:
+        return self.__home_position
+    
+    @property
     def heading(self) -> float:
         return self.__heading
     
@@ -119,6 +123,12 @@ class DroneApi(Api):
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
+        )
+    def __set_vehicle_local_position(self, vehicle_home_position_msg: NEDCoordinate):
+        self.__home_position = NEDCoordinate(
+            x=vehicle_home_position_msg.x,
+            y=vehicle_home_position_msg.y,
+            z=vehicle_home_position_msg.z
         )
 
     def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs):

@@ -3,6 +3,7 @@ from typing import Optional
 from api import DroneApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
+from agent.constants import TAKEOFF_HEIGHT
 
 from .behavior import Behavior
 
@@ -31,3 +32,4 @@ class IdleBehavior(Behavior):
     def on_exit(self):
         self.drone_api.reset_origin(NEDCoordinate(0, 0, 0)) # TODO
         self.drone_api.reset_start_position()
+        self.drone_api.home_position = self.drone_api.start_position - NEDCoordinate.down * TAKEOFF_HEIGHT
