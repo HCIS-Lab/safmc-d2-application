@@ -22,8 +22,6 @@ ros2 launch agent simulation.launch.py
 ros2 run mediator mediator
 ```
 
----
-
 ## Rviz2
 
 ### Arguments
