@@ -4,7 +4,7 @@ from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-                            WalkToHotspotBehavior, WalkToSupplyBehavior)
+                            WalkToHotspotBehavior, WalkToSupplyBehavior, BonusBehavior)
 from api import DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
@@ -17,6 +17,7 @@ class States(Enum):
     WALK_TO_HOTSPOT = 4
     WAIT = 5
     DROP = 6
+    BONUS = 7
 
 
 transitions = [
@@ -28,6 +29,7 @@ transitions = [
     {'source': States.WALK_TO_HOTSPOT, 'dest': States.WAIT},
     {'source': States.WAIT, 'dest': States.DROP},
     {'source': States.DROP, 'dest': States.WALK_TO_SUPPLY},
+    {'source': States.TAKEOFF, 'dest': States.BONUS}
 ]
 
 
@@ -44,7 +46,8 @@ class AgentMachine(Machine):
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
             States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api,lidar_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
-            States.DROP: DropBehavior(logger, magnet_api)
+            States.DROP: DropBehavior(logger, magnet_api),
+            States.BONUS: BonusBehavior(logger, drone_api, lidar_api)
         }
 
         # add state on_enter/on_exit callback

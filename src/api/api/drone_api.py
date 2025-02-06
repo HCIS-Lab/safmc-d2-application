@@ -71,12 +71,6 @@ class DroneApi(Api):
             qos_profile
         )
 
-        self.goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint,
-            f"/px4_{self.drone_id}/fmu/in/goto_setpoint",
-            qos_profile
-        )
-
         self.trajectory_setpoint_pub = node.create_publisher(
             TrajectorySetpoint,
             f"/px4_{self.drone_id}/fmu/in/trajectory_setpoint",
@@ -269,7 +263,7 @@ class DroneApi(Api):
             delta_time * velocity.x
         trajectory_setpoint_msg.position[1] = self.local_position.y + \
             delta_time * velocity.y
-        trajectory_setpoint_msg.position[2] = self.local_position.z + \
+        trajectory_setpoint_msg.position[2] = self.home_position.z + \
             delta_time * velocity.z
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
