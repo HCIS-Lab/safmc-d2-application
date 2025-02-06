@@ -24,6 +24,25 @@ ros2 run mediator mediator
 
 ---
 
+## Rviz2
+
+### Arguments
+- drone_id: 1~4
+- view_mode: lidar/camera
+
+```bash
+colcon build
+source install/setup.bash
+
+# for lidar
+ros2 launch agent rviz.launch.py drone_id:=1 view_mode:=lidar
+
+# for camera
+ros2 launch agent rviz.launch.py drone_id:=1 view_mode:=camera
+```
+
+---
+
 ## 補充
 
 ```bash
