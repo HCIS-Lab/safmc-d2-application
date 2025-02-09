@@ -15,7 +15,7 @@ class BonusBehavior(Behavior):
         super().__init__(logger)
         self.drone_api = drone_api
         self.lidar_api = lidar_api
-        self.bug_navigator = bugNavigator(0.5)
+        self.bug_navigator = bugNavigator(0.7)
 
     def on_enter(self):
         self.target_position: NEDCoordinate = NEDCoordinate(17, 8, self.drone_api.home_position.z)

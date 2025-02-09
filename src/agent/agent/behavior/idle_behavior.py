@@ -32,4 +32,3 @@ class IdleBehavior(Behavior):
     def on_exit(self):
         self.drone_api.reset_origin(NEDCoordinate(0, 0, 0)) # TODO
         self.drone_api.reset_start_position()
-        self.drone_api.home_position = self.drone_api.start_position - NEDCoordinate.down * TAKEOFF_HEIGHT

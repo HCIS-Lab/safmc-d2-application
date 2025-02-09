@@ -9,6 +9,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
+from agent.constants import TAKEOFF_HEIGHT
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
@@ -28,6 +29,7 @@ class DroneApi(Api):
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = NEDCoordinate(0, 0, 0)
+        self.__local_position = NEDCoordinate(0, 0, 0)
 
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
@@ -118,12 +120,6 @@ class DroneApi(Api):
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
         )
-    def __set_vehicle_local_position(self, vehicle_home_position_msg: NEDCoordinate):
-        self.__home_position = NEDCoordinate(
-            x=vehicle_home_position_msg.x,
-            y=vehicle_home_position_msg.y,
-            z=vehicle_home_position_msg.z
-        )
 
     def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs):
         '''
@@ -198,6 +194,7 @@ class DroneApi(Api):
         Resets the starting position to the current local position.
         """
         self.__start_position = self.local_position
+        self.__home_position = self.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
     @property
     def start_position(self) -> NEDCoordinate:
