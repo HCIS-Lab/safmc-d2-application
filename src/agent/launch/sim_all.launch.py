@@ -1,10 +1,9 @@
-import launch
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-
-
 import os
+
+import launch
 from ament_index_python.packages import get_package_share_directory
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
@@ -36,7 +35,7 @@ def generate_launch_description():
         declared_args +
         [
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sim_bridge.launch.py'))
+                PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sim_bridge.launch.py')) # TODO deprecated
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sim_agent.launch.py'))

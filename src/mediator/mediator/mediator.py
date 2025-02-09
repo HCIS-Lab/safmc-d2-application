@@ -4,16 +4,15 @@
 # TODO refactor
 # TODO log
 # TODO timestamp (如果真的沒用就移除)
+# TODO 區分清楚 public/private property
 
 import rclpy
+from geometry_msgs.msg import Point
 from rclpy.node import Node
 from std_msgs.msg import Bool
-from agent_msgs.msg import (
-    AgentInfo,
-    AgentStatus,
-    SupplyZoneInfo,
-    DropZoneInfo,
-)
+
+from agent_msgs.msg import AgentInfo, AgentStatus, DropZoneInfo, SupplyZoneInfo
+from common.ned_coordinate import NEDCoordinate
 
 
 class Metiator(Node):
@@ -26,7 +25,28 @@ class Metiator(Node):
         self.group = [-1, -1, -1, -1]
         self.state = [-1, -1, -1, -1]
 
+        self.__model_positions = {
+            "blue_supply_zone": NEDCoordinate(),
+            "green_supply_zone": NEDCoordinate(),
+            "drop_zone_1": NEDCoordinate(),
+            "drop_zone_2": NEDCoordinate(),
+            "drop_zone_3": NEDCoordinate(),
+            "drop_zone_4": NEDCoordinate(),
+            "x500_safmc_d2_1": NEDCoordinate(),
+            "x500_safmc_d2_2": NEDCoordinate(),
+            "x500_safmc_d2_3": NEDCoordinate(),
+            "x500_safmc_d2_4": NEDCoordinate()
+        }
+
         # subscriptions
+        for model_name in self.__model_positions:
+            self.create_subscription(
+                Point,
+                f"/position/{model_name}",
+                lambda msg, model_name: self.__set_model_position(model_name, msg),
+                10
+            )
+
         self.online_sub = self.create_subscription(
             AgentInfo,
             '/mediator/online',
@@ -84,6 +104,11 @@ class Metiator(Node):
                 f"/agent_{i+1}/drop",
                 10
             )
+
+    def __set_model_position(self, model_name: str, msg: Point):
+        self.__model_positions[model_name].x = msg.x
+        self.__model_positions[model_name].y = msg.y
+        self.__model_positions[model_name].z = -msg.z
 
     def __set_online(self, agent_info_msg):
         index = agent_info_msg.drone_id - 1

@@ -1,4 +1,5 @@
 # TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
+# TODO 大部分 sub 好像不用特別用 _sub 來儲存...
 
 from typing import Optional
 
@@ -18,7 +19,7 @@ from .api import Api
 
 class DroneApi(Api):
     def __init__(self, node: Node, drone_id: int):
-        
+
         self.drone_id = drone_id
 
         self.__clock: Clock = node.get_clock()
@@ -38,7 +39,7 @@ class DroneApi(Api):
 
         # Subscriptions
         print(f"/px4_{self.drone_id}/fmu/out/vehicle_local_position")
-        
+
         self.vehicle_local_position_sub = node.create_subscription(
             VehicleLocalPosition,
             f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
@@ -108,11 +109,11 @@ class DroneApi(Api):
     @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position - self.__origin
-    
+
     @property
     def heading(self) -> float:
         return self.__heading
-    
+
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
         self.__heading = vehicle_local_position_msg.heading
         self.__local_position = NEDCoordinate(
@@ -146,9 +147,9 @@ class DroneApi(Api):
 
         # defaults
         vehicle_command_msg.target_system = self.drone_id - 1
-        vehicle_command_msg.target_component = 0 # all components
+        vehicle_command_msg.target_component = 0  # all components
         vehicle_command_msg.source_system = self.drone_id - 1
-        vehicle_command_msg.source_component = 0 # all components
+        vehicle_command_msg.source_component = 0  # all components
         vehicle_command_msg.from_external = True
 
         # other kwargs
