@@ -16,7 +16,10 @@ colcon build
 source install/setup.bash
 
 # for agent
-ros2 launch agent simulation.launch.py
+ros2 launch agent sim_all.launch.py         num_drones:=4 drone_id:=1 view_mode:=lidar
+# ros2 launch agent sim_bridge.launch.py    num_drones:=4
+# ros2 launch agent sim_agent.launch.py     num_drones:=4
+# ros2 launch agent sim_rviz.launch.py      drone_id:=1 view_mode:=lidar
 
 # for mediator
 ros2 run mediator mediator
@@ -26,12 +29,10 @@ ros2 run mediator mediator
 
 ## 補充
 
-```bash
-colcon build
-source install/setup.bash
-ros2 run agent agent
-ros2 run mediator mediator
-```
+### Gazebo-ROS2 bridge
+
+> [!IMPORTANT]  
+> 如果是使用前面提到的 launch file 執行, 就不需要跑這些指令了!
 
 ```bash
 # ref: https://github.com/gazebosim/ros_gz/blob/ros2/ros_gz_bridge/README.md
@@ -62,3 +63,7 @@ ros2 run ros_gz_bridge parameter_bridge \
 /world/safmc_d2/model/x500_safmc_d2_4/link/pi3_cam_link/sensor/pi3_cam_sensor/image@sensor_msgs/msg/Image[gz.msgs.Image \
 /world/safmc_d2/model/x500_safmc_d2_4/link/pi3_cam_link/sensor/pi3_cam_sensor/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo \
 ```
+
+## 參考
+
+- [Launch file 撰寫](https://docs.ros.org/en/humble/Tutorials/Intermediate/Launch/Using-ROS2-Launch-For-Large-Projects.html)
