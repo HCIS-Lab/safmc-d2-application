@@ -32,7 +32,7 @@ class WalkToSupplyBehavior(Behavior):
         # 往 target_position 移動, 速度大小是 self.speed
         dist = NEDCoordinate.distance(current_location, self.target_position)
         vel = (self.target_position - current_location).normalized * min(self.speed, dist)
-        self.drone_api.move_with_velocity(vel, DELTA_TIME)
+        self.drone_api.move_with_velocity(vel)
 
         if NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
             # 回頭 (A to B or B to A)
