@@ -239,29 +239,26 @@ class DroneApi(Api):
 
     def move_to(self, position: NEDCoordinate):
 
-        trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = self.__get_timestamp()
 
-        trajectory_setpoint_msg.position[0] = position.x
-        trajectory_setpoint_msg.position[1] = position.y
-        trajectory_setpoint_msg.position[2] = position.z
+        goto_setpoint_msg.position[0] = position.x
+        goto_setpoint_msg.position[1] = position.y
+        goto_setpoint_msg.position[2] = position.z
 
-        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+        self.goto_setpoint_pub.publish(goto_setpoint_msg)
 
-    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float):
+    def move_with_velocity(self, velocity: NEDCoordinate):
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
         trajectory_setpoint_msg.velocity[0] = velocity.x
         trajectory_setpoint_msg.velocity[1] = velocity.y
         trajectory_setpoint_msg.velocity[2] = velocity.z
-
-        trajectory_setpoint_msg.position[0] = self.local_position.x + \
-            delta_time * velocity.x
-        trajectory_setpoint_msg.position[1] = self.local_position.y + \
-            delta_time * velocity.y
-        trajectory_setpoint_msg.position[2] = self.local_position.z + \
-            delta_time * velocity.z
+        
+        trajectory_setpoint_msg.position[0] = None
+        trajectory_setpoint_msg.position[1] = None
+        trajectory_setpoint_msg.position[2] = None
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
