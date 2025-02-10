@@ -58,10 +58,11 @@ class AlignToSupplyBehavior(Behavior): # 精準定位
         pass
 
     def execute(self):
-        # TODO: 依照 Aruco Marker 精準定位
         # 目前想法是依照 Aruco node 的資訊做 move with velocity
         # Aruco node 的回傳是無人機要移動到 Aruco marker 的距離
-        pass 
+        vel_tuple = [(self.vel_factor * coord) if coord >= self.dist_threshold else 0 for coord in self.drone_api.get_aruco_point_sub()]
+        vel = NEDCoordinate(vel_tuple[0], vel_tuple[1], vel_tuple[2])
+        self.drone_api.move_with_velocity(vel)
 
 
     def get_next_state(self) -> Optional[str]:
