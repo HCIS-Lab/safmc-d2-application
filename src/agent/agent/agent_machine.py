@@ -4,9 +4,14 @@ from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
+<<<<<<< HEAD
                             WalkToHotspotBehavior, WalkToSupplyBehavior, 
                             AlignToHotspotBehavior, AlignToSupplyBehavior)
 from api import DroneApi, MagnetApi, MediatorApi
+=======
+                            WalkToHotspotBehavior, WalkToSupplyBehavior)
+from api import DroneApi, LidarApi, MagnetApi, MediatorApi
+>>>>>>> origin/phase1
 from common.logger import Logger
 
 
@@ -37,7 +42,7 @@ transitions = [
 
 
 class AgentMachine(Machine):
-    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi,lidar_api: LidarApi):
 
         self.logger = logger
 
@@ -47,7 +52,7 @@ class AgentMachine(Machine):
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api),
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api,lidar_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
             States.DROP: DropBehavior(logger, magnet_api),
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api),

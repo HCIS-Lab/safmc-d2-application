@@ -19,7 +19,9 @@ from .api import Api
 
 
 class DroneApi(Api):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, drone_id: int):
+        
+        self.drone_id = drone_id
 
         self.__clock: Clock = node.get_clock()
 
@@ -37,15 +39,17 @@ class DroneApi(Api):
         )
 
         # Subscriptions
+        print(f"/px4_{self.drone_id}/fmu/out/vehicle_local_position")
+        
         self.vehicle_local_position_sub = node.create_subscription(
             VehicleLocalPosition,
-            "/fmu/out/vehicle_local_position",
+            f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
             self.__set_vehicle_local_position,
             qos_profile)
 
         self.vehicle_status_sub = node.create_subscription(
             VehicleStatus,
-            "/fmu/out/vehicle_status",
+            f"/px4_{self.drone_id}/fmu/out/vehicle_status",
             self.__set_vehicle_status,
             qos_profile
         )
@@ -60,31 +64,31 @@ class DroneApi(Api):
         # Publishers
         self.vehicle_command_pub = node.create_publisher(
             VehicleCommand,
-            "/fmu/in/vehicle_command",
+            f"/px4_{self.drone_id}/fmu/in/vehicle_command",
             qos_profile
         )
 
         self.offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode,
-            "/fmu/in/offboard_control_mode",
+            f"/px4_{self.drone_id}/fmu/in/offboard_control_mode",
             qos_profile
         )
 
         self.goto_setpoint_pub = node.create_publisher(
             GotoSetpoint,
-            "/fmu/in/goto_setpoint",
+            f"/px4_{self.drone_id}/fmu/in/goto_setpoint",
             qos_profile
         )
 
         self.goto_setpoint_pub = node.create_publisher(
             GotoSetpoint,
-            "/fmu/in/goto_setpoint",
+            f"/px4_{self.drone_id}/fmu/in/goto_setpoint",
             qos_profile
         )
 
         self.trajectory_setpoint_pub = node.create_publisher(
             TrajectorySetpoint,
-            "/fmu/in/trajectory_setpoint",
+            f"/px4_{self.drone_id}/fmu/in/trajectory_setpoint",
             qos_profile
         )
 
@@ -126,8 +130,13 @@ class DroneApi(Api):
     @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position - self.__origin
-
+    
+    @property
+    def heading(self) -> float:
+        return self.__heading
+    
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
+        self.__heading = vehicle_local_position_msg.heading
         self.__local_position = NEDCoordinate(
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
@@ -139,9 +148,9 @@ class DroneApi(Api):
         Generate the vehicle command.\n
         defaults:\n
             params[0:7] = 0
-            target_system = 1\n
+            target_system = self.drone_id - 1\n
             target_component = 1\n
-            source_system = 1\n
+            source_system = self.drone_id - 1\n
             source_component = 1\n
             from_external = True\n
             timestamp = int(timestamp / 1000)
@@ -158,10 +167,10 @@ class DroneApi(Api):
             setattr(vehicle_command_msg, f'param{i}', float(param))
 
         # defaults
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
+        vehicle_command_msg.target_system = self.drone_id - 1
+        vehicle_command_msg.target_component = 0 # all components
+        vehicle_command_msg.source_system = self.drone_id - 1
+        vehicle_command_msg.source_component = 0 # all components
         vehicle_command_msg.from_external = True
 
         # other kwargs
@@ -251,29 +260,26 @@ class DroneApi(Api):
 
     def move_to(self, position: NEDCoordinate):
 
-        trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = self.__get_timestamp()
 
-        trajectory_setpoint_msg.position[0] = position.x
-        trajectory_setpoint_msg.position[1] = position.y
-        trajectory_setpoint_msg.position[2] = position.z
+        goto_setpoint_msg.position[0] = position.x
+        goto_setpoint_msg.position[1] = position.y
+        goto_setpoint_msg.position[2] = position.z
 
-        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+        self.goto_setpoint_pub.publish(goto_setpoint_msg)
 
-    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float):
+    def move_with_velocity(self, velocity: NEDCoordinate):
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
         trajectory_setpoint_msg.velocity[0] = velocity.x
         trajectory_setpoint_msg.velocity[1] = velocity.y
         trajectory_setpoint_msg.velocity[2] = velocity.z
-
-        trajectory_setpoint_msg.position[0] = self.local_position.x + \
-            delta_time * velocity.x
-        trajectory_setpoint_msg.position[1] = self.local_position.y + \
-            delta_time * velocity.y
-        trajectory_setpoint_msg.position[2] = self.local_position.z + \
-            delta_time * velocity.z
+        
+        trajectory_setpoint_msg.position[0] = None
+        trajectory_setpoint_msg.position[1] = None
+        trajectory_setpoint_msg.position[2] = None
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
