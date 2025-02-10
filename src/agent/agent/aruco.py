@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Point
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
@@ -14,7 +14,7 @@ class ArucoTracker(Node):
             '/camera/image_raw',
             self.image_callback,
             10)
-        self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.publisher = self.create_publisher(Point, '/cmd_vel', 10)
         self.bridge = CvBridge()
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
         self.parameters = cv2.aruco.DetectorParameters()
@@ -37,15 +37,13 @@ class ArucoTracker(Node):
         if ids is not None:
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, self.aruco_marker_size, self.camera_matrix, self.dist_coeffs)
             target_x, target_y = tvecs[0][0][0], tvecs[0][0][1]
-            twist_msg = Twist()
+            point_msg = Point()
             
-            # 閾值內移動
-            if abs(target_x) > self.target_tolerance:
-                twist_msg.linear.x = -target_x  
-            if abs(target_y) > self.target_tolerance:
-                twist_msg.linear.y = -target_y
+            point_msg.x = -target_x  
+            point_msg.y = -target_y
+            point_msg.z = 0
             
-            self.publisher.publish(twist_msg)
+            self.publisher.publish(point_msg)
 
 
 def main(args=None):

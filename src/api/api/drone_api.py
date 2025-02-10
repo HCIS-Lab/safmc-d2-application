@@ -7,7 +7,7 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Point
 
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
@@ -51,9 +51,9 @@ class DroneApi(Api):
         )
 
         self.aruco_align_velocity_sub = node.create_subscription(
-            Twist,
+            Point,
             '/cmd_vel',
-            self.__twist_callback,
+            self.__aruco_point_callback,
             10
         )
 
@@ -110,14 +110,14 @@ class DroneApi(Api):
     def reset_origin(self, origin: NEDCoordinate):
         self.__origin = origin
 
-    def __twist_callback(self, twist_msg):
-        self.__twists_vector = (twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z)
+    def __aruco_point_callback(self, point_msg):
+        self.__aruco_point_vector = (point_msg.x, point_msg.y, point_msg.z)
 
-    def get_twist(self):
-        if hasattr(self, '_DroneApi__twists_vector'):
-            return self.__twists_vector
+    def get_aruco_point_sub(self):
+        if hasattr(self, '_DroneApi__aruco_point_vector'):
+            return self.__aruco_point_vector
         else:
-            print('twist vector not found, return zero vector instead')
+            print('point vector not found, return zero vector instead')
             return (0, 0, 0)
             
 
