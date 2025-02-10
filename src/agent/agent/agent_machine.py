@@ -4,14 +4,9 @@ from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-<<<<<<< HEAD
                             WalkToHotspotBehavior, WalkToSupplyBehavior, 
                             AlignToHotspotBehavior, AlignToSupplyBehavior)
-from api import DroneApi, MagnetApi, MediatorApi
-=======
-                            WalkToHotspotBehavior, WalkToSupplyBehavior)
 from api import DroneApi, LidarApi, MagnetApi, MediatorApi
->>>>>>> origin/phase1
 from common.logger import Logger
 
 
