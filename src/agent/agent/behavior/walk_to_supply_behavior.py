@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import DELTA_TIME, NAV_THRESHOLD
-from api import DroneApi
+from api import DroneApi, MediatorApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
 
@@ -10,16 +10,17 @@ from .behavior import Behavior
 
 class WalkToSupplyBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi):
         super().__init__(logger)
         self.drone_api = drone_api
+        self.mediator_api = mediator_api
         self.speed: float = 0.5
 
     def on_enter(self):
 
         # TODO supply zone 的兩端點位置如何決定?
-        self.point_a: NEDCoordinate = NEDCoordinate(1, 1, self.drone_api.local_position.z)
-        self.point_b: NEDCoordinate = NEDCoordinate(1, 7, self.drone_api.local_position.z)
+        self.point_a: NEDCoordinate = NEDCoordinate(self.mediator_api.supply_zone[0])
+        self.point_b: NEDCoordinate = NEDCoordinate(self.mediator_api.supply_zone[1])
 
         self.target_position: NEDCoordinate = self.point_a
 

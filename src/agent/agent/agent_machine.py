@@ -4,23 +4,25 @@ from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-                            WalkToHotspotBehavior, WalkToSupplyBehavior)
+                            WalkToHotspotBehavior, WalkToSupplyBehavior, ArmBehavior)
 from api import DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
 
 class States(Enum):
     IDLE = 0
-    TAKEOFF = 1
-    WALK_TO_SUPPLY = 2
-    LOAD = 3
-    WALK_TO_HOTSPOT = 4
-    WAIT = 5
-    DROP = 6
+    ARM = 1
+    TAKEOFF = 2
+    WALK_TO_SUPPLY = 3
+    LOAD = 4
+    WALK_TO_HOTSPOT = 5
+    WAIT = 6
+    DROP = 7
 
 
 transitions = [
-    {'source': States.IDLE, 'dest': States.TAKEOFF},
+    {'source': States.IDLE, 'dest': States.ARM},
+    {'source': States.ARM, 'dest': States.TAKEOFF},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.WALK_TO_SUPPLY, 'dest': States.LOAD},
@@ -38,9 +40,10 @@ class AgentMachine(Machine):
 
         # behavior binding
         self.state_behavior_map = {
-            States.IDLE: IdleBehavior(logger, drone_api),
+            States.IDLE: IdleBehavior(logger, drone_api, mediator_api),
+            States.ARM: ArmBehavior(logger, drone_api, mediator_api),
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, mediator_api),
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
             States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api,lidar_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),

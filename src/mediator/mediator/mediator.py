@@ -14,28 +14,31 @@ from std_msgs.msg import Bool
 from agent_msgs.msg import AgentInfo, AgentStatus, DropZoneInfo, SupplyZoneInfo
 from common.ned_coordinate import NEDCoordinate
 
+from functools import partial
 
-class Metiator(Node):
+
+class Mediator(Node):
 
     def __init__(self):
-        super().__init__('metiator')
+        super().__init__('mediator')
 
         self.online = [False, False, False, False]  # 無人機是否在線上
+        self.armed = [False, False, False, False]
         self.wait = [False, False, False, False]  # 無人機是否在 Hotspot 正上方等待了
         self.group = [-1, -1, -1, -1]
         self.state = [-1, -1, -1, -1]
 
         self.__model_positions = {
-            "blue_supply_zone": NEDCoordinate(),
-            "green_supply_zone": NEDCoordinate(),
-            "drop_zone_1": NEDCoordinate(),
-            "drop_zone_2": NEDCoordinate(),
-            "drop_zone_3": NEDCoordinate(),
-            "drop_zone_4": NEDCoordinate(),
-            "x500_safmc_d2_1": NEDCoordinate(),
-            "x500_safmc_d2_2": NEDCoordinate(),
-            "x500_safmc_d2_3": NEDCoordinate(),
-            "x500_safmc_d2_4": NEDCoordinate()
+            "blue_supply_zone": NEDCoordinate(0, 0, 0),
+            "green_supply_zone": NEDCoordinate(0, 0, 0),
+            "drop_zone_1": NEDCoordinate(0, 0, 0),
+            "drop_zone_2": NEDCoordinate(0, 0, 0),
+            "drop_zone_3": NEDCoordinate(0, 0, 0),
+            "drop_zone_4": NEDCoordinate(0, 0, 0),
+            "x500_safmc_d2_1": NEDCoordinate(0, 0, 0),
+            "x500_safmc_d2_2": NEDCoordinate(0, 0, 0),
+            "x500_safmc_d2_3": NEDCoordinate(0, 0, 0),
+            "x500_safmc_d2_4": NEDCoordinate(0, 0, 0)
         }
 
         # subscriptions
@@ -43,7 +46,7 @@ class Metiator(Node):
             self.create_subscription(
                 Point,
                 f"/position/{model_name}",
-                lambda msg, model_name: self.__set_model_position(model_name, msg),
+                partial(self.__set_model_position, model_name),
                 10
             )
 
@@ -51,6 +54,13 @@ class Metiator(Node):
             AgentInfo,
             '/mediator/online',
             self.__set_online,
+            10
+        )
+
+        self.online_sub = self.create_subscription(
+            AgentInfo,
+            '/mediator/armed',
+            self.__set_armed,
             10
         )
 
@@ -76,11 +86,18 @@ class Metiator(Node):
         )
 
         # publishers
+        self.arm_pubs = [None] * 4
         self.takeoff_pubs = [None] * 4
         self.supply_zone_pubs = [None] * 4
         self.drop_zone_pubs = [None] * 4
         self.drop_pubs = [None] * 4
         for i in range(4):
+            self.arm_pubs[i] = self.create_publisher(
+                Bool,
+                f"/agent_{i+1}/arm",
+                10
+            )
+
             self.takeoff_pubs[i] = self.create_publisher(
                 Bool,
                 f"/agent_{i+1}/takeoff",
@@ -99,7 +116,7 @@ class Metiator(Node):
                 10
             )
 
-            self.drop_pubs[i] = self.create_subscription(
+            self.drop_pubs[i] = self.create_publisher(
                 Bool,
                 f"/agent_{i+1}/drop",
                 10
@@ -122,6 +139,19 @@ class Metiator(Node):
         # 全部都上線了
         bool_msg = Bool()
         bool_msg.data = True
+        self.arm_pubs[index].publish(bool_msg)
+
+    def __set_armed(self, agent_info_msg):
+        index = agent_info_msg.drone_id - 1
+        self.armed[index] = True
+
+        for i in range(4):
+            if self.armed[i] == False:
+                return
+
+        # 全部都armed了
+        bool_msg = Bool()
+        bool_msg.data = True
         self.takeoff_pubs[index].publish(bool_msg)
 
     def __set_status(self, agent_status_msg):
@@ -140,8 +170,14 @@ class Metiator(Node):
             # TODO 持續校正 heading
             # TODO supply zone position (global -> local)
             supply_zone_msg = SupplyZoneInfo()
-            supply_zone_msg.position1 = [0, 0, 0]
-            supply_zone_msg.position2 = [0, 0, 0]
+            if index % 2 == 0:
+                green_supply_zone = self.__model_positions["green_supply_zone"]
+                supply_zone_msg.position1 = [green_supply_zone.x - 3, green_supply_zone.y, green_supply_zone]
+                supply_zone_msg.position2 = [green_supply_zone.x + 3, green_supply_zone.y, green_supply_zone]
+            else:
+                blue_supply_zone = self.__model_positions["blue_supply_zone"]
+                supply_zone_msg.position1 = [blue_supply_zone.x - 3, blue_supply_zone.y, blue_supply_zone]
+                supply_zone_msg.position2 = [blue_supply_zone.x + 3, blue_supply_zone.y, blue_supply_zone]
             supply_zone_msg.aruco_marker_id = 0
             self.supply_zone_pubs[index].publish(supply_zone_msg)
         elif self.state[index] == 8 or self.state[index] == 9:
@@ -188,12 +224,12 @@ class Metiator(Node):
 def main(args=None):
 
     rclpy.init(args=args)
-    metiator = Metiator()
+    mediator = Mediator()
 
     try:
-        rclpy.spin(metiator)
+        rclpy.spin(mediator)
     finally:
-        metiator.destroy_node()
+        mediator.destroy_node()
         rclpy.shutdown()
 
 

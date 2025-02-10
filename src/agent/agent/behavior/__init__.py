@@ -1,6 +1,7 @@
 from .behavior import Behavior
 from .drop_behavior import DropBehavior
 from .idle_behavior import IdleBehavior
+from .arm_behavior import ArmBehavior
 from .load_behavior import LoadBehavior
 from .takeoff_behavior import TakeoffBehavior
 from .wait_behavior import WaitBehavior
