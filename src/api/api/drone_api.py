@@ -7,6 +7,8 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
+from geometry_msgs.msg import Twist
+
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
@@ -46,6 +48,13 @@ class DroneApi(Api):
             "/fmu/out/vehicle_status",
             self.__set_vehicle_status,
             qos_profile
+        )
+
+        self.aruco_align_velocity_sub = node.create_subscription(
+            Twist,
+            '/cmd_vel',
+            self.__twist_callback,
+            10
         )
 
         # Publishers
@@ -100,6 +109,19 @@ class DroneApi(Api):
 
     def reset_origin(self, origin: NEDCoordinate):
         self.__origin = origin
+
+    def __twist_callback(self, twist_msg):
+        self.__twists_vector = (twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z)
+
+    def get_twist(self):
+        if hasattr(self, '_DroneApi__twists_vector'):
+            return self.__twists_vector
+        else:
+            print('twist vector not found, return zero vector instead')
+            return (0, 0, 0)
+            
+
+
 
     @property
     def local_position(self) -> NEDCoordinate:

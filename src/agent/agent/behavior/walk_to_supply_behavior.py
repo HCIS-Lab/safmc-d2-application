@@ -68,10 +68,11 @@ class AlignToSupplyBehavior(Behavior): # 精準定位
         self.logger.info(f"current position: {current_location}")
 
         # TODO: 依照 Aruco Marker 精準定位
+        # 目前想法是依照 Aruco node 的資訊做 move with velocity 
 
 
     def get_next_state(self) -> Optional[str]:
-        if False: # TODO: 如果定位已經完成了
+        if self.drone_api.get_twist() == (0, 0, 0): # 如果定位已經完成了，aruco node 傳回的速度向量為零
             return "load" # 拿東西
         return None
 
