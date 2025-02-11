@@ -39,9 +39,6 @@ class ArucoTracker(Node):
         # aruco實際大小
         self.aruco_marker_size = 0.1
 
-        # 距離誤差閾值
-        self.target_tolerance = 0.1 
-
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
