@@ -4,5 +4,7 @@ from .idle_behavior import IdleBehavior
 from .load_behavior import LoadBehavior
 from .takeoff_behavior import TakeoffBehavior
 from .wait_behavior import WaitBehavior
-from .walk_to_hotspot_behavior import WalkToHotspotBehavior, AlignToHotspotBehavior
-from .walk_to_supply_behavior import WalkToSupplyBehavior, AlignToSupplyBehavior
+from .walk_to_hotspot_behavior import (AlignToHotspotBehavior,
+                                       WalkToHotspotBehavior)
+from .walk_to_supply_behavior import (AlignToSupplyBehavior,
+                                      WalkToSupplyBehavior)

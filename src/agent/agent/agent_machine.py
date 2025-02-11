@@ -2,10 +2,10 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
+                            Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-                            WalkToHotspotBehavior, WalkToSupplyBehavior, 
-                            AlignToHotspotBehavior, AlignToSupplyBehavior)
+                            WalkToHotspotBehavior, WalkToSupplyBehavior)
 from api import DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
