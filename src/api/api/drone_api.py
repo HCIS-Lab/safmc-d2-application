@@ -15,6 +15,7 @@ from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 
+from agent_msgs.msg import ArucoInfo
 from .api import Api
 
 
@@ -55,9 +56,9 @@ class DroneApi(Api):
         )
 
         self.aruco_align_velocity_sub = node.create_subscription(
-            Point,
+            ArucoInfo,
             '/cmd_vel',
-            self.__aruco_point_callback,
+            self.__aruco_info_callback,
             10
         )
 
@@ -114,15 +115,15 @@ class DroneApi(Api):
     def reset_origin(self, origin: NEDCoordinate):
         self.__origin = origin
 
-    def __aruco_point_callback(self, point_msg):
-        self.__aruco_point_vector = (point_msg.x, point_msg.y, point_msg.z)
+    def __aruco_info_callback(self, info_msg):
+        self.__aruco_info_vector = (info_msg.id, info_msg.x, info_msg.y)
 
-    def get_aruco_point_sub(self):
-        if hasattr(self, '_DroneApi__aruco_point_vector'):
-            return self.__aruco_point_vector
+    def get_aruco_info_sub(self):
+        if hasattr(self, '_DroneApi__aruco_info_vector'):
+            return self.__aruco_info_vector
         else:
-            print('point vector not found, return zero vector instead')
-            return (0, 0, 0)
+            print('aurco info vector not found, return dummy return instead')
+            return (-1, 0, 0)
             
 
 

@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 from cv_bridge import CvBridge
 
+from agent_msgs.msg import ArucoInfo
+
 class ArucoTracker(Node):
     def __init__(self):
         super().__init__('aruco_tracker')
@@ -14,7 +16,7 @@ class ArucoTracker(Node):
             '/camera/image_raw',
             self.image_callback,
             10)
-        self.publisher = self.create_publisher(Point, '/cmd_vel', 10)
+        self.publisher = self.create_publisher(ArucoInfo, '/cmd_vel', 10)
         self.bridge = CvBridge()
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
         self.parameters = cv2.aruco.DetectorParameters()
@@ -34,16 +36,20 @@ class ArucoTracker(Node):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         corners, ids, _ = cv2.aruco.detectMarkers(gray, self.dictionary, parameters=self.parameters)
 
+        aruco_msg = ArucoInfo()
+        aruco_msg.id = -1
+        aruco_msg.x = 0
+        aruco_msg.y = 0
+
         if ids is not None:
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, self.aruco_marker_size, self.camera_matrix, self.dist_coeffs)
             target_x, target_y = tvecs[0][0][0], tvecs[0][0][1]
-            point_msg = Point()
             
-            point_msg.x = -target_x  
-            point_msg.y = -target_y
-            point_msg.z = 0
+            aruco_msg.id = ids[0][0]
+            aruco_msg.x = -target_x  
+            aruco_msg.y = -target_y
             
-            self.publisher.publish(point_msg)
+            self.publisher.publish(aruco_msg)
 
 
 def main(args=None):

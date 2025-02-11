@@ -40,8 +40,8 @@ class WalkToSupplyBehavior(Behavior):
             self.target_position = self.point_b if self.target_position == self.point_a else self.point_a
 
     def get_next_state(self) -> Optional[str]:
-        if False: # TODO: 如果畫面中有出現 aruco marker
-            return "align_to_supply" # TODO 開始精準定位
+        if self.drone_api.get_aruco_info_sub()[0] >= 0: # 如果畫面中有出現 aruco marker
+            return "align_to_supply" # 開始精準定位
         return None
     
 
@@ -50,7 +50,7 @@ class AlignToSupplyBehavior(Behavior): # 精準定位
     def __init__(self, logger: Logger, drone_api: DroneApi): # TODO: 需要 aruco 的 node
         super().__init__(logger)
         self.drone_api = drone_api
-        self.speed: float = 0.2 # 機器速度倍率
+        self.speed: float = 0.75 # 機器速度倍率
         self.dist_threshold = 0.1 # 距離誤差閾值
 
 
