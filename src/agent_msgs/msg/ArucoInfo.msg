@@ -1,3 +1,2 @@
-int8 id
-float64 x
-float64 y
+int32 id
+geometry_msgs/Vector3 position

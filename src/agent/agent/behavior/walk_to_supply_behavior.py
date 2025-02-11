@@ -1,7 +1,7 @@
 from typing import Optional
 
-from agent.constants import DELTA_TIME, NAV_THRESHOLD
-from api import DroneApi
+from agent.constants import NAV_THRESHOLD
+from api import ArucoApi, DroneApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
 
@@ -10,9 +10,10 @@ from .behavior import Behavior
 
 class WalkToSupplyBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, aruco_api: ArucoApi):
         super().__init__(logger)
         self.drone_api = drone_api
+        self.aruco_api = aruco_api
         self.speed: float = 0.5
 
     def on_enter(self):
@@ -20,8 +21,11 @@ class WalkToSupplyBehavior(Behavior):
         # TODO supply zone 的兩端點位置如何決定?
         self.point_a: NEDCoordinate = NEDCoordinate(1, 1, self.drone_api.local_position.z)
         self.point_b: NEDCoordinate = NEDCoordinate(1, 7, self.drone_api.local_position.z)
-
         self.target_position: NEDCoordinate = self.point_a
+
+        # 重設 ArUco Marker
+        # TODO 透過 mediator 設定 target marker id
+        self.aruco_api.reset()  # TODO 或許可以直接把設定 target 寫在 reset() 裡面
 
     def execute(self):
         current_location = self.drone_api.local_position
@@ -40,43 +44,6 @@ class WalkToSupplyBehavior(Behavior):
             self.target_position = self.point_b if self.target_position == self.point_a else self.point_a
 
     def get_next_state(self) -> Optional[str]:
-        if self.drone_api.get_aruco_info_sub()[0] >= 0: # 如果畫面中有出現 aruco marker
-            return "align_to_supply" # 開始精準定位
+        if self.aruco_api.is_marker_detected:  # 偵測到目標的 ArUco Marker
+            return "align_to_supply"  # 開始精準定位
         return None
-    
-
-class AlignToSupplyBehavior(Behavior): # 精準定位
-
-    def __init__(self, logger: Logger, drone_api: DroneApi): # TODO: 需要 aruco 的 node
-        super().__init__(logger)
-        self.drone_api = drone_api
-        self.speed: float = 0.75 # 機器速度倍率
-        self.dist_threshold = 0.1 # 距離誤差閾值
-
-
-    def on_enter(self):
-        pass
-
-    def execute(self):
-        # 目前想法是依照 Aruco node 的資訊做 move with velocity
-        # Aruco node 的回傳是無人機要移動到 Aruco marker 的距離
-        aruco_info = self.drone_api.get_aruco_info_sub()
-
-        vel_tuple = [(self.vel_factor * coord) if coord >= self.dist_threshold else 0 for coord in aruco_info[1:]]
-        vel = NEDCoordinate(vel_tuple[0], vel_tuple[1], 0)
-        self.drone_api.move_with_velocity(vel)
-
-
-    def get_next_state(self) -> Optional[str]:
-        aruco_info = self.drone_api.get_aruco_info_sub()
-        if (aruco_info[0] >= 0 and                                            # aruco_info[0] := aruco marker id; -1 = not found
-            all ([dist <= self.dist_threshold for dist in aruco_info[1:]])) : # 如果定位已經完成了，aruco node 傳回的各方向距離都會低於閾值
-            return "load" # 拿東西
-        if aruco_info[0] < 0: # 偵測不到 aruco marker
-            self.outofframe_streak += 1
-            if self.outofframe_streak > 60: # 應該就是被神秘力量拉走了
-                return "walk_to_supply" # 回去重走
-        else:
-            self.outofframe_streak = 0
-        return None
-

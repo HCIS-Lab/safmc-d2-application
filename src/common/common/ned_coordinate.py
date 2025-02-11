@@ -15,6 +15,9 @@ class NEDCoordinate:
     def __str__(self) -> str:
         return f"NED(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
+    def __neg__(self) -> 'NEDCoordinate':
+        return NEDCoordinate(-self.x, -self.y, -self.z)
+
     def __add__(self, other: 'NEDCoordinate') -> 'NEDCoordinate':
         if not isinstance(other, NEDCoordinate):
             raise TypeError(

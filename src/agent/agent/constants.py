@@ -17,3 +17,9 @@ LOAD_HEIGHT = 0.3
 '''
 Altitude (meters) for the drone to descend to in order to pick up the payload.
 '''
+
+import cv2
+
+ARUCO_DICT = cv2.aruco.DICT_5X5_50
+
+ARUCO_MARKER_SIZE = 0.1 # meter(s)

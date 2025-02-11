@@ -2,7 +2,6 @@
 
 from typing import Optional
 
-from geometry_msgs.msg import Point
 from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
@@ -31,6 +30,7 @@ class DroneApi(Api):
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = NEDCoordinate(0, 0, 0)
 
+        # QoS
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -56,7 +56,7 @@ class DroneApi(Api):
 
         self.aruco_align_velocity_sub = node.create_subscription(
             ArucoInfo,
-            '/cmd_vel',
+            '/aruco_info',
             self.__aruco_info_callback,
             10
         )
