@@ -17,7 +17,7 @@ class ArucoTracker(Node):
         if use_calibration:
             self.subscription = self.create_subscription(
                 Image,
-                '/camera/image_rect_color',
+                '/camera/image_rect',
                 self.image_callback,
                 10)
         else:
