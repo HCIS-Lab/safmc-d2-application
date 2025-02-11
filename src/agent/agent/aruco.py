@@ -11,11 +11,22 @@ from agent_msgs.msg import ArucoInfo
 class ArucoTracker(Node):
     def __init__(self):
         super().__init__('aruco_tracker')
-        self.subscription = self.create_subscription(
-            Image,
-            '/camera/image_raw',
-            self.image_callback,
-            10)
+        
+        # use calibration or not
+        use_calibration = False 
+        if use_calibration:
+            self.subscription = self.create_subscription(
+                Image,
+                '/camera/image_rect_color',
+                self.image_callback,
+                10)
+        else:
+            self.subscription = self.create_subscription(
+                Image,
+                '/camera/image_raw',
+                self.image_callback,
+                10)
+            
         self.publisher = self.create_publisher(ArucoInfo, '/cmd_vel', 10)
         self.bridge = CvBridge()
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
