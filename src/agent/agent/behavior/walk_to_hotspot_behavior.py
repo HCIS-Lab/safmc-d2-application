@@ -64,6 +64,7 @@ class AlignToHotspotBehavior(Behavior): # 精準定位
         self.drone_api = drone_api
         self.speed: float = 0.75 # 機器速度倍率
         self.dist_threshold = 0.1 # 距離誤差閾值
+        self.outofframe_streak = 0 # 例外狀況：可能要退回之前的 state
 
 
     def on_enter(self):
@@ -73,13 +74,21 @@ class AlignToHotspotBehavior(Behavior): # 精準定位
         # 目前想法是依照 Aruco node 的資訊做 move with velocity
         # Aruco node 的回傳是無人機要移動到 Aruco marker 的距離
         aruco_info = self.drone_api.get_aruco_info_sub()
+
         vel_tuple = [(self.vel_factor * coord) if coord >= self.dist_threshold else 0 for coord in aruco_info[1:]]
         vel = NEDCoordinate(vel_tuple[0], vel_tuple[1], 0)
         self.drone_api.move_with_velocity(vel)
 
 
     def get_next_state(self) -> Optional[str]:
-        if ((aruco_info := self.drone_api.get_aruco_info_sub())[0] >= 0 and   # aruco_info[0] := aruco marker id; -1 = not found
+        aruco_info = self.drone_api.get_aruco_info_sub()
+        if (aruco_info[0] >= 0 and                                            # aruco_info[0] := aruco marker id; -1 = not found
             all ([dist <= self.dist_threshold for dist in aruco_info[1:]])) : # 如果定位已經完成了，aruco node 傳回的各方向距離都會低於閾值
             return "wait" # 等待
+        if aruco_info[0] < 0: # 偵測不到 aruco marker
+            self.outofframe_streak += 1
+            if self.outofframe_streak > 60: # 應該就是被神秘力量拉走了
+                return "walk_to_hotspot" # 回去重走
+        else:
+            self.outofframe_streak = 0
         return None
