@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 set(msg_files
     "msg/Magnet.msg"
@@ -16,10 +17,12 @@ set(msg_files
     "msg/AgentStatus.msg"
     "msg/DropZoneInfo.msg"
     "msg/SupplyZoneInfo.msg"
+    "msg/ArucoInfo.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
     ${msg_files}
+    DEPENDENCIES geometry_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)
