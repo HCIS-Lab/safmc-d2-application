@@ -188,10 +188,7 @@ class Mediator(Node):
         
         # drop zone
         drop_zone_msg = DropZoneInfo()
-        drop_zone_msg.position1 = [0, 0, 0]
-        drop_zone_msg.position2 = [0, 0, 0]
-        drop_zone_msg.position3 = [0, 0, 0]
-        drop_zone_msg.position4 = [0, 0, 0]
+        drop_zone_msg.position = [0, 0, 0]
         drop_zone_msg.aruco_marker_id = 0
         self.drop_zone_pubs[index].publish(drop_zone_msg)
 
@@ -204,19 +201,22 @@ class Mediator(Node):
         self.wait[index] = True
 
         # 檢查同組的每個人有沒有到
-        for i in range(DRONE_COUNTS):
-            if self.group[i] == agent_info_msg.group_id and self.wait[i] == False:
-                # 同組 (這邊就算是同一台無人機也不用特別 continue)
-                return
+        # for i in range(DRONE_COUNTS):
+        #     if self.group[i] == agent_info_msg.group_id and self.wait[i] == False:
+        #         # 同組 (這邊就算是同一台無人機也不用特別 continue)
+        #         return
+        if not all((self.group[i] == agent_info_msg.group_id and self.wait[i] == False
+                    for i in range(DRONE_COUNTS))):
+            return
 
         # 同組的都到齊了
         for i in range(DRONE_COUNTS):
-            if self.group[i] == agent_info_msg.group_id and self.wait[i] == False:
+            if self.group[i] == agent_info_msg.group_id:
                 # 同組 (這邊就算是同一台無人機也不用特別 continue)
                 bool_msg = Bool()
                 bool_msg.data = True
                 self.drop_pubs[i].publish(bool_msg)
-                return
+
 
     def __set_drop_ack(self, agent_info_msg):
         index = agent_info_msg.drone_id - 1
