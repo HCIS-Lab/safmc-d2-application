@@ -16,17 +16,19 @@ from common.ned_coordinate import NEDCoordinate
 
 from functools import partial
 
+from .constants import DRONE_COUNTS
+
 
 class Mediator(Node):
 
     def __init__(self):
         super().__init__('mediator')
 
-        self.online = [False, False, False, False]  # 無人機是否在線上
-        self.armed = [False, False, False, False]
-        self.wait = [False, False, False, False]  # 無人機是否在 Hotspot 正上方等待了
-        self.group = [-1, -1, -1, -1]
-        self.state = [-1, -1, -1, -1]
+        self.online = [False] * DRONE_COUNTS  # 無人機是否在線上
+        self.armed = [False] * DRONE_COUNTS 
+        self.wait = [False] * DRONE_COUNTS   # 無人機是否在 Hotspot 正上方等待了
+        self.group = [-1] * DRONE_COUNTS 
+        self.state = [-1] * DRONE_COUNTS 
 
         self.__model_positions = {
             "blue_supply_zone": NEDCoordinate(0, 0, 0),
@@ -86,12 +88,12 @@ class Mediator(Node):
         )
 
         # publishers
-        self.arm_pubs = [None] * 4
-        self.takeoff_pubs = [None] * 4
-        self.supply_zone_pubs = [None] * 4
-        self.drop_zone_pubs = [None] * 4
-        self.drop_pubs = [None] * 4
-        for i in range(4):
+        self.arm_pubs = [None] * DRONE_COUNTS 
+        self.takeoff_pubs = [None] * DRONE_COUNTS 
+        self.supply_zone_pubs = [None] * DRONE_COUNTS 
+        self.drop_zone_pubs = [None] * DRONE_COUNTS 
+        self.drop_pubs = [None] * DRONE_COUNTS 
+        for i in range(DRONE_COUNTS):
             self.arm_pubs[i] = self.create_publisher(
                 Bool,
                 f"/agent_{i+1}/arm",
@@ -132,9 +134,11 @@ class Mediator(Node):
         self.online[index] = True
         self.group[index] = agent_info_msg.group_id
 
-        for i in range(4):
-            if self.online[i] == False:
-                return
+        # for i in range(4):
+        #     if self.online[i] == False:
+        #         return
+        if not all(self.online):
+            return
 
         # 全部都上線了
         bool_msg = Bool()
@@ -145,9 +149,11 @@ class Mediator(Node):
         index = agent_info_msg.drone_id - 1
         self.armed[index] = True
 
-        for i in range(4):
-            if self.armed[i] == False:
-                return
+        # for i in range(4):
+        #     if self.armed[i] == False:
+        #         return
+        if not all(self.armed):
+            return
 
         # 全部都armed了
         bool_msg = Bool()
@@ -163,31 +169,31 @@ class Mediator(Node):
         # TODO: timestamp???
 
         self.state[index] = agent_status_msg.state
+        
+        # supply zone
 
-        if self.state[index] == 2:  # STATE_HEADING_CALIBRATION
-            pass
-        elif self.state[index] == 3 or self.state[index] == 4:
-            # TODO 持續校正 heading
-            # TODO supply zone position (global -> local)
-            supply_zone_msg = SupplyZoneInfo()
-            if index % 2 == 0:
-                green_supply_zone = self.__model_positions["green_supply_zone"]
-                supply_zone_msg.position1 = [green_supply_zone.x - 3, green_supply_zone.y, green_supply_zone]
-                supply_zone_msg.position2 = [green_supply_zone.x + 3, green_supply_zone.y, green_supply_zone]
-            else:
-                blue_supply_zone = self.__model_positions["blue_supply_zone"]
-                supply_zone_msg.position1 = [blue_supply_zone.x - 3, blue_supply_zone.y, blue_supply_zone]
-                supply_zone_msg.position2 = [blue_supply_zone.x + 3, blue_supply_zone.y, blue_supply_zone]
-            supply_zone_msg.aruco_marker_id = 0
-            self.supply_zone_pubs[index].publish(supply_zone_msg)
-        elif self.state[index] == 8 or self.state[index] == 9:
-            drop_zone_msg = DropZoneInfo()
-            drop_zone_msg.position1 = [0, 0, 0]
-            drop_zone_msg.position2 = [0, 0, 0]
-            drop_zone_msg.position3 = [0, 0, 0]
-            drop_zone_msg.position4 = [0, 0, 0]
-            drop_zone_msg.aruco_marker_id = 0
-            self.drop_zone_pubs[index].publish(drop_zone_msg)
+        # TODO 持續校正 heading
+        # TODO supply zone position (global -> local)
+        supply_zone_msg = SupplyZoneInfo()
+        if index % 2 == 0:
+            green_supply_zone = self.__model_positions["green_supply_zone"]
+            supply_zone_msg.position1 = [green_supply_zone.x - 3, green_supply_zone.y, green_supply_zone]
+            supply_zone_msg.position2 = [green_supply_zone.x + 3, green_supply_zone.y, green_supply_zone]
+        else:
+            blue_supply_zone = self.__model_positions["blue_supply_zone"]
+            supply_zone_msg.position1 = [blue_supply_zone.x - 3, blue_supply_zone.y, blue_supply_zone]
+            supply_zone_msg.position2 = [blue_supply_zone.x + 3, blue_supply_zone.y, blue_supply_zone]
+        supply_zone_msg.aruco_marker_id = 0
+        self.supply_zone_pubs[index].publish(supply_zone_msg)
+        
+        # drop zone
+        drop_zone_msg = DropZoneInfo()
+        drop_zone_msg.position1 = [0, 0, 0]
+        drop_zone_msg.position2 = [0, 0, 0]
+        drop_zone_msg.position3 = [0, 0, 0]
+        drop_zone_msg.position4 = [0, 0, 0]
+        drop_zone_msg.aruco_marker_id = 0
+        self.drop_zone_pubs[index].publish(drop_zone_msg)
 
     def __set_wait(self, agent_info_msg):
         index = agent_info_msg.drone_id - 1
@@ -198,13 +204,13 @@ class Mediator(Node):
         self.wait[index] = True
 
         # 檢查同組的每個人有沒有到
-        for i in range(4):
+        for i in range(DRONE_COUNTS):
             if self.group[i] == agent_info_msg.group_id and self.wait[i] == False:
                 # 同組 (這邊就算是同一台無人機也不用特別 continue)
                 return
 
         # 同組的都到齊了
-        for i in range(4):
+        for i in range(DRONE_COUNTS):
             if self.group[i] == agent_info_msg.group_id and self.wait[i] == False:
                 # 同組 (這邊就算是同一台無人機也不用特別 continue)
                 bool_msg = Bool()
