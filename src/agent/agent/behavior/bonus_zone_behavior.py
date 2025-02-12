@@ -37,7 +37,7 @@ class BonusBehavior(Behavior):
         # vel = (self.target_position - current_location).normalized * min(self.speed, dist)
         # self.drone_api.move_with_velocity(vel, DELTA_TIME)
 
-        self.drone_api.move_with_velocity(vel, 0.1)
+        self.drone_api.move_with_velocity(vel)
 
 
     def get_next_state(self) -> Optional[str]:

@@ -260,7 +260,7 @@ class DroneApi(Api):
 
         trajectory_setpoint_msg.position[0] = None
         trajectory_setpoint_msg.position[1] = None
-        trajectory_setpoint_msg.position[2] = None
+        trajectory_setpoint_msg.position[2] = self.__home_position.z
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 

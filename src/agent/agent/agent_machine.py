@@ -4,7 +4,7 @@ from transitions import Machine
 
 from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-                            WalkToHotspotBehavior, WalkToSupplyBehavior, BonusBehavior)
+                            WalkToHotspotBehavior, WalkToSupplyBehavior, AlignToSupplyBehavior, AlignToHotspotBehavior, BonusBehavior)
 from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
