@@ -7,6 +7,7 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
+from agent_msgs.msg import ArucoInfo
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
 from agent.constants import TAKEOFF_HEIGHT
@@ -19,7 +20,7 @@ from .api import Api
 
 class DroneApi(Api):
     def __init__(self, node: Node, drone_id: int):
-        
+
         self.drone_id = drone_id
 
         self.__clock: Clock = node.get_clock()
@@ -31,6 +32,7 @@ class DroneApi(Api):
         self.__start_position = NEDCoordinate(0, 0, 0)
         self.__local_position = NEDCoordinate(0, 0, 0)
 
+        # QoS
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -40,7 +42,7 @@ class DroneApi(Api):
 
         # Subscriptions
         print(f"/px4_{self.drone_id}/fmu/out/vehicle_local_position")
-        
+
         self.vehicle_local_position_sub = node.create_subscription(
             VehicleLocalPosition,
             f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
@@ -112,7 +114,7 @@ class DroneApi(Api):
     @property
     def heading(self) -> float:
         return self.__heading
-    
+
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
         self.__heading = vehicle_local_position_msg.heading
         self.__local_position = NEDCoordinate(
@@ -146,9 +148,9 @@ class DroneApi(Api):
 
         # defaults
         vehicle_command_msg.target_system = self.drone_id - 1
-        vehicle_command_msg.target_component = 0 # all components
+        vehicle_command_msg.target_component = 0  # all components
         vehicle_command_msg.source_system = self.drone_id - 1
-        vehicle_command_msg.source_component = 0 # all components
+        vehicle_command_msg.source_component = 0  # all components
         vehicle_command_msg.from_external = True
 
         # other kwargs
@@ -239,16 +241,16 @@ class DroneApi(Api):
 
     def move_to(self, position: NEDCoordinate):
 
-        trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = self.__get_timestamp()
 
-        trajectory_setpoint_msg.position[0] = position.x
-        trajectory_setpoint_msg.position[1] = position.y
-        trajectory_setpoint_msg.position[2] = position.z
+        goto_setpoint_msg.position[0] = position.x
+        goto_setpoint_msg.position[1] = position.y
+        goto_setpoint_msg.position[2] = position.z
 
-        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+        self.goto_setpoint_pub.publish(goto_setpoint_msg)
 
-    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float):
+    def move_with_velocity(self, velocity: NEDCoordinate):
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
@@ -256,12 +258,9 @@ class DroneApi(Api):
         trajectory_setpoint_msg.velocity[1] = velocity.y
         trajectory_setpoint_msg.velocity[2] = velocity.z
 
-        trajectory_setpoint_msg.position[0] = self.local_position.x + \
-            delta_time * velocity.x
-        trajectory_setpoint_msg.position[1] = self.local_position.y + \
-            delta_time * velocity.y
-        trajectory_setpoint_msg.position[2] = self.home_position.z + \
-            delta_time * velocity.z
+        trajectory_setpoint_msg.position[0] = None
+        trajectory_setpoint_msg.position[1] = None
+        trajectory_setpoint_msg.position[2] = None
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
