@@ -4,6 +4,8 @@ from typing import Optional
 from api import ArucoApi, DroneApi
 from common.logger import Logger
 
+from agent.constants import ARUCO_DIST_THRESHOLD 
+
 from .behavior import Behavior
 
 
@@ -14,9 +16,7 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
 
         self.drone_api = drone_api
         self.aruco_api = aruco_api
-        self.speed: float = 0.75  # 機器速度倍率
-        self.dist_threshold = 0.1  # 距離誤差閾值, TODO 也許放到 constants.py?
-        # self.outofframe_streak = 0  # 例外狀況：可能要退回之前的 state
+        self.speed: float = 0.3  # 機器最大速度
 
     def execute(self):
         # 目前想法是依照 Aruco node 的資訊做 move with velocity
@@ -34,14 +34,9 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
         pos = self.aruco_api.marker_position
         pos.z = 0
 
-        if pos.magnitude <= self.dist_threshold:
+        if pos.magnitude <= ARUCO_DIST_THRESHOLD :
             return "wait"  # 等待
-        return None
+        if self.aruco_api.idle_time.nanoseconds > 3e9 : # 3sec
+            return "walk_to_hotspot"                    # 偵測不到目標 marker，退回去重走
 
-        # TODO
-        # if aruco_info[0] < 0:  # 偵測不到 aruco marker
-        #     self.outofframe_streak += 1
-        #     if self.outofframe_streak > 60:  # 應該就是被神秘力量拉走了
-        #         return "walk_to_hotspot"  # 回去重走
-        # else:
-        #     self.outofframe_streak = 0
+        return None

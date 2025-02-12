@@ -8,6 +8,8 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from sensor_msgs.msg import Image
 
+from common.ned_coordinate import NEDCoordinate
+
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
 from agent_msgs.msg import ArucoInfo
 
@@ -62,8 +64,7 @@ class ArucoTracker(Node):
                     
         aruco_msg = ArucoInfo()
         aruco_msg.id = -1
-        aruco_msg.x = 0
-        aruco_msg.y = 0
+        aruco_msg.position = NEDCoordinate()
 
         if ids is not None:
             rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, self.aruco_marker_size, self.camera_matrix, self.dist_coeffs)
