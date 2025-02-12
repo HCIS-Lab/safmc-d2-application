@@ -2,10 +2,11 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
+                            Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
                             WalkToHotspotBehavior, WalkToSupplyBehavior)
-from api import DroneApi, LidarApi, MagnetApi, MediatorApi
+from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
 
@@ -17,22 +18,33 @@ class States(Enum):
     WALK_TO_HOTSPOT = 4
     WAIT = 5
     DROP = 6
+    ALIGN_TO_SUPPLY = 7
+    ALIGN_TO_HOTSPOT = 8
 
 
 transitions = [
     {'source': States.IDLE, 'dest': States.TAKEOFF},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
-    {'source': States.WALK_TO_SUPPLY, 'dest': States.LOAD},
+    {'source': States.WALK_TO_SUPPLY, 'dest': States.ALIGN_TO_SUPPLY},
+    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.WALK_TO_SUPPLY},
+    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.LOAD},
     {'source': States.LOAD, 'dest': States.WALK_TO_HOTSPOT},
-    {'source': States.WALK_TO_HOTSPOT, 'dest': States.WAIT},
+    {'source': States.WALK_TO_HOTSPOT, 'dest': States.ALIGN_TO_HOTSPOT},
+    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WALK_TO_HOTSPOT},
+    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WAIT},
     {'source': States.WAIT, 'dest': States.DROP},
     {'source': States.DROP, 'dest': States.WALK_TO_SUPPLY},
 ]
 
 
 class AgentMachine(Machine):
-    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi,lidar_api: LidarApi):
+    def __init__(self, logger: Logger,
+                 drone_api: DroneApi,
+                 magnet_api: MagnetApi,
+                 mediator_api: MediatorApi,
+                 lidar_api: LidarApi,
+                 aruco_api: ArucoApi):
 
         self.logger = logger
 
@@ -40,11 +52,13 @@ class AgentMachine(Machine):
         self.state_behavior_map = {
             States.IDLE: IdleBehavior(logger, drone_api),
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api),
+            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, aruco_api),
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api,lidar_api),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api),
+            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, aruco_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
-            States.DROP: DropBehavior(logger, magnet_api)
+            States.DROP: DropBehavior(logger, magnet_api),
         }
 
         # add state on_enter/on_exit callback

@@ -7,6 +7,7 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
+from agent_msgs.msg import ArucoInfo
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
@@ -18,7 +19,7 @@ from .api import Api
 
 class DroneApi(Api):
     def __init__(self, node: Node, drone_id: int):
-        
+
         self.drone_id = drone_id
 
         self.__clock: Clock = node.get_clock()
@@ -29,6 +30,7 @@ class DroneApi(Api):
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = NEDCoordinate(0, 0, 0)
 
+        # QoS
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -38,7 +40,7 @@ class DroneApi(Api):
 
         # Subscriptions
         print(f"/px4_{self.drone_id}/fmu/out/vehicle_local_position")
-        
+
         self.vehicle_local_position_sub = node.create_subscription(
             VehicleLocalPosition,
             f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
@@ -108,11 +110,11 @@ class DroneApi(Api):
     @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position - self.__origin
-    
+
     @property
     def heading(self) -> float:
         return self.__heading
-    
+
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
         self.__heading = vehicle_local_position_msg.heading
         self.__local_position = NEDCoordinate(
@@ -146,9 +148,9 @@ class DroneApi(Api):
 
         # defaults
         vehicle_command_msg.target_system = self.drone_id - 1
-        vehicle_command_msg.target_component = 0 # all components
+        vehicle_command_msg.target_component = 0  # all components
         vehicle_command_msg.source_system = self.drone_id - 1
-        vehicle_command_msg.source_component = 0 # all components
+        vehicle_command_msg.source_component = 0  # all components
         vehicle_command_msg.from_external = True
 
         # other kwargs
@@ -254,7 +256,7 @@ class DroneApi(Api):
         trajectory_setpoint_msg.velocity[0] = velocity.x
         trajectory_setpoint_msg.velocity[1] = velocity.y
         trajectory_setpoint_msg.velocity[2] = velocity.z
-        
+
         trajectory_setpoint_msg.position[0] = None
         trajectory_setpoint_msg.position[1] = None
         trajectory_setpoint_msg.position[2] = None
