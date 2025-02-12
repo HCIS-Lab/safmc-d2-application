@@ -29,7 +29,7 @@ class bugNavigator:
 
     def compute_tangent_pos(self, current_position : NEDCoordinate, obstacle_points: list[tuple[float, float]]):
 
-        if(current_position.y > 9.2) : self.reverse = True
+        if(current_position.y > 10.0) : self.reverse = True
 
         ind = np.argmin([obstacle[0]**2 + obstacle[1]**2 for obstacle in obstacle_points])
         nearest_point = np.array(obstacle_points[ind])
