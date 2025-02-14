@@ -20,8 +20,8 @@ class WalkToSupplyBehavior(Behavior):
     def on_enter(self):
 
         # TODO supply zone 的兩端點位置如何決定?
-        self.point_a: NEDCoordinate = NEDCoordinate(self.mediator_api.supply_zone[0])
-        self.point_b: NEDCoordinate = NEDCoordinate(self.mediator_api.supply_zone[1])
+        self.mediator_api.send_status(3, self.drone_api.local_position)
+        self.point_a, self.point_b = self.get_target()
         self.target_position: NEDCoordinate = self.point_a
 
         # 重設 ArUco Marker
@@ -30,8 +30,9 @@ class WalkToSupplyBehavior(Behavior):
 
     def execute(self):
         current_location = self.drone_api.local_position
+        self.mediator_api.send_status(3, current_location)
 
-        self.logger.info(f"target position: {self.target_position}")
+        self.logger.info(f"target position: {self.target_position}, {self.drone_api.global_position}, {self.drone_api.local_position}, {self.mediator_api.supply_zone[0]}")
         self.logger.info(f"current position: {current_location}")
 
         # 往 target_position 移動, 速度大小是 self.speed
@@ -48,3 +49,18 @@ class WalkToSupplyBehavior(Behavior):
         if self.aruco_api.is_marker_detected:  # 偵測到目標的 ArUco Marker
             return "align_to_supply"  # 開始精準定位
         return None
+    
+    def get_target(self):
+        point_a: NEDCoordinate = NEDCoordinate(self.mediator_api.supply_zone[0][0], self.mediator_api.supply_zone[0][1], self.mediator_api.supply_zone[0][2])
+        point_b: NEDCoordinate = NEDCoordinate(self.mediator_api.supply_zone[1][0], self.mediator_api.supply_zone[1][1], self.mediator_api.supply_zone[1][2])
+        point_a = self.to_local(point_a)
+        point_b = self.to_local(point_b)
+        return point_a, point_b
+    
+    def to_local(self, target_global):
+        global_position = self.drone_api.global_position
+        local_position = self.drone_api.local_position
+        x = target_global.x - global_position.x + local_position.x
+        y = target_global.y - global_position.y + local_position.y
+        z = local_position.z
+        return NEDCoordinate(x, y, z)

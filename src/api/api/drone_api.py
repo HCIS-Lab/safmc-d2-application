@@ -15,6 +15,8 @@ from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 
+from geometry_msgs.msg import Point
+
 from .api import Api
 
 
@@ -30,6 +32,7 @@ class DroneApi(Api):
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = NEDCoordinate(0, 0, 0)
+        self.__global_position = NEDCoordinate(0, 0, 0)
 
         # QoS
         qos_profile = QoSProfile(
@@ -47,6 +50,12 @@ class DroneApi(Api):
             f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
             self.__set_vehicle_local_position,
             qos_profile)
+        
+        self.vehicle_global_position_sub = node.create_subscription(
+            Point,
+            f"/position/x500_safmc_d2_{self.drone_id}",
+            self.__set_vehicle_global_position,
+            10)
 
         self.vehicle_status_sub = node.create_subscription(
             VehicleStatus,
@@ -111,6 +120,10 @@ class DroneApi(Api):
     @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position - self.__origin
+    
+    @property
+    def global_position(self) -> NEDCoordinate:
+        return self.__global_position
 
     @property
     def heading(self) -> float:
@@ -122,6 +135,13 @@ class DroneApi(Api):
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
+        )
+
+    def __set_vehicle_global_position(self, vehicle_global_position_msg: Point):
+        self.__global_position = NEDCoordinate(     # convert to px4 coordinate
+            x=vehicle_global_position_msg.y,
+            y=vehicle_global_position_msg.x,
+            z=-vehicle_global_position_msg.z
         )
 
     def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs):
@@ -148,9 +168,9 @@ class DroneApi(Api):
             setattr(vehicle_command_msg, f'param{i}', float(param))
 
         # defaults
-        vehicle_command_msg.target_system = self.drone_id - 1
+        vehicle_command_msg.target_system = 0
         vehicle_command_msg.target_component = 0  # all components
-        vehicle_command_msg.source_system = self.drone_id - 1
+        vehicle_command_msg.source_system = 0
         vehicle_command_msg.source_component = 0  # all components
         vehicle_command_msg.from_external = True
 
