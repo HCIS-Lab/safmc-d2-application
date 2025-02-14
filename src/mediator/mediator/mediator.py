@@ -177,21 +177,21 @@ class Mediator(Node):
         supply_zone_msg = SupplyZoneInfo()
         if index % 2 == 0:
             green_supply_zone = self.__model_positions["green_supply_zone"]
-            supply_zone_msg.position1 = [green_supply_zone.x - 3, green_supply_zone.y, green_supply_zone]
-            supply_zone_msg.position2 = [green_supply_zone.x + 3, green_supply_zone.y, green_supply_zone]
+            supply_zone_msg.position_1 = [green_supply_zone.y, green_supply_zone.x - 3, green_supply_zone.z]
+            supply_zone_msg.position_2 = [green_supply_zone.y, green_supply_zone.x + 3, green_supply_zone.z]
         else:
             blue_supply_zone = self.__model_positions["blue_supply_zone"]
-            supply_zone_msg.position1 = [blue_supply_zone.x - 3, blue_supply_zone.y, blue_supply_zone]
-            supply_zone_msg.position2 = [blue_supply_zone.x + 3, blue_supply_zone.y, blue_supply_zone]
+            supply_zone_msg.position_1 = [blue_supply_zone.y, blue_supply_zone.x - 3, blue_supply_zone.z]
+            supply_zone_msg.position_2 = [blue_supply_zone.y, blue_supply_zone.x + 3, blue_supply_zone.z]
         supply_zone_msg.aruco_marker_id = 0
         self.supply_zone_pubs[index].publish(supply_zone_msg)
         
         # drop zone
         drop_zone_msg = DropZoneInfo()
-        drop_zone_msg.position1 = [0, 0, 0]
-        drop_zone_msg.position2 = [0, 0, 0]
-        drop_zone_msg.position3 = [0, 0, 0]
-        drop_zone_msg.position4 = [0, 0, 0]
+        drop_zone_msg.position_1 = [0.0] * 3
+        drop_zone_msg.position_2 = [0.0] * 3
+        drop_zone_msg.position_3 = [0.0] * 3
+        drop_zone_msg.position_4 = [0.0] * 3
         drop_zone_msg.aruco_marker_id = 0
         self.drop_zone_pubs[index].publish(drop_zone_msg)
 

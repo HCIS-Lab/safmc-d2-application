@@ -4,6 +4,8 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Empty, Int8, Bool
 from agent_msgs.msg import AgentInfo, AgentStatus, DropZoneInfo, SupplyZoneInfo
+from common.ned_coordinate import NEDCoordinate
+
 
 from .api import Api
 
@@ -26,6 +28,7 @@ class MediatorApi(Api):
         # Subscriptions
         self.__signal = False
         self.__supply_zone = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+        self.__drop_zone = [0.0, 0.0, 0.0]
         self.__takeoff_ready = False
         self.__arm_ready = False
         self.signal_sub = node.create_subscription(
@@ -35,6 +38,13 @@ class MediatorApi(Api):
             SupplyZoneInfo,
             f"/agent_{self.drone_id}/supply_zone",
             self.__set_supply_zone,
+            10
+        )
+
+        self.drop_zone_sub = node.create_subscription(
+            DropZoneInfo,
+            f"/agent_{self.drone_id}/drop_zone",
+            self.__set_drop_zone,
             10
         )
 
@@ -66,6 +76,12 @@ class MediatorApi(Api):
             '/mediator/armed',
             10
         )
+
+        self.status_pub = node.create_publisher(
+            AgentStatus,
+            '/mediator/status',
+            10
+        )
         
         self.wait_pub = node.create_publisher(
             Int8, f'/group{self.group_id}/wait', qos_profile)
@@ -85,6 +101,15 @@ class MediatorApi(Api):
         armed_msg.drone_id = self.drone_id
         armed_msg.group_id = self.group_id
         self.armed_pub.publish(armed_msg)
+
+    def send_status(self, status, localposition):
+        status_msg = AgentStatus()
+        status_msg.timestamp = int(self.__clock.now().nanoseconds / 1000)
+        status_msg.drone_id = self.drone_id
+        status_msg.group_id = self.group_id
+        status_msg.local_position = [localposition.x, localposition.y, localposition.z]
+        status_msg.state = status
+        self.status_pub.publish(status_msg)
         
     def wait_to_drop(self):
         signal_msg = Int8()
@@ -104,6 +129,9 @@ class MediatorApi(Api):
     @property
     def supply_zone(self):
         return self.__supply_zone
+    @property
+    def drop_zone(self):
+        return self.__drop_zone
     
     
 
@@ -120,3 +148,6 @@ class MediatorApi(Api):
     def __set_supply_zone(self, msg: SupplyZoneInfo):
         self.__supply_zone[0] = msg.position_1
         self.__supply_zone[1] = msg.position_2
+
+    def __set_drop_zone(self, msg: DropZoneInfo):
+        self.__drop_zone = msg.position_1

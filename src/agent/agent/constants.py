@@ -8,7 +8,7 @@ TAKEOFF_HEIGHT = 1.5
 Altitude (meters) for takeoff.
 '''
 
-NAV_THRESHOLD = 0.2
+NAV_THRESHOLD = 0.1
 '''
 Minimum distance (meters) to target for navigation completion.
 '''

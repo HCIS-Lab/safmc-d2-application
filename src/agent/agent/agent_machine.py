@@ -55,11 +55,11 @@ class AgentMachine(Machine):
         self.state_behavior_map = {
             States.IDLE: IdleBehavior(logger, drone_api, mediator_api),
             States.ARM: ArmBehavior(logger, drone_api, mediator_api),
-            States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
+            States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api, mediator_api),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api, mediator_api),
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, aruco_api),
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api, mediator_api),
             States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, aruco_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
             States.DROP: DropBehavior(logger, magnet_api),
