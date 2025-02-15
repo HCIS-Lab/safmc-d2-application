@@ -13,6 +13,10 @@ find_package(geometry_msgs REQUIRED)
 set(msg_files
     "msg/Magnet.msg"
     "msg/Payload.msg"
+    "msg/AgentInfo.msg"
+    "msg/AgentStatus.msg"
+    "msg/DropZoneInfo.msg"
+    "msg/SupplyZoneInfo.msg"
     "msg/ArucoInfo.msg"
 )
 

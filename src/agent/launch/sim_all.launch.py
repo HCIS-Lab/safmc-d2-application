@@ -35,7 +35,7 @@ def generate_launch_description():
         declared_args +
         [
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sim_bridge.launch.py'))
+                PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sim_bridge.launch.py')) # TODO deprecated
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sim_agent.launch.py'))

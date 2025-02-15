@@ -2,29 +2,32 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
-                            TakeoffBehavior, WaitBehavior,
-                            WalkToHotspotBehavior, WalkToSupplyBehavior, AlignToSupplyBehavior, AlignToHotspotBehavior, BonusBehavior)
-from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
+from api import DroneApi, MagnetApi, MediatorApi, LidarApi, ArucoApi
+from agent.behavior import (
+    AlignToHotspotBehavior, AlignToSupplyBehavior,
+    Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+    TakeoffBehavior, WaitBehavior,
+    WalkToHotspotBehavior, WalkToSupplyBehavior, ArmBehavior, BonusBehavior)
 from common.logger import Logger
 
 
 class States(Enum):
     IDLE = 0
-    TAKEOFF = 1
-    WALK_TO_SUPPLY = 2
-    LOAD = 3
-    WALK_TO_HOTSPOT = 4
-    WAIT = 5
-    DROP = 6
-
-    ALIGN_TO_SUPPLY = 7
-    ALIGN_TO_HOTSPOT = 8
-    BONUS = 9
+    ARM = 1
+    TAKEOFF = 2
+    WALK_TO_SUPPLY = 3
+    ALIGN_TO_SUPPLY = 4
+    LOAD = 5
+    WALK_TO_HOTSPOT = 6
+    ALIGN_TO_HOTSPOT = 7
+    WAIT = 8
+    DROP = 9
+    BONUS = 10
 
 
 transitions = [
-    {'source': States.IDLE, 'dest': States.TAKEOFF},
+    {'source': States.IDLE, 'dest': States.ARM},
+    {'source': States.ARM, 'dest': States.TAKEOFF},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.WALK_TO_SUPPLY, 'dest': States.ALIGN_TO_SUPPLY},
@@ -52,12 +55,13 @@ class AgentMachine(Machine):
 
         # behavior binding
         self.state_behavior_map = {
-            States.IDLE: IdleBehavior(logger, drone_api),
-            States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api),
+            States.IDLE: IdleBehavior(logger, drone_api, mediator_api),
+            States.ARM: ArmBehavior(logger, drone_api, mediator_api),
+            States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api, mediator_api),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api, mediator_api),
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, aruco_api),
             States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
-            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api, mediator_api),
             States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, aruco_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
             States.DROP: DropBehavior(logger, magnet_api),
