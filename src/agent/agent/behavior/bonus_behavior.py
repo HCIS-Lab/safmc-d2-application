@@ -3,8 +3,8 @@ from typing import Optional
 from agent.constants import DELTA_TIME, NAV_THRESHOLD
 from api import DroneApi, LidarApi
 from common.bug_navigator import bugNavigator
+from common.coordinate import Coordinate
 from common.logger import Logger
-from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 
@@ -18,7 +18,7 @@ class BonusBehavior(Behavior):
         self.bug_navigator = bugNavigator(0.7)
 
     def on_enter(self):
-        self.target_position: NEDCoordinate = NEDCoordinate(17, 8, self.drone_api.home_position.z)
+        self.target_position: Coordinate = Coordinate(17, 8, self.drone_api.home_position.z)
 
     def execute(self):
         obstacle_points = self.lidar_api.get_obstacle_points_2d(max_distance=5.0)

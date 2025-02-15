@@ -2,8 +2,8 @@ from typing import Optional
 
 from agent.constants import NAV_THRESHOLD, TAKEOFF_HEIGHT
 from api import DroneApi, MagnetApi, MediatorApi
+from common.coordinate import Coordinate
 from common.logger import Logger
-from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 
@@ -17,7 +17,7 @@ class TakeoffBehavior(Behavior):
         self.mediator_api = mediator_api
 
     def on_enter(self):
-        self.target_position = self.drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
+        self.target_position = self.drone_api.local_position - Coordinate.down * TAKEOFF_HEIGHT
 
     def execute(self):
         self.drone_api.move_to(self.target_position)
@@ -31,4 +31,4 @@ class TakeoffBehavior(Behavior):
         self.drone_api.reset_start_position()
 
     def __has_reached_final_position(self) -> bool:
-        return NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD
+        return Coordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD

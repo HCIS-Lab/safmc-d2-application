@@ -20,7 +20,7 @@ class Agent(Node):
 
         self.drone_api = DroneApi(self, drone_id)
         self.mediator_api = MediatorApi(self, drone_id)
-        self.magnet_api = MagnetApi(self)
+        self.magnet_api = MagnetApi(self, drone_id)
         self.lidar_api = LidarApi(self, drone_id)
         self.aruco_api = ArucoApi(self)
 

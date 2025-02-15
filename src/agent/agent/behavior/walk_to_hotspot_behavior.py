@@ -2,8 +2,8 @@ from typing import Optional
 
 from api import ArucoApi, DroneApi, LidarApi, MediatorApi
 from common.apf_navigator import ApfNavigator
+from common.coordinate import Coordinate
 from common.logger import Logger
-from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 
@@ -26,7 +26,7 @@ class WalkToHotspotBehavior(Behavior):
         )
 
     def on_enter(self):
-        self.target_position: NEDCoordinate = self.mediator_api.drop_zone
+        self.target_position: Coordinate = self.mediator_api.drop_zone
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
@@ -57,7 +57,7 @@ class WalkToHotspotBehavior(Behavior):
         return None
 
     def get_target(self):
-        target: NEDCoordinate = NEDCoordinate(
+        target: Coordinate = Coordinate(
             self.mediator_api.drop_zone[0], self.mediator_api.drop_zone[1], self.mediator_api.drop_zone[2])
         target = self.to_local(target)
         return target
@@ -68,4 +68,4 @@ class WalkToHotspotBehavior(Behavior):
         x = target_global.x - global_position.x + local_position.x
         y = target_global.y - global_position.y + local_position.y
         z = local_position.z
-        return NEDCoordinate(x, y, z)
+        return Coordinate(x, y, z)

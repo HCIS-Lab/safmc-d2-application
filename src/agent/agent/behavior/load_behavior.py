@@ -1,9 +1,9 @@
 from typing import Optional
 
-from agent.constants import LOAD_HEIGHT, NAV_THRESHOLD, HEIGHT_THRESHOLD
+from agent.constants import HEIGHT_THRESHOLD, LOAD_HEIGHT, NAV_THRESHOLD
 from api import DroneApi, MagnetApi
+from common.coordinate import Coordinate
 from common.logger import Logger
-from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 
@@ -18,9 +18,9 @@ class LoadBehavior(Behavior):
     def on_enter(self):
 
         # TODO supply zone 的兩端點位置如何決定?
-        self.origin_position: NEDCoordinate = self.drone_api.local_position
-        
-        self.load_position: NEDCoordinate = self.drone_api.local_position
+        self.origin_position: Coordinate = self.drone_api.local_position
+
+        self.load_position: Coordinate = self.drone_api.local_position
         self.load_position.z = self.drone_api.start_position.z - LOAD_HEIGHT
 
         self.target_position = self.load_position
@@ -29,7 +29,7 @@ class LoadBehavior(Behavior):
 
         self.logger.info(f"target position: {self.target_position}, current position: {self.drone_api.local_position}")
 
-        if NEDCoordinate.distance(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD and (self.drone_api.local_position.z - self.load_position.z) < HEIGHT_THRESHOLD:
+        if Coordinate.distance(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD and (self.drone_api.local_position.z - self.load_position.z) < HEIGHT_THRESHOLD:
             self.magnet_api.activate_magnet()
 
         if self.magnet_api.is_loaded:
@@ -39,6 +39,6 @@ class LoadBehavior(Behavior):
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:
-        if self.magnet_api.is_loaded and NEDCoordinate.distance(self.drone_api.local_position, self.origin_position) <= NAV_THRESHOLD:
+        if self.magnet_api.is_loaded and Coordinate.distance(self.drone_api.local_position, self.origin_position) <= NAV_THRESHOLD:
             return "walk_to_hotspot"
         return None

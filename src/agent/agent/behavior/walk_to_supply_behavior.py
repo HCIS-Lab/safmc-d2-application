@@ -2,8 +2,8 @@ from typing import Optional
 
 from agent.constants import NAV_THRESHOLD
 from api import ArucoApi, DroneApi, MediatorApi
+from common.coordinate import Coordinate
 from common.logger import Logger
-from common.ned_coordinate import NEDCoordinate
 
 from .behavior import Behavior
 
@@ -19,13 +19,13 @@ class WalkToSupplyBehavior(Behavior):
 
     def on_enter(self):
 
-        self.point_a: NEDCoordinate = self.mediator_api.supply_zone[0]
-        self.point_b: NEDCoordinate = self.mediator_api.supply_zone[1]
+        self.point_a: Coordinate = self.mediator_api.supply_zone[0]
+        self.point_b: Coordinate = self.mediator_api.supply_zone[1]
 
         self.point_a.z = self.drone_api.start_position.z
         self.point_b.z = self.drone_api.start_position.z
 
-        self.target_position: NEDCoordinate = self.point_a
+        self.target_position: Coordinate = self.point_a
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
@@ -35,13 +35,13 @@ class WalkToSupplyBehavior(Behavior):
         current_location = self.drone_api.local_position
 
         # 往 target_position 移動, 速度大小是 self.speed
-        dist = NEDCoordinate.distance(current_location, self.target_position)
+        dist = Coordinate.distance(current_location, self.target_position)
         vel = (self.target_position - current_location).normalized * min(self.speed, dist)
         self.drone_api.move_with_velocity(vel)
 
         self.logger.info(f"target position: {self.target_position}, current position: {current_location}, vel: {vel}")
 
-        if NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
+        if Coordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
             # 回頭 (A to B or B to A)
             self.logger.info(f"reached target position, changing direction")
             self.target_position = self.point_b if self.target_position == self.point_a else self.point_a

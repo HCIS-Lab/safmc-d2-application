@@ -11,8 +11,8 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 
 from agent.constants import TAKEOFF_HEIGHT
 from agent_msgs.msg import ArucoInfo
+from common.coordinate import Coordinate
 from common.decorators import deprecated
-from common.ned_coordinate import NEDCoordinate
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
@@ -105,12 +105,12 @@ class DroneApi(Api):
         return self.__heading
 
     @property
-    def local_position(self) -> NEDCoordinate:
+    def local_position(self) -> Coordinate:
         return self.__local_position
 
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
         self.__heading = vehicle_local_position_msg.heading
-        self.__local_position = NEDCoordinate(
+        self.__local_position = Coordinate(
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
@@ -191,7 +191,7 @@ class DroneApi(Api):
         self.__start_position = self.__local_position
 
     @property
-    def start_position(self) -> NEDCoordinate:
+    def start_position(self) -> Coordinate:
         """
         The position of the drone at the moment of takeoff.
         """
@@ -231,7 +231,7 @@ class DroneApi(Api):
 
         self.vehicle_command_pub.publish(vehicle_command_msg)
 
-    def move_to(self, position: NEDCoordinate):
+    def move_to(self, position: Coordinate):
 
         goto_setpoint_msg = GotoSetpoint()
         goto_setpoint_msg.timestamp = self.__get_timestamp()
@@ -242,7 +242,7 @@ class DroneApi(Api):
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
 
-    def move_with_velocity(self, velocity: NEDCoordinate):
+    def move_with_velocity(self, velocity: Coordinate):
         trajectory_setpoint_msg = TrajectorySetpoint()
         trajectory_setpoint_msg.timestamp = self.__get_timestamp()
 
@@ -259,7 +259,7 @@ class DroneApi(Api):
     @deprecated
     def publish_goto_setpoint(self,
                               timestamp: int,
-                              coord: NEDCoordinate,
+                              coord: Coordinate,
                               heading: Optional[float] = None,
                               max_horizontal_speed: Optional[float] = None,
                               max_vertical_speed: Optional[float] = None,

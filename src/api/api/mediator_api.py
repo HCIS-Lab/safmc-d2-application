@@ -5,7 +5,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 from std_msgs.msg import Bool
 
 from agent_msgs.msg import AgentInfo, AgentStatus, DropZoneInfo, SupplyZoneInfo
-from common.ned_coordinate import NEDCoordinate
+from common.coordinate import Coordinate
 
 from .api import Api
 
@@ -111,7 +111,7 @@ class MediatorApi(Api):
         agent_info_msg.drone_id = self.drone_id
         self.arm_ack_pub.publish(agent_info_msg)
 
-    def send_status(self, state_name: str, local_position: NEDCoordinate):
+    def send_status(self, state_name: str, local_position: Coordinate):
         if state_name == None or local_position == None:
             return
         agent_status_msg = AgentStatus()
@@ -163,19 +163,19 @@ class MediatorApi(Api):
         self.__is_ready_to_drop = msg.data
 
     def __set_supply_zone(self, msg: SupplyZoneInfo):
-        self.__supply_zone[0] = NEDCoordinate(
+        self.__supply_zone[0] = Coordinate(
             msg.position_1.x,
             msg.position_1.y,
             msg.position_1.z,
         )
-        self.__supply_zone[1] = NEDCoordinate(
+        self.__supply_zone[1] = Coordinate(
             msg.position_2.x,
             msg.position_2.y,
             msg.position_2.z,
         )
 
     def __set_drop_zone(self, msg: DropZoneInfo):
-        self.__drop_zone = NEDCoordinate(
+        self.__drop_zone = Coordinate(
             msg.position.x,
             msg.position.y,
             msg.position.z,

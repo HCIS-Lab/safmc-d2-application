@@ -2,7 +2,7 @@
 
 import math
 
-from common.ned_coordinate import NEDCoordinate
+from common.coordinate import Coordinate
 
 
 class ApfNavigator:
@@ -21,11 +21,11 @@ class ApfNavigator:
 
     def compute_velocity(
         self,
-        current_position: NEDCoordinate,
-        target_position: NEDCoordinate,
+        current_position: Coordinate,
+        target_position: Coordinate,
         obstacle_points: list[tuple[float, float]],
         heading: float
-    ) -> NEDCoordinate:
+    ) -> Coordinate:
         """
         Args:
             current_position: 無人機目前位置 (NED 座標)
@@ -67,7 +67,7 @@ class ApfNavigator:
         fy = f_att_y + f_rep_y
         fz = f_att_z
         # fz = 0
-        print("Attract Force:", f_att_x , f_att_y, f_att_z)
+        print("Attract Force:", f_att_x, f_att_y, f_att_z)
         # print("Repulse Force:", f_rep_x , f_rep_y, 0.0)
         speed_mag = math.sqrt(fx**2 + fy**2)
         if speed_mag > self.max_speed:
@@ -76,4 +76,4 @@ class ApfNavigator:
             fy *= scale
             # fz *= scale
 
-        return NEDCoordinate(fx, fy, fz)
+        return Coordinate(fx, fy, fz)

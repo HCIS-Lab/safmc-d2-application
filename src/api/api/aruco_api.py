@@ -6,7 +6,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 from rclpy.time import Time
 
 from agent_msgs.msg import ArucoInfo
-from common.ned_coordinate import NEDCoordinate
+from common.coordinate import Coordinate
 
 from .api import Api
 
@@ -17,7 +17,7 @@ class ArucoApi(Api):
         # Initial Values
         self.__target_marker_id = 6
         self.__is_marker_detected = False
-        self.__marker_position = NEDCoordinate(0, 0, 0)
+        self.__marker_position = Coordinate(0, 0, 0)
 
         # QoS
         qos_profile = QoSProfile(
@@ -49,9 +49,9 @@ class ArucoApi(Api):
         return self.__is_marker_detected
 
     @property
-    def marker_position(self) -> NEDCoordinate:
+    def marker_position(self) -> Coordinate:
         return self.__marker_position
-    
+
     @property
     def idle_time(self) -> Time:
         return self.clock.now() - self.__latest_msg_time
@@ -71,4 +71,3 @@ class ArucoApi(Api):
         self.__marker_position.y = aruco_info_msg.position.y
         self.__marker_position.z = aruco_info_msg.position.z
         self.__latest_msg_time = self.clock.now()
-        
