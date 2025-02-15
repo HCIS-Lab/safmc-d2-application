@@ -20,7 +20,6 @@ class TakeoffBehavior(Behavior):
         self.target_position = self.drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
     def execute(self):
-        self.log_position(self.target_position, self.drone_api.local_position)
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:

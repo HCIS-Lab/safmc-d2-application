@@ -33,7 +33,6 @@ class WalkToSupplyBehavior(Behavior):
 
     def execute(self):
         current_location = self.drone_api.local_position
-        self.log_position(self.target_position, current_location)
 
         # 往 target_position 移動, 速度大小是 self.speed
         dist = NEDCoordinate.distance(current_location, self.target_position)
