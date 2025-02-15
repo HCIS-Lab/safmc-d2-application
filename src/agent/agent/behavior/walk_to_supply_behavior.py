@@ -39,6 +39,8 @@ class WalkToSupplyBehavior(Behavior):
         vel = (self.target_position - current_location).normalized * min(self.speed, dist)
         self.drone_api.move_with_velocity(vel)
 
+        self.logger.info(f"target position: {self.target_position}, current position: {current_location}, vel: {vel}")
+
         if NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
             # 回頭 (A to B or B to A)
             self.logger.info(f"reached target position, changing direction")
