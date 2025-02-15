@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import ArucoApi, DroneApi, LidarApi
+from api import ArucoApi, DroneApi, LidarApi, MediatorApi
 from common.apf_navigator import ApfNavigator
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
@@ -10,11 +10,12 @@ from .behavior import Behavior
 
 class WalkToHotspotBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, lidar_api: LidarApi, aruco_api: ArucoApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, lidar_api: LidarApi, aruco_api: ArucoApi, mediator_api: MediatorApi):
         super().__init__(logger)
         self.drone_api = drone_api
         self.lidar_api = lidar_api
         self.aruco_api = aruco_api
+        self.mediator_api = mediator_api
         self.speed: float = 0.5
 
         self.apf_navigator = ApfNavigator(
@@ -25,8 +26,7 @@ class WalkToHotspotBehavior(Behavior):
         )
 
     def on_enter(self):
-        # TODO hotspot 位置如何決定? 應該是要 mediator 告訴他?
-        self.target_position: NEDCoordinate = NEDCoordinate(13, 6.2135, self.drone_api.home_position.z)
+        self.target_position: NEDCoordinate = self.mediator_api.drop_zone
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
@@ -35,6 +35,8 @@ class WalkToHotspotBehavior(Behavior):
     def execute(self):
         obstacle_points = self.lidar_api.get_obstacle_points_2d(max_distance=5.0)
         current_location = self.drone_api.local_position
+        self.mediator_api.send_status(8, current_location)
+
         heading = self.drone_api.heading
         vel = self.apf_navigator.compute_velocity(
             current_position=current_location,

@@ -12,21 +12,19 @@ class Agent(Node):
     def __init__(self):
         super().__init__('agent')
 
-        drone_id = get_parameter(self, 'drone_id', 1)
-        group_id = get_parameter(self, 'group_id', 1)
-        
-        print(drone_id)
-        print(group_id)
-
-        # TODO: check param (drone_id, group_id) is unique (from mediator?)
-
         self.logger = Logger(self.get_logger(), self.get_clock())
+
+        drone_id = get_parameter(self, 'drone_id', 1)
+
+        self.logger.info(f"New agent: drone_id={drone_id}")
+
         self.drone_api = DroneApi(self, drone_id)
-        self.mediator_api = MediatorApi(self, drone_id, group_id)
-        self.magnet_api = MagnetApi(self, drone_id)
+        self.mediator_api = MediatorApi(self, drone_id)
+        self.magnet_api = MagnetApi(self)
         self.lidar_api = LidarApi(self, drone_id)
         self.aruco_api = ArucoApi(self)
-        # machine
+
+        # State Machine
         self.machine = AgentMachine(
             self.logger, self.drone_api, self.magnet_api, self.mediator_api, self.lidar_api, self.aruco_api)
 
@@ -35,6 +33,10 @@ class Agent(Node):
     def update(self):
         # 要 2 Hz 發送, 否則會退出 offboard control mode
         self.drone_api.set_offboard_control_mode()
+
+        # 傳送 agent status 給 mediator
+        self.mediator_api.send_status(self.machine.state.value, self.drone_api.local_position)
+
         self.machine.proceed()
         self.machine.execute()
 

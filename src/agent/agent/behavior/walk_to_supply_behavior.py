@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import NAV_THRESHOLD
-from api import ArucoApi, DroneApi
+from api import ArucoApi, DroneApi, MediatorApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
 
@@ -10,17 +10,21 @@ from .behavior import Behavior
 
 class WalkToSupplyBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, aruco_api: ArucoApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, aruco_api: ArucoApi, mediator_api: MediatorApi):
         super().__init__(logger)
         self.drone_api = drone_api
         self.aruco_api = aruco_api
+        self.mediator_api = mediator_api
         self.speed: float = 0.5
 
     def on_enter(self):
 
-        # TODO supply zone 的兩端點位置如何決定?
-        self.point_a: NEDCoordinate = NEDCoordinate(self.drone_api.local_position.x, 1, self.drone_api.home_position.z)
-        self.point_b: NEDCoordinate = NEDCoordinate(self.drone_api.local_position.x, 7, self.drone_api.home_position.z)
+        self.point_a: NEDCoordinate = self.mediator_api.supply_zone[0]
+        self.point_b: NEDCoordinate = self.mediator_api.supply_zone[1]
+
+        self.point_a.z = self.drone_api.start_position.z
+        self.point_b.z = self.drone_api.start_position.z
+
         self.target_position: NEDCoordinate = self.point_a
 
         # 重設 ArUco Marker
@@ -29,7 +33,6 @@ class WalkToSupplyBehavior(Behavior):
 
     def execute(self):
         current_location = self.drone_api.local_position
-
 
         # 往 target_position 移動, 速度大小是 self.speed
         dist = NEDCoordinate.distance(current_location, self.target_position)

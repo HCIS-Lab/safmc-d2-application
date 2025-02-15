@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import NAV_THRESHOLD, TAKEOFF_HEIGHT
-from api import DroneApi, MagnetApi
+from api import DroneApi, MagnetApi, MediatorApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
 
@@ -10,24 +10,25 @@ from .behavior import Behavior
 
 class TakeoffBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi):
         super().__init__(logger)
         self.drone_api = drone_api
         self.magnet_api = magnet_api
+        self.mediator_api = mediator_api
 
     def on_enter(self):
         self.target_position = self.drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
     def execute(self):
-        self.log_position(self.target_position, self.drone_api.local_position)
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:
         if self.__has_reached_final_position():
-            return "bonus"
-            self.logger.info("takeoff altitude reached")
             return "walk_to_hotspot" if self.magnet_api.is_loaded else "walk_to_supply"
         return None
+
+    def on_exit(self):
+        self.drone_api.reset_start_position()
 
     def __has_reached_final_position(self) -> bool:
         return NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD

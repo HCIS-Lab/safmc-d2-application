@@ -1,10 +1,9 @@
 
 from typing import Optional
 
+from agent.constants import ARUCO_DIST_THRESHOLD
 from api import ArucoApi, DroneApi
 from common.logger import Logger
-
-from agent.constants import ARUCO_DIST_THRESHOLD 
 
 from .behavior import Behavior
 
