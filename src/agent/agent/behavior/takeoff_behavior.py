@@ -26,7 +26,7 @@ class TakeoffBehavior(Behavior):
 
     def get_next_state(self) -> Optional[str]:
         if self.__has_reached_final_position():
-            return "walk_to_supply"
+            return "walk_to_hotspot"
             self.logger.info("takeoff altitude reached")
             return "walk_to_hotspot" if self.magnet_api.is_loaded else "walk_to_supply"
         return None
