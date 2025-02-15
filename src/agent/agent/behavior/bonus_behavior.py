@@ -20,7 +20,6 @@ class BonusBehavior(Behavior):
     def on_enter(self):
         self.target_position: NEDCoordinate = NEDCoordinate(17, 8, self.drone_api.home_position.z)
 
-
     def execute(self):
         obstacle_points = self.lidar_api.get_obstacle_points_2d(max_distance=5.0)
         current_location = self.drone_api.local_position
@@ -39,8 +38,7 @@ class BonusBehavior(Behavior):
 
         self.drone_api.move_with_velocity(vel)
 
-
     def get_next_state(self) -> Optional[str]:
-        if False: # TODO: 如果畫面中有出現 aruco marker
-            return None # TODO 開始精準定位
+        if False:  # TODO: 如果畫面中有出現 aruco marker
+            return None  # TODO 開始精準定位
         return None

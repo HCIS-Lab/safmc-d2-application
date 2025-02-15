@@ -2,12 +2,12 @@ from enum import Enum
 
 from transitions import Machine
 
-from api import DroneApi, MagnetApi, MediatorApi, LidarApi, ArucoApi
-from agent.behavior import (
-    AlignToHotspotBehavior, AlignToSupplyBehavior,
-    Behavior, DropBehavior, IdleBehavior, LoadBehavior,
-    TakeoffBehavior, WaitBehavior,
-    WalkToHotspotBehavior, WalkToSupplyBehavior, ArmBehavior, BonusBehavior)
+from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
+                            ArmBehavior, Behavior, BonusBehavior, DropBehavior,
+                            IdleBehavior, LoadBehavior, TakeoffBehavior,
+                            WaitBehavior, WalkToHotspotBehavior,
+                            WalkToSupplyBehavior)
+from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
 
@@ -17,12 +17,12 @@ class States(Enum):
     TAKEOFF = 2
     WALK_TO_SUPPLY = 3
     ALIGN_TO_SUPPLY = 4
-    LOAD = 5
-    WALK_TO_HOTSPOT = 6
-    ALIGN_TO_HOTSPOT = 7
-    WAIT = 8
-    DROP = 9
-    BONUS = 10
+    LOAD = 6
+    WALK_TO_HOTSPOT = 8
+    ALIGN_TO_HOTSPOT = 9
+    WAIT = 10
+    DROP = 11
+    BONUS = 12
 
 
 transitions = [
@@ -100,6 +100,7 @@ class AgentMachine(Machine):
         """
         Executes the behavior of the current state.
         """
+        self.logger.ori.info(self.state.name)
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             behavior.execute()
@@ -112,5 +113,3 @@ class AgentMachine(Machine):
         if behavior:
             if (next_state := behavior.get_next_state()):
                 self.trigger(next_state)
-                # TODO better log location?
-                self.logger.ori.info(f"current state: {self.state}")

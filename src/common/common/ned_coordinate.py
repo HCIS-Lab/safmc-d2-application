@@ -8,9 +8,9 @@ from common.decorators import staticproperty
 class NEDCoordinate:
     # TODO: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Vector3.html
 
-    x: float
-    y: float
-    z: float
+    x: float  # n
+    y: float  # e
+    z: float  # d
 
     def __str__(self) -> str:
         return f"NED(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"

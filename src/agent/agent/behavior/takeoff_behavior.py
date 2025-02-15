@@ -20,16 +20,16 @@ class TakeoffBehavior(Behavior):
         self.target_position = self.drone_api.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
     def execute(self):
-        self.mediator_api.send_status(1, self.drone_api.local_position)
         self.log_position(self.target_position, self.drone_api.local_position)
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:
         if self.__has_reached_final_position():
-            return "walk_to_hotspot"
-            self.logger.info("takeoff altitude reached")
             return "walk_to_hotspot" if self.magnet_api.is_loaded else "walk_to_supply"
         return None
+
+    def on_exit(self):
+        self.drone_api.reset_start_position()
 
     def __has_reached_final_position(self) -> bool:
         return NEDCoordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD

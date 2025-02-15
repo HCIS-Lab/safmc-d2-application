@@ -1,8 +1,10 @@
 
 import math
+
 import numpy as np
 
 from common.ned_coordinate import NEDCoordinate
+
 
 class bugNavigator:
 

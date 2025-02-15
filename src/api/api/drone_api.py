@@ -3,20 +3,19 @@
 
 from typing import Optional
 
+from geometry_msgs.msg import Point
 from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
+from agent.constants import TAKEOFF_HEIGHT
 from agent_msgs.msg import ArucoInfo
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
-from agent.constants import TAKEOFF_HEIGHT
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
-
-from geometry_msgs.msg import Point
 
 from .api import Api
 
@@ -32,9 +31,8 @@ class DroneApi(Api):
         self.__is_armed = False
         self.__vehicle_timestamp = -1
         self.__is_each_pre_flight_check_passed = False
-        self.__start_position = NEDCoordinate(0, 0, 0)
-        self.__global_position = NEDCoordinate(0, 0, 0)
-        self.__local_position = NEDCoordinate(0, 0, 0)
+        self.__start_position = None
+        self.__local_position = None
 
         # QoS
         qos_profile = QoSProfile(
@@ -45,21 +43,13 @@ class DroneApi(Api):
         )
 
         # Subscriptions
-        print(f"/px4_{self.drone_id}/fmu/out/vehicle_local_position")
-
-        self.vehicle_local_position_sub = node.create_subscription(
+        node.create_subscription(
             VehicleLocalPosition,
             f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
             self.__set_vehicle_local_position,
             qos_profile)
 
-        self.vehicle_global_position_sub = node.create_subscription(
-            Point,
-            f"/position/x500_safmc_d2_{self.drone_id}",
-            self.__set_vehicle_global_position,
-            10)
-
-        self.vehicle_status_sub = node.create_subscription(
+        node.create_subscription(
             VehicleStatus,
             f"/px4_{self.drone_id}/fmu/out/vehicle_status",
             self.__set_vehicle_status,
@@ -110,23 +100,13 @@ class DroneApi(Api):
             vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
         )
 
-    def reset_origin(self, origin: NEDCoordinate):
-        self.__origin = origin
-
-    @property
-    def local_position(self) -> NEDCoordinate:
-        return self.__local_position - self.__origin
-
-    @property
-    def global_position(self) -> NEDCoordinate:
-        return self.__global_position
-
-    def home_position(self) -> NEDCoordinate:
-        return self.__home_position
-
     @property
     def heading(self) -> float:
         return self.__heading
+
+    @property
+    def local_position(self) -> NEDCoordinate:
+        return self.__local_position
 
     def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
         self.__heading = vehicle_local_position_msg.heading
@@ -134,13 +114,6 @@ class DroneApi(Api):
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
-        )
-
-    def __set_vehicle_global_position(self, vehicle_global_position_msg: Point):
-        self.__global_position = NEDCoordinate(     # convert to px4 coordinate
-            x=vehicle_global_position_msg.y,
-            y=vehicle_global_position_msg.x,
-            z=-vehicle_global_position_msg.z
         )
 
     def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs):
@@ -215,8 +188,7 @@ class DroneApi(Api):
         """
         Resets the starting position to the current local position.
         """
-        self.__start_position = self.local_position
-        self.__home_position = self.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
+        self.__start_position = self.__local_position
 
     @property
     def start_position(self) -> NEDCoordinate:
@@ -280,7 +252,7 @@ class DroneApi(Api):
 
         trajectory_setpoint_msg.position[0] = None
         trajectory_setpoint_msg.position[1] = None
-        trajectory_setpoint_msg.position[2] = self.__home_position.z
+        trajectory_setpoint_msg.position[2] = self.__start_position.z
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 

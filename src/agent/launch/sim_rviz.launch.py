@@ -63,8 +63,7 @@ def prepare_rviz_node(context, *args, **kwargs):
                 executable='rviz2',
                 namespace=f'agent_{drone_id}',
                 output='screen',
-                arguments=['-d', modified_rviz_config_path]
-            )
+                arguments=['-d', modified_rviz_config_path, '--ros-args', '--log-level', 'fatal'])
         ]
 
         return rviz_node + [message]

@@ -1,9 +1,8 @@
 from typing import Optional
 
+from agent.constants import ARUCO_DIST_THRESHOLD
 from api import ArucoApi, DroneApi
 from common.logger import Logger
-
-from agent.constants import ARUCO_DIST_THRESHOLD 
 
 from .behavior import Behavior
 
@@ -15,7 +14,7 @@ class AlignToSupplyBehavior(Behavior):  # 精準定位
 
         self.drone_api = drone_api
         self.aruco_api = aruco_api
-        self.speed: float = 0.3  # 機器最大速度
+        self.speed: float = 0.3  # 最大速度
 
     def execute(self):
         # 目前想法是依照 Aruco node 的資訊做 move with velocity
@@ -33,9 +32,9 @@ class AlignToSupplyBehavior(Behavior):  # 精準定位
         pos = self.aruco_api.marker_position
         pos.z = 0
 
-        if pos.magnitude <= ARUCO_DIST_THRESHOLD :
+        if pos.magnitude <= ARUCO_DIST_THRESHOLD:
             return "load"  # 等待
-        if self.aruco_api.idle_time.nanoseconds > 3e9 : # 3sec
+        if self.aruco_api.idle_time.nanoseconds > 3e9:  # 3sec
             return "walk_to_supply"                    # 偵測不到目標 marker，退回去重走
-        
+
         return None

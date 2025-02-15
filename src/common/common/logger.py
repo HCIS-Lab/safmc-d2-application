@@ -9,7 +9,7 @@ class Logger():
         self.ori: RcutilsLogger = rcutils_logger
         self.__clock: Clock = clock
         self.__log_caller_time_map = {}
-        self.__time_interval = 5000000000 # TODO magic number
+        self.__time_interval = 5000000000  # TODO magic number
 
     def debug(self, msg, **kwargs):
         self.__log(self.ori.debug, msg, **kwargs)
@@ -33,4 +33,5 @@ class Logger():
         last_time = self.__log_caller_time_map.get(caller)
         if last_time is None or (timestamp - last_time >= self.__time_interval):
             self.__log_caller_time_map[caller] = timestamp
-            log_function(msg, **kwargs)
+            # log_function(msg, **kwargs)
+            log_function(msg)
