@@ -28,8 +28,8 @@ class States(Enum):
 transitions = [
     {'source': States.IDLE, 'dest': States.ARM},
     {'source': States.ARM, 'dest': States.TAKEOFF},
-    {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
+    {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.WALK_TO_SUPPLY, 'dest': States.ALIGN_TO_SUPPLY},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.LOAD},
