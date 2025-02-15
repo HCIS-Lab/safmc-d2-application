@@ -150,4 +150,4 @@ class MediatorApi(Api):
         self.__supply_zone[1] = msg.position_2
 
     def __set_drop_zone(self, msg: DropZoneInfo):
-        self.__drop_zone = msg.position_1
+        self.__drop_zone = msg.position

@@ -16,7 +16,7 @@ from common.ned_coordinate import NEDCoordinate
 
 from functools import partial
 
-from .constants import DRONE_COUNTS
+from .constants import DRONE_COUNTS, DROP_ZONE_COUNT
 
 
 class Mediator(Node):
@@ -29,6 +29,7 @@ class Mediator(Node):
         self.wait = [False] * DRONE_COUNTS   # 無人機是否在 Hotspot 正上方等待了
         self.group = [-1] * DRONE_COUNTS 
         self.state = [-1] * DRONE_COUNTS 
+        self.dropzoneDone = [False] * DROP_ZONE_COUNT
 
         self.__model_positions = {
             "blue_supply_zone": NEDCoordinate(0, 0, 0),
@@ -188,7 +189,19 @@ class Mediator(Node):
         
         # drop zone
         drop_zone_msg = DropZoneInfo()
-        drop_zone_msg.position = [0, 0, 0]
+        drop_zone = [self.__model_positions[f"drop_zone_{i+1}"] for i in range(DROP_ZONE_COUNT)]
+        if index < 2:
+            if self.dropzoneDone[0] == True:
+                drop_zone_msg.position = [drop_zone[1].y, drop_zone[1].x - 3, drop_zone[1].z]
+            else:
+                drop_zone_msg.position = [drop_zone[0].y, drop_zone[0].x - 3, drop_zone[0].z]
+
+        else:
+            if self.dropzoneDone[2] == True:
+                drop_zone_msg.position = [drop_zone[3].y, drop_zone[3].x - 3, drop_zone[3].z]
+            else:
+                drop_zone_msg.position = [drop_zone[2].y, drop_zone[2].x - 3, drop_zone[2].z]
+
         drop_zone_msg.aruco_marker_id = 0
         self.drop_zone_pubs[index].publish(drop_zone_msg)
 
