@@ -22,8 +22,8 @@ class WalkToSupplyBehavior(Behavior):
         self.point_a: Coordinate = self.mediator_api.supply_zone[0]
         self.point_b: Coordinate = self.mediator_api.supply_zone[1]
 
-        self.point_a.z = self.drone_api.start_position.z
-        self.point_b.z = self.drone_api.start_position.z
+        self.point_a.z = self.drone_api.local_position.z
+        self.point_b.z = self.drone_api.local_position.z
 
         self.target_position: Coordinate = self.point_a
 

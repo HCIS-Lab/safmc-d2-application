@@ -21,7 +21,7 @@ class LoadBehavior(Behavior):
         self.origin_position: Coordinate = self.drone_api.local_position
 
         self.load_position: Coordinate = self.drone_api.local_position
-        self.load_position.z = self.drone_api.start_position.z - LOAD_HEIGHT
+        self.load_position.z = self.drone_api.local_position.z - LOAD_HEIGHT
 
         self.target_position = self.load_position
 
