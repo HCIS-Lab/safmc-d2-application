@@ -13,7 +13,6 @@ class WaitBehavior(Behavior):
         self.mediator_api = mediator_api
 
     def execute(self):
-        self.logger.info("wait for drop signal")
         self.mediator_api.wait_to_drop()
 
     def get_next_state(self) -> Optional[str]:

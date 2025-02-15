@@ -1,6 +1,6 @@
 # local position
 
-float32[3] position_1   # [m] NED local world frame
-float32[3] position_2   # [m] NED local world frame
+geometry_msgs/Point position_1   # [m] NED local world frame
+geometry_msgs/Point position_2   # [m] NED local world frame
 
 uint8 aruco_marker_id   # Identifier for ArUco marker

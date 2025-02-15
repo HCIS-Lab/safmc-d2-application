@@ -26,8 +26,7 @@ class WalkToHotspotBehavior(Behavior):
         )
 
     def on_enter(self):
-        # TODO hotspot 位置如何決定? 應該是要 mediator 告訴他?
-        self.target_position: NEDCoordinate = NEDCoordinate(13, 6.2135, self.drone_api.local_position.z)
+        self.target_position: NEDCoordinate = self.mediator_api.drop_zone
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
