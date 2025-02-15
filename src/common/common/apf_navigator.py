@@ -66,9 +66,10 @@ class ApfNavigator:
         fx = f_att_x + f_rep_x
         fy = f_att_y + f_rep_y
         fz = f_att_z
+        # fz = 0
         print("Attract Force:", f_att_x , f_att_y, f_att_z)
-        print("Repulse Force:", f_rep_x , f_rep_y, 0.0)
-        speed_mag = math.sqrt(fx**2 + fy**2 + fz**2)
+        # print("Repulse Force:", f_rep_x , f_rep_y, 0.0)
+        speed_mag = math.sqrt(fx**2 + fy**2)
         if speed_mag > self.max_speed:
             scale = self.max_speed / speed_mag
             fx *= scale

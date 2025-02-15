@@ -1,4 +1,4 @@
-# local position
+# global position(px4 coordinate)
 
 float32[3] position   # [m] NED local world frame
 

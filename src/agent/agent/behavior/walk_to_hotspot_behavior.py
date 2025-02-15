@@ -27,7 +27,8 @@ class WalkToHotspotBehavior(Behavior):
 
     def on_enter(self):
         # TODO hotspot 位置如何決定? 應該是要 mediator 告訴他?
-        self.target_position: NEDCoordinate = NEDCoordinate(13, 6.2135, self.drone_api.local_position.z)
+        self.mediator_api.send_status(8, self.drone_api.local_position)
+        self.target_position: NEDCoordinate = self.get_target()
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
@@ -36,6 +37,7 @@ class WalkToHotspotBehavior(Behavior):
     def execute(self):
         obstacle_points = self.lidar_api.get_obstacle_points_2d(max_distance=5.0)
         current_location = self.drone_api.local_position
+        self.mediator_api.send_status(8, current_location)
         self.mediator_api.send_status(8, current_location)
 
         heading = self.drone_api.heading
@@ -46,7 +48,7 @@ class WalkToHotspotBehavior(Behavior):
             heading=heading
         )
 
-        self.logger.info(f"target position: {self.target_position}, current position: {current_location}, vel: {vel}")
+        self.logger.info(f"target position: {self.target_position}, {self.drone_api.global_position}, current position: {current_location}, vel: {vel}")
 
         self.drone_api.move_with_velocity(vel)
 
@@ -54,3 +56,16 @@ class WalkToHotspotBehavior(Behavior):
         if self.aruco_api.is_marker_detected:  # 偵測到目標的 ArUco Marker
             return "align_to_hotspot"  # 開始精準定位
         return None
+
+    def get_target(self):
+        target: NEDCoordinate = NEDCoordinate(self.mediator_api.drop_zone[0], self.mediator_api.drop_zone[1], self.mediator_api.drop_zone[2])
+        target = self.to_local(target)
+        return target
+    
+    def to_local(self, target_global):
+        global_position = self.drone_api.global_position
+        local_position = self.drone_api.local_position
+        x = target_global.x - global_position.x + local_position.x
+        y = target_global.y - global_position.y + local_position.y
+        z = local_position.z
+        return NEDCoordinate(x, y, z)
