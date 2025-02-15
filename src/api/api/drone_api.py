@@ -11,6 +11,7 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 from agent_msgs.msg import ArucoInfo
 from common.decorators import deprecated
 from common.ned_coordinate import NEDCoordinate
+from agent.constants import TAKEOFF_HEIGHT
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
@@ -33,6 +34,7 @@ class DroneApi(Api):
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = NEDCoordinate(0, 0, 0)
         self.__global_position = NEDCoordinate(0, 0, 0)
+        self.__local_position = NEDCoordinate(0, 0, 0)
 
         # QoS
         qos_profile = QoSProfile(
@@ -50,7 +52,7 @@ class DroneApi(Api):
             f"/px4_{self.drone_id}/fmu/out/vehicle_local_position",
             self.__set_vehicle_local_position,
             qos_profile)
-        
+
         self.vehicle_global_position_sub = node.create_subscription(
             Point,
             f"/position/x500_safmc_d2_{self.drone_id}",
@@ -74,12 +76,6 @@ class DroneApi(Api):
         self.offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode,
             f"/px4_{self.drone_id}/fmu/in/offboard_control_mode",
-            qos_profile
-        )
-
-        self.goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint,
-            f"/px4_{self.drone_id}/fmu/in/goto_setpoint",
             qos_profile
         )
 
@@ -120,10 +116,13 @@ class DroneApi(Api):
     @property
     def local_position(self) -> NEDCoordinate:
         return self.__local_position - self.__origin
-    
+
     @property
     def global_position(self) -> NEDCoordinate:
         return self.__global_position
+
+    def home_position(self) -> NEDCoordinate:
+        return self.__home_position
 
     @property
     def heading(self) -> float:
@@ -217,6 +216,7 @@ class DroneApi(Api):
         Resets the starting position to the current local position.
         """
         self.__start_position = self.local_position
+        self.__home_position = self.local_position - NEDCoordinate.down * TAKEOFF_HEIGHT
 
     @property
     def start_position(self) -> NEDCoordinate:
@@ -280,7 +280,7 @@ class DroneApi(Api):
 
         trajectory_setpoint_msg.position[0] = None
         trajectory_setpoint_msg.position[1] = None
-        trajectory_setpoint_msg.position[2] = None
+        trajectory_setpoint_msg.position[2] = self.__home_position.z
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
