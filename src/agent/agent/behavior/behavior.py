@@ -24,5 +24,4 @@ class Behavior(ABC):
         """
         Log the target and current position.
         """
-        self.logger.ori.info(f"Target position: {target_position}")
-        self.logger.ori.info(f"Current position: {current_position}")
+        self.logger.info(f"Target position: {target_position}\nCurrent position: {current_position}\n\n")

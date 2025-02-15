@@ -100,7 +100,7 @@ class AgentMachine(Machine):
         """
         Executes the behavior of the current state.
         """
-        self.logger.ori.info(self.state.name)
+        self.logger.info(self.state.name)
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             behavior.execute()
