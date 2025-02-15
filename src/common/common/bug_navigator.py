@@ -1,8 +1,10 @@
 
 import math
+
 import numpy as np
 
 from common.ned_coordinate import NEDCoordinate
+
 
 class bugNavigator:
 
@@ -41,6 +43,5 @@ class bugNavigator:
 
     def move_in_direction_vel(self, current_position : NEDCoordinate, target_position: NEDCoordinate):
         cur_tar_vec = target_position - current_position
-        cur_tar_vec /= math.sqrt(cur_tar_vec.x**2 + cur_tar_vec.y**2)
-        return NEDCoordinate(cur_tar_vec.x, cur_tar_vec.y, 0)
+        return cur_tar_vec.normalized
     

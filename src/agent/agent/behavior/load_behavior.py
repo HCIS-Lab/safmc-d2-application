@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.constants import LOAD_HEIGHT, NAV_THRESHOLD
+from agent.constants import LOAD_HEIGHT, NAV_THRESHOLD, HEIGHT_THRESHOLD
 from api import DroneApi, MagnetApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
@@ -27,10 +27,9 @@ class LoadBehavior(Behavior):
 
     def execute(self):
 
-        self.logger.info(f"target position: {self.target_position}")
-        self.logger.info(f"current position: {self.drone_api.local_position}")
+        self.logger.info(f"target position: {self.target_position}, current position: {self.drone_api.local_position}")
 
-        if NEDCoordinate.distance(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD:
+        if NEDCoordinate.distance(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD and (self.drone_api.local_position.z - self.load_position.z) < HEIGHT_THRESHOLD:
             self.magnet_api.activate_magnet()
 
         if self.magnet_api.is_loaded:

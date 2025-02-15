@@ -2,7 +2,6 @@
 
 uint64 timestamp            # time since system start (microseconds)
 uint8 drone_id              # Drone ID             
-uint8 group_id              # Group ID
 
 # TODO
 # IP address

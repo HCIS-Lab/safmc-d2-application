@@ -26,9 +26,7 @@ class WalkToHotspotBehavior(Behavior):
         )
 
     def on_enter(self):
-        # TODO hotspot 位置如何決定? 應該是要 mediator 告訴他?
-        self.mediator_api.send_status(8, self.drone_api.local_position)
-        self.target_position: NEDCoordinate = self.get_target()
+        self.target_position: NEDCoordinate = self.mediator_api.drop_zone
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
@@ -48,7 +46,8 @@ class WalkToHotspotBehavior(Behavior):
             heading=heading
         )
 
-        self.logger.info(f"target position: {self.target_position}, {self.drone_api.global_position}, current position: {current_location}, vel: {vel}")
+        self.logger.info(
+            f"target position: {self.target_position}, {self.drone_api.global_position}, current position: {current_location}, vel: {vel}")
 
         self.drone_api.move_with_velocity(vel)
 
@@ -58,10 +57,11 @@ class WalkToHotspotBehavior(Behavior):
         return None
 
     def get_target(self):
-        target: NEDCoordinate = NEDCoordinate(self.mediator_api.drop_zone[0], self.mediator_api.drop_zone[1], self.mediator_api.drop_zone[2])
+        target: NEDCoordinate = NEDCoordinate(
+            self.mediator_api.drop_zone[0], self.mediator_api.drop_zone[1], self.mediator_api.drop_zone[2])
         target = self.to_local(target)
         return target
-    
+
     def to_local(self, target_global):
         global_position = self.drone_api.global_position
         local_position = self.drone_api.local_position

@@ -9,7 +9,7 @@ class Logger():
         self.ori: RcutilsLogger = rcutils_logger
         self.__clock: Clock = clock
         self.__log_caller_time_map = {}
-        self.__time_interval = 5000000000 # TODO magic number
+        self.__time_interval = 3e10  # TODO magic number (30 secs)
 
     def debug(self, msg, **kwargs):
         self.__log(self.ori.debug, msg, **kwargs)
@@ -27,10 +27,11 @@ class Logger():
         self.__log(self.ori.fatal, msg, **kwargs)
 
     def __log(self, log_function: callable, msg, **kwargs):
-        frame = inspect.currentframe().f_back
-        caller = (frame.f_code.co_filename, frame.f_lineno)
+
         timestamp = self.__clock.now().nanoseconds
-        last_time = self.__log_caller_time_map.get(caller)
+        last_time = self.__log_caller_time_map.get(msg)
+
         if last_time is None or (timestamp - last_time >= self.__time_interval):
-            self.__log_caller_time_map[caller] = timestamp
-            log_function(msg, **kwargs)
+            self.__log_caller_time_map[msg] = timestamp
+            # log_function(msg, **kwargs)
+            log_function(msg)

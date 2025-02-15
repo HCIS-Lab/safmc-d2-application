@@ -15,7 +15,7 @@ class ArucoApi(Api):
     def __init__(self, node: Node):
 
         # Initial Values
-        self.__target_marker_id = -1
+        self.__target_marker_id = 6
         self.__is_marker_detected = False
         self.__marker_position = NEDCoordinate(0, 0, 0)
 
