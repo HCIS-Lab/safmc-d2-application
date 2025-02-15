@@ -6,11 +6,15 @@ from common.decorators import staticproperty
 
 @dataclass
 class NEDCoordinate:
-    # TODO: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Vector3.html
 
     x: float  # n
     y: float  # e
     z: float  # d
+
+    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
+        self.x = x
+        self.y = y
+        self.z = z
 
     def __str__(self) -> str:
         return f"NED(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"

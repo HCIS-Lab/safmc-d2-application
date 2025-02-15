@@ -18,6 +18,7 @@ set(msg_files
     "msg/DropZoneInfo.msg"
     "msg/SupplyZoneInfo.msg"
     "msg/ArucoInfo.msg"
+    "msg/HiddenObstacles.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
