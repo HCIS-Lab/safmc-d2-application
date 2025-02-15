@@ -13,6 +13,8 @@ from common.ned_coordinate import NEDCoordinate
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
 from agent_msgs.msg import ArucoInfo
 
+from geometry_msgs.msg import Vector3
+
 
 class ArucoTracker(Node):
     def __init__(self):
@@ -20,7 +22,7 @@ class ArucoTracker(Node):
 
         self.bridge = CvBridge()
         self.dictionary = aruco.getPredefinedDictionary(ARUCO_DICT)
-        self.parameters = aruco.DetectorParameters()
+        self.parameters = aruco.DetectorParameters_create()
 
         # 相機資訊 之後要校正
         self.camera_matrix = np.array([[1400, 0, 640], [0, 1400, 360], [0, 0, 1]])
@@ -32,6 +34,13 @@ class ArucoTracker(Node):
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1
+        )
+
+        image_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1
         )
@@ -49,12 +58,18 @@ class ArucoTracker(Node):
         else:
             self.subscription = self.create_subscription(
                 Image,
-                '/camera/image_raw',
+                '/world/safmc_d2/model/x500_safmc_d2_1/link/pi3_cam_link/sensor/pi3_cam_sensor/image',
                 self.image_callback,
-                qos_profile
+                image_qos
+            )
+
+            self.detected_image_pub = self.create_publisher(
+                Image,
+                "/detected/aruco",
+                image_qos
             )
             
-        self.publisher = self.create_publisher(ArucoInfo, '/aruco_info', 10)
+        self.publisher = self.create_publisher(ArucoInfo, '/aruco_info', qos_profile)
         
 
     def image_callback(self, msg):
@@ -64,20 +79,38 @@ class ArucoTracker(Node):
                     
         aruco_msg = ArucoInfo()
         aruco_msg.id = -1
-        aruco_msg.position = NEDCoordinate()
+        aruco_msg.position = Vector3()
 
         if ids is not None:
             rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, self.aruco_marker_size, self.camera_matrix, self.dist_coeffs)
-            
-            for i, id in enumerate(ids):
-                tvec = tvecs[i][0]  # position (x, y, z)
-                rvec = rvecs[i][0]  # rotation
+
+            for rvec, tvec, marker_corner, id in zip(rvecs, tvecs, list(corners)[0], ids):
+                #tvec = tvecs[i][0]  # position (x, y, z)
+                #rvec = rvecs[i][0]  # rotation
+                print(frame.shape)
+
+                marked_frame = frame
+                cv2.line(marked_frame, (int(marker_corner[0][0]), int(marker_corner[0][1])), (int(marker_corner[1][0]), int(marker_corner[1][1])), (0,255,0), 6)
+                cv2.line(marked_frame, (int(marker_corner[1][0]), int(marker_corner[1][1])), (int(marker_corner[2][0]), int(marker_corner[2][1])), (0,255,0), 6)
+                cv2.line(marked_frame, (int(marker_corner[2][0]), int(marker_corner[2][1])), (int(marker_corner[3][0]), int(marker_corner[3][1])), (0,255,0), 6)
+                cv2.line(marked_frame, (int(marker_corner[3][0]), int(marker_corner[3][1])), (int(marker_corner[0][0]), int(marker_corner[0][1])), (0,255,0), 6)
+                
+                cv2.line(marked_frame, (int((marker_corner[0][0] + marker_corner[2][0])/2), int((marker_corner[0][1] + marker_corner[2][1])/2)),
+                          (int(frame.shape[1]/2), int(frame.shape[0]/2)),
+                            (0,255,0),
+                              6)
+                
+                cv2.putText(marked_frame, f"x:{tvec[0][1]:.3f}, y:{tvec[0][0]:.3f}", (int(marker_corner[3][0]), int(marker_corner[3][1])-10), fontScale=1.5, thickness=3, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), lineType=cv2.LINE_AA)
+
+                image_msg = self.bridge.cv2_to_imgmsg(marked_frame)
+                self.detected_image_pub.publish(image_msg)
+
                 
                 aruco_msg = ArucoInfo()
-                aruco_msg.id = id
-                aruco_msg.position.x = tvec[0]
-                aruco_msg.position.y = tvec[1]
-                aruco_msg.position.z = tvec[2]
+                aruco_msg.id = int(id[0])
+                aruco_msg.position.x = tvec[0][0]
+                aruco_msg.position.y = tvec[0][1]
+                aruco_msg.position.z = tvec[0][2]
                 self.publisher.publish(aruco_msg)
         else:
             print("No Aruco markers detected.") # TODO

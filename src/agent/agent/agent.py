@@ -23,7 +23,7 @@ class Agent(Node):
         self.logger = Logger(self.get_logger(), self.get_clock())
         self.drone_api = DroneApi(self, drone_id)
         self.mediator_api = MediatorApi(self, drone_id, group_id)
-        self.magnet_api = MagnetApi(self)
+        self.magnet_api = MagnetApi(self, drone_id)
         self.lidar_api = LidarApi(self, drone_id)
         self.aruco_api = ArucoApi(self)
         # machine

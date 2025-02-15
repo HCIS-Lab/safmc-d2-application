@@ -23,7 +23,7 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
         # Aruco node 的回傳是無人機要移動到 Aruco marker 的距離
 
         vel = self.aruco_api.marker_position
-        vel.z = 0
+        vel.z = self.drone_api.home_position - self.drone_api.local_position
 
         if vel.magnitude > self.speed:
             vel = self.speed * vel.normalized
