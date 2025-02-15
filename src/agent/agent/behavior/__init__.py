@@ -8,3 +8,4 @@ from .takeoff_behavior import TakeoffBehavior
 from .wait_behavior import WaitBehavior
 from .walk_to_hotspot_behavior import WalkToHotspotBehavior
 from .walk_to_supply_behavior import WalkToSupplyBehavior
+from .bonus_zone_behavior import BonusBehavior

@@ -42,6 +42,8 @@ class LidarApi(Api):
         將 LiDAR 分佈轉成 2D 坐標點 (以機體/雷射座標為原點).
         只取距離小於 max_distance 的數據, 以過濾過遠或雜訊.
         回傳 [(x1, y1), (x2, y2), ...]
+        右邊方向是-y
+        x方向正確（往前）
         """
         obstacle_points = []
         if not self.__lidar_ranges:

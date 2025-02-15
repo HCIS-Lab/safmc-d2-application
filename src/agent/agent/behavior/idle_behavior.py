@@ -3,6 +3,7 @@ from typing import Optional
 from api import DroneApi
 from common.logger import Logger
 from common.ned_coordinate import NEDCoordinate
+from agent.constants import TAKEOFF_HEIGHT
 
 from .behavior import Behavior
 

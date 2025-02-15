@@ -2,10 +2,9 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
-                            Behavior, DropBehavior, IdleBehavior, LoadBehavior,
+from agent.behavior import (Behavior, DropBehavior, IdleBehavior, LoadBehavior,
                             TakeoffBehavior, WaitBehavior,
-                            WalkToHotspotBehavior, WalkToSupplyBehavior)
+                            WalkToHotspotBehavior, WalkToSupplyBehavior, AlignToSupplyBehavior, AlignToHotspotBehavior, BonusBehavior)
 from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
@@ -18,8 +17,10 @@ class States(Enum):
     WALK_TO_HOTSPOT = 4
     WAIT = 5
     DROP = 6
+
     ALIGN_TO_SUPPLY = 7
     ALIGN_TO_HOTSPOT = 8
+    BONUS = 9
 
 
 transitions = [
@@ -35,6 +36,7 @@ transitions = [
     {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WAIT},
     {'source': States.WAIT, 'dest': States.DROP},
     {'source': States.DROP, 'dest': States.WALK_TO_SUPPLY},
+    {'source': States.TAKEOFF, 'dest': States.BONUS}
 ]
 
 
@@ -59,6 +61,7 @@ class AgentMachine(Machine):
             States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, aruco_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
             States.DROP: DropBehavior(logger, magnet_api),
+            States.BONUS: BonusBehavior(logger, drone_api, lidar_api)
         }
 
         # add state on_enter/on_exit callback
