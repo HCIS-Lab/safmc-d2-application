@@ -46,7 +46,7 @@ class WalkToSupplyBehavior(Behavior):
             self.target_position.z = self.drone_api.local_position.z  # TODO 用 drone_api?????
 
     def get_next_state(self) -> Optional[str]:
-        if self.mediator_api.received_disarm_signal:
+        if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if not self.drone_api.is_armed:
             self.drone_api.set_resume_state("walk_to_supply")

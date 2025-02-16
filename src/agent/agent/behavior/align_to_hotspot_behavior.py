@@ -31,18 +31,18 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
         self.drone_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
-        if self.mediator_api.received_disarm_signal:
+        if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if not self.drone_api.is_armed:
             self.drone_api.set_resume_state("align_to_hotspot")
             return "arm"
-        
+
         pos = self.aruco_api.marker_position
         pos.z = 0
 
-        if pos.magnitude <= ARUCO_DIST_THRESHOLD :
+        if pos.magnitude <= ARUCO_DIST_THRESHOLD:
             return "wait"  # 等待
-        if self.aruco_api.idle_time.nanoseconds > 3e9 : # 3sec
+        if self.aruco_api.idle_time.nanoseconds > 3e9:  # 3sec
             return "walk_to_hotspot"                    # 偵測不到目標 marker，退回去重走
 
         return None

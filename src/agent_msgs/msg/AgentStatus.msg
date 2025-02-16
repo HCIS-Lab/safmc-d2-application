@@ -1,7 +1,5 @@
-uint64 timestamp                    # time since system start (microseconds)
 uint8 drone_id                      # Drone ID             
-
-geometry_msgs/Point local_position  # [m] NED local world frame
+geometry_msgs/Point point           # local position [m] NED local world frame
 
 uint32 state
 uint32 STATE_IDLE = 0

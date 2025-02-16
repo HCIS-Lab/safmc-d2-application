@@ -21,10 +21,9 @@ class MediatorApi(Api):
         self.__clock: Clock = node.get_clock()
 
         # Initial Values
-        self.__is_ok_to_arm = False  # 是否可以 arming (當同組的所有 drone 都上線後由 mediator 下指令)
+        self.__is_ok_to_arm = False
         self.__is_ok_to_takeoff = False
         self.__is_ok_to_drop = False
-        self.__received_disarm_signal = False
 
         self.__supply_zone: List[Optional[Coordinate]] = [None, None, None, None]
         self.__drop_zone: Optional[Coordinate] = None
@@ -40,6 +39,27 @@ class MediatorApi(Api):
 
         # Subscriptions
         node.create_subscription(
+            Bool,
+            f"/agent_{self.__drone_id}/cmd_arm",
+            self.__set_is_ok_to_arm,
+            qos_profile
+        )
+
+        node.create_subscription(
+            Bool,
+            f"/agent_{self.__drone_id}/cmd_takeoff",
+            self.__set_is_ok_to_takeoff,
+            qos_profile
+        )
+
+        node.create_subscription(
+            Bool,
+            f"/agent_{self.__drone_id}/cmd_drop",
+            self.__set_is_ok_to_drop,
+            qos_profile
+        )
+
+        node.create_subscription(
             SupplyZoneInfo,
             f"/agent_{self.__drone_id}/supply_zone",
             self.__set_supply_zone,
@@ -50,34 +70,6 @@ class MediatorApi(Api):
             DropZoneInfo,
             f"/agent_{self.__drone_id}/drop_zone",
             self.__set_drop_zone,
-            qos_profile
-        )
-
-        node.create_subscription(
-            Bool,
-            f"/agent_{self.__drone_id}/arm",
-            self.__set_is_ok_to_arm,
-            qos_profile
-        )
-
-        node.create_subscription(
-            Bool,
-            f"/agent_{self.drone_id}/ext_disarm",
-            self.__disarm,
-            qos_profile
-        )
-
-        node.create_subscription(
-            Bool,
-            f"/agent_{self.__drone_id}/takeoff",
-            self.__set_is_ok_to_takeoff,
-            qos_profile
-        )
-
-        node.create_subscription(
-            Bool,
-            f"/agent_{self.__drone_id}/drop",
-            self.__set_is_ok_to_drop,
             qos_profile
         )
 
@@ -108,9 +100,9 @@ class MediatorApi(Api):
             qos_profile
         )
 
-        self.wait_pub = node.create_publisher(
+        self.drop_request_pub = node.create_publisher(
             UInt32,
-            '/mediator/wait',
+            '/mediator/drop_request',
             qos_profile
         )
 
@@ -132,7 +124,7 @@ class MediatorApi(Api):
         self.arm_ack_pub.publish(self.__get_drone_id_msg())
 
     def wait_to_drop(self):
-        self.wait_pub.publish(self.__get_drone_id_msg())
+        self.drop_request_pub.publish(self.__get_drone_id_msg())
 
     def send_drop_ack(self):
         self.drop_ack_pub.publish(self.__get_drone_id_msg())
@@ -157,8 +149,16 @@ class MediatorApi(Api):
         return self.__is_ok_to_takeoff
 
     @property
-    def is_ready_to_drop(self):
-        return self.__is_ready_to_drop
+    def is_ok_to_drop(self):
+        return self.__is_ok_to_drop
+
+    def reset_states(self):
+        '''
+        重置 is_ok_to_arm, is_ok_to_takeoff, is_ok_to_drop
+        '''
+        self.__is_ok_to_arm = False
+        self.__is_ok_to_takeoff = False
+        self.__is_ok_to_drop = False
 
     @property
     def supply_zone(self):
@@ -166,12 +166,7 @@ class MediatorApi(Api):
 
     @property
     def drop_zone(self):
-        return self.__drop_zone4
-    
-    def reset_arm_status(self):
-        self.__is_ready_to_arm = False
-        self.__is_ready_to_takeoff = False
-        self.__is_ready_to_drop = False
+        return self.__drop_zone
 
     @property
     def obstacle_array(self) -> List[Coordinate]:
@@ -185,9 +180,6 @@ class MediatorApi(Api):
 
     def __set_is_ok_to_drop(self, msg: Bool):
         self.__is_ok_to_drop = msg.data
-
-    def __disarm(self, msg: Bool):
-        self.__received_disarm_signal = msg.data
 
     def __set_supply_zone(self, msg: SupplyZoneInfo):
         self.__supply_zone[0] = Coordinate.from_point(msg.point_1)

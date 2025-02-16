@@ -22,7 +22,7 @@ class ArmBehavior(Behavior):
             self.mediator_api.arm_ack()
 
     def get_next_state(self) -> Optional[str]:
-        if self.mediator_api.received_disarm_signal:
+        if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if self.mediator_api.is_ok_to_takeoff:
             return "takeoff"

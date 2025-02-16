@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import MagnetApi, MediatorApi, DroneApi
+from api import DroneApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
 from .behavior import Behavior
@@ -20,7 +20,7 @@ class DropBehavior(Behavior):
         self.magnet_api.deactivate_magnet()
 
     def get_next_state(self) -> Optional[str]:
-        if self.mediator_api.received_disarm_signal:
+        if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if not self.drone_api.is_armed:
             self.drone_api.set_resume_state("drop")

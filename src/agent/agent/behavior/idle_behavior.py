@@ -11,9 +11,9 @@ class IdleBehavior(Behavior):
         super().__init__(logger)
         self.drone_api = drone_api
         self.mediator_api = mediator_api
-    
+
     def on_enter(self):
-        self.mediator_api.reset_arm_status()
+        self.mediator_api.reset_states()
 
     def execute(self):
         pf_pass = self.drone_api.is_each_pre_flight_check_passed
