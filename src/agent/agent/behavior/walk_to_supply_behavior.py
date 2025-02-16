@@ -47,6 +47,11 @@ class WalkToSupplyBehavior(Behavior):
             self.target_position = self.point_b if self.target_position == self.point_a else self.point_a
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            self.drone_api.set_resume_state("walk_to_supply")
+            return "arm"
         if self.aruco_api.is_marker_detected:  # 偵測到目標的 ArUco Marker
             return "align_to_supply"  # 開始精準定位
         return None

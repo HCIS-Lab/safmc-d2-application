@@ -61,7 +61,7 @@ ros2 run ros_gz_bridge parameter_bridge \
 /world/safmc_d2/model/x500_safmc_d2_4/link/lidar_2d_link/sensor/lidar_2d_sensor/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan \
 /world/safmc_d2/model/x500_safmc_d2_4/link/lidar_2d_link/sensor/lidar_2d_sensor/scan/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked \
 /world/safmc_d2/model/x500_safmc_d2_4/link/pi3_cam_link/sensor/pi3_cam_sensor/image@sensor_msgs/msg/Image[gz.msgs.Image \
-/world/safmc_d2/model/x500_safmc_d2_4/link/pi3_cam_link/sensor/pi3_cam_sensor/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo \
+/world/safmc_d2/model/x500_safmc_d2_4/link/pi3_cam_link/sensor/pi3_cam_sensor/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo
 ```
 
 ## 參考

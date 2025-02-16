@@ -16,6 +16,11 @@ class WaitBehavior(Behavior):
         self.mediator_api.wait_to_drop()
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            self.drone_api.set_resume_state("wait")
+            return "arm"
         if self.mediator_api.is_ready_to_drop:
             return "drop"
         return None

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import HEIGHT_THRESHOLD, LOAD_HEIGHT, NAV_THRESHOLD
-from api import DroneApi, MagnetApi
+from api import DroneApi, MagnetApi, MediatorApi
 from common.coordinate import Coordinate
 from common.logger import Logger
 
@@ -10,9 +10,10 @@ from .behavior import Behavior
 
 class LoadBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, magnet_api: MagnetApi, mediator_api: MediatorApi):
         super().__init__(logger)
         self.drone_api = drone_api
+        self.mediator_api = mediator_api
         self.magnet_api = magnet_api
 
     def on_enter(self):
@@ -39,6 +40,11 @@ class LoadBehavior(Behavior):
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            self.drone_api.set_resume_state("load")
+            return "arm"
         if self.magnet_api.is_loaded and Coordinate.distance(self.drone_api.local_position, self.origin_position) <= NAV_THRESHOLD:
             return "walk_to_hotspot"
         return None

@@ -23,7 +23,12 @@ class TakeoffBehavior(Behavior):
         self.drone_api.move_to(self.target_position)
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            return "arm"
         if self.__has_reached_final_position():
+            if(self.drone_api.last_state != "walk_to_supply") : return self.drone_api.last_state
             return "walk_to_hotspot" if self.magnet_api.is_loaded else "walk_to_supply"
         return None
 

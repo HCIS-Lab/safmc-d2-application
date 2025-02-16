@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import DELTA_TIME, NAV_THRESHOLD
-from api import DroneApi, LidarApi
+from api import DroneApi, LidarApi, MediatorApi
 from common.bug_navigator import bugNavigator
 from common.coordinate import Coordinate
 from common.logger import Logger
@@ -11,9 +11,10 @@ from .behavior import Behavior
 
 class BonusBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, lidar_api: LidarApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi, lidar_api: LidarApi):
         super().__init__(logger)
         self.drone_api = drone_api
+        self.mediator_api = mediator_api
         self.lidar_api = lidar_api
         self.bug_navigator = bugNavigator(0.7)
 
@@ -39,6 +40,11 @@ class BonusBehavior(Behavior):
         self.drone_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            self.drone_api.set_resume_state("bonus")
+            return "arm"
         if False:  # TODO: 如果畫面中有出現 aruco marker
             return None  # TODO 開始精準定位
         return None

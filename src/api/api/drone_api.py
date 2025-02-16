@@ -33,6 +33,7 @@ class DroneApi(Api):
         self.__is_each_pre_flight_check_passed = False
         self.__start_position = None
         self.__local_position = None
+        self.__last_state = "walk_to_supply"
 
         # QoS
         qos_profile = QoSProfile(
@@ -92,6 +93,10 @@ class DroneApi(Api):
     @property
     def is_armed(self) -> bool:
         return self.__is_armed
+    
+    @property
+    def last_state(self) -> str:
+        return self.__last_state
 
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
         self.__is_each_pre_flight_check_passed = vehicle_status_msg.pre_flight_checks_pass
@@ -190,6 +195,12 @@ class DroneApi(Api):
         """
         self.__start_position = self.__local_position
 
+    def set_resume_state(self, state_name: str) -> None:
+        """
+        Record state under unexpected disarm circumstances
+        """
+        self.__last_state = state_name
+
     @property
     def start_position(self) -> Coordinate:
         """
@@ -239,6 +250,9 @@ class DroneApi(Api):
         goto_setpoint_msg.position[0] = position.x
         goto_setpoint_msg.position[1] = position.y
         goto_setpoint_msg.position[2] = position.z
+
+        goto_setpoint_msg.flag_control_heading = True
+        goto_setpoint_msg.heading = 0.0
 
         self.goto_setpoint_pub.publish(goto_setpoint_msg)
 

@@ -52,6 +52,11 @@ class WalkToHotspotBehavior(Behavior):
         self.drone_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            self.drone_api.set_resume_state("walk_to_hotspot")
+            return "arm"
         if self.aruco_api.is_marker_detected:  # 偵測到目標的 ArUco Marker
             return "align_to_hotspot"  # 開始精準定位
         return None

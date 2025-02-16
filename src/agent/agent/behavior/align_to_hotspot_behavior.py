@@ -2,7 +2,7 @@
 from typing import Optional
 
 from agent.constants import ARUCO_DIST_THRESHOLD
-from api import ArucoApi, DroneApi
+from api import ArucoApi, DroneApi, MediatorApi
 from common.logger import Logger
 
 from .behavior import Behavior
@@ -10,10 +10,11 @@ from .behavior import Behavior
 
 class AlignToHotspotBehavior(Behavior):  # 精準定位
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, aruco_api: ArucoApi):
+    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi,  aruco_api: ArucoApi):
         super().__init__(logger)
 
         self.drone_api = drone_api
+        self.mediator_api = mediator_api
         self.aruco_api = aruco_api
         self.speed: float = 0.3  # 機器最大速度
 
@@ -30,6 +31,12 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
         self.drone_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
+        if self.mediator_api.received_disarm_signal:
+            return "idle"
+        if not self.drone_api.is_armed:
+            self.drone_api.set_resume_state("align_to_hotspot")
+            return "arm"
+        
         pos = self.aruco_api.marker_position
         pos.z = 0
 

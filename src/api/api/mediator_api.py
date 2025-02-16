@@ -21,6 +21,7 @@ class MediatorApi(Api):
         self.__is_ready_to_arm = False  # 是否可以 arming (當同組的所有 drone 都上線後由 mediator 下指令)
         self.__is_ready_to_takeoff = False
         self.__is_ready_to_drop = False
+        self.__received_disarm_signal = False
 
         self.__supply_zone = [None, None]
         self.__drop_zone = None
@@ -51,6 +52,13 @@ class MediatorApi(Api):
             Bool,
             f"/agent_{self.drone_id}/arm",
             self.__arm,
+            qos_profile
+        )
+
+        node.create_subscription(
+            Bool,
+            f"/agent_{self.drone_id}/ext_disarm",
+            self.__disarm,
             qos_profile
         )
 
@@ -144,6 +152,10 @@ class MediatorApi(Api):
     @property
     def is_ready_to_drop(self):
         return self.__is_ready_to_drop
+    
+    @property
+    def received_disarm_signal(self):
+        return self.__received_disarm_signal
 
     @property
     def supply_zone(self):  # TODO rename (有兩個端點)
@@ -151,7 +163,12 @@ class MediatorApi(Api):
 
     @property
     def drop_zone(self):
-        return self.__drop_zone
+        return self.__drop_zone4
+    
+    def reset_arm_status(self):
+        self.__is_ready_to_arm = False
+        self.__is_ready_to_takeoff = False
+        self.__is_ready_to_drop = False
 
     def __arm(self, msg: Bool):
         self.__is_ready_to_arm = msg.data
@@ -161,6 +178,9 @@ class MediatorApi(Api):
 
     def __drop(self, msg: Bool):
         self.__is_ready_to_drop = msg.data
+
+    def __disarm(self, msg: Bool):
+        self.__received_disarm_signal = msg.data
 
     def __set_supply_zone(self, msg: SupplyZoneInfo):
         self.__supply_zone[0] = Coordinate(

@@ -27,19 +27,43 @@ class States(Enum):
 
 transitions = [
     {'source': States.IDLE, 'dest': States.ARM},
+    {'source': States.ARM, 'dest': States.IDLE},
     {'source': States.ARM, 'dest': States.TAKEOFF},
+    {'source': States.TAKEOFF, 'dest': States.IDLE},
+    {'source': States.TAKEOFF, 'dest': States.ARM},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
+    {'source': States.TAKEOFF, 'dest': States.ALIGN_TO_SUPPLY},
+    {'source': States.TAKEOFF, 'dest': States.LOAD},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
+    {'source': States.TAKEOFF, 'dest': States.ALIGN_TO_HOTSPOT},
+    {'source': States.TAKEOFF, 'dest': States.WAIT},
+    {'source': States.TAKEOFF, 'dest': States.DROP},
+    {'source': States.TAKEOFF, 'dest': States.BONUS},
+    {'source': States.WALK_TO_SUPPLY, 'dest': States.IDLE},
+    {'source': States.WALK_TO_SUPPLY, 'dest': States.ARM},
     {'source': States.WALK_TO_SUPPLY, 'dest': States.ALIGN_TO_SUPPLY},
+    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.IDLE},
+    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.ARM},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.LOAD},
+    {'source': States.LOAD, 'dest': States.IDLE},
+    {'source': States.LOAD, 'dest': States.ARM},
     {'source': States.LOAD, 'dest': States.WALK_TO_HOTSPOT},
+    {'source': States.WALK_TO_HOTSPOT, 'dest': States.IDLE},
+    {'source': States.WALK_TO_HOTSPOT, 'dest': States.ARM},
     {'source': States.WALK_TO_HOTSPOT, 'dest': States.ALIGN_TO_HOTSPOT},
+    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.IDLE},
+    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.ARM},
     {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WAIT},
+    {'source': States.WAIT, 'dest': States.IDLE},
+    {'source': States.WAIT, 'dest': States.ARM},
     {'source': States.WAIT, 'dest': States.DROP},
+    {'source': States.DROP, 'dest': States.IDLE},
+    {'source': States.DROP, 'dest': States.ARM},
     {'source': States.DROP, 'dest': States.WALK_TO_SUPPLY},
-    {'source': States.TAKEOFF, 'dest': States.BONUS}
+    {'source': States.BONUS, 'dest': States.IDLE},
+    {'source': States.BONUS, 'dest': States.ARM}
 ]
 
 
@@ -59,13 +83,13 @@ class AgentMachine(Machine):
             States.ARM: ArmBehavior(logger, drone_api, mediator_api),
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api, mediator_api),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api, mediator_api),
-            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, aruco_api),
-            States.LOAD: LoadBehavior(logger, drone_api, magnet_api),
+            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, mediator_api, aruco_api),
+            States.LOAD: LoadBehavior(logger, drone_api, magnet_api, mediator_api),
             States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api, mediator_api),
-            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, aruco_api),
+            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, mediator_api, aruco_api),
             States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
-            States.DROP: DropBehavior(logger, magnet_api),
-            States.BONUS: BonusBehavior(logger, drone_api, lidar_api)
+            States.DROP: DropBehavior(logger, drone_api, mediator_api, magnet_api),
+            States.BONUS: BonusBehavior(logger, drone_api, mediator_api, lidar_api)
         }
 
         # add state on_enter/on_exit callback
