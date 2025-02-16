@@ -2,9 +2,9 @@ from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, UInt32
 
-from agent_msgs.msg import AgentInfo, AgentStatus, DropZoneInfo, SupplyZoneInfo
+from agent_msgs.msg import AgentStatus, DropZoneInfo, SupplyZoneInfo
 from common.coordinate import Coordinate
 
 from .api import Api
@@ -70,7 +70,7 @@ class MediatorApi(Api):
 
         # Publishers
         self.online_pub = node.create_publisher(
-            AgentInfo,
+            UInt32,
             '/mediator/online',
             qos_profile
         )
@@ -82,34 +82,34 @@ class MediatorApi(Api):
         )
 
         self.arm_ack_pub = node.create_publisher(
-            AgentInfo,
+            UInt32,
             '/mediator/arm_ack',
             qos_profile
         )
 
         self.wait_pub = node.create_publisher(
-            AgentInfo,
+            UInt32,
             '/mediator/wait',
             qos_profile
         )
 
         self.drop_ack_pub = node.create_publisher(
-            AgentInfo,
+            UInt32,
             '/mediator/drop_ack',
             qos_profile
         )
 
     def online(self):
-        agent_info_msg = AgentInfo()
-        agent_info_msg.timestamp = int(self.__clock.now().nanoseconds / 1000)
-        agent_info_msg.drone_id = self.drone_id
-        self.online_pub.publish(agent_info_msg)
+        uint32_msg = UInt32()
+        uint32_msg.timestamp = int(self.__clock.now().nanoseconds / 1000)
+        uint32_msg.drone_id = self.drone_id
+        self.online_pub.publish(uint32_msg)
 
     def arm_ack(self):
-        agent_info_msg = AgentInfo()
-        agent_info_msg.timestamp = int(self.__clock.now().nanoseconds / 1000)
-        agent_info_msg.drone_id = self.drone_id
-        self.arm_ack_pub.publish(agent_info_msg)
+        uint32_msg = UInt32()
+        uint32_msg.timestamp = int(self.__clock.now().nanoseconds / 1000)
+        uint32_msg.drone_id = self.drone_id
+        self.arm_ack_pub.publish(uint32_msg)
 
     def send_status(self, state_name: str, local_position: Coordinate):
         if state_name == None or local_position == None:
@@ -124,14 +124,14 @@ class MediatorApi(Api):
         self.status_pub.publish(agent_status_msg)
 
     def wait_to_drop(self):
-        agent_info_msg = AgentInfo()
-        agent_info_msg.drone_id = self.drone_id
-        self.wait_pub.publish(agent_info_msg)
+        uint32_msg = UInt32()
+        uint32_msg.drone_id = self.drone_id
+        self.wait_pub.publish(uint32_msg)
 
     def send_drop_ack(self):
-        agent_info_msg = AgentInfo()
-        agent_info_msg.drone_id = self.drone_id
-        self.drop_ack_pub.publish(agent_info_msg)
+        uint32_msg = UInt32()
+        uint32_msg.drone_id = self.drone_id
+        self.drop_ack_pub.publish(uint32_msg)
 
     @property
     def is_ready_to_arm(self):
