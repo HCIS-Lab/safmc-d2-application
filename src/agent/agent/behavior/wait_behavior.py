@@ -21,6 +21,6 @@ class WaitBehavior(Behavior):
         if not self.drone_api.is_armed:
             self.drone_api.set_resume_state("wait")
             return "arm"
-        if self.mediator_api.is_ready_to_drop:
+        if self.mediator_api.is_ok_to_drop:
             return "drop"
         return None

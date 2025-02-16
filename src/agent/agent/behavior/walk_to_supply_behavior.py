@@ -18,14 +18,9 @@ class WalkToSupplyBehavior(Behavior):
         self.speed: float = 0.5
 
     def on_enter(self):
-
-        self.point_a: Coordinate = self.mediator_api.supply_zone[0]
-        self.point_b: Coordinate = self.mediator_api.supply_zone[1]
-
-        self.point_a.z = self.drone_api.local_position.z
-        self.point_b.z = self.drone_api.local_position.z
-
-        self.target_position: Coordinate = self.point_a
+        self.target_index: int = 0
+        self.target_position: Coordinate = self.mediator_api.supply_zone[self.target_index]
+        self.target_position.z = self.drone_api.local_position.z  # TODO 用 drone_api?????
 
         # 重設 ArUco Marker
         # TODO 透過 mediator 設定 target marker id
@@ -39,12 +34,16 @@ class WalkToSupplyBehavior(Behavior):
         vel = (self.target_position - current_location).normalized * min(self.speed, dist)
         self.drone_api.move_with_velocity(vel)
 
+        # TODO 加上避障
+
         self.logger.info(f"target position: {self.target_position}, current position: {current_location}, vel: {vel}")
 
         if Coordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD:
             # 回頭 (A to B or B to A)
-            self.logger.info(f"reached target position, changing direction")
-            self.target_position = self.point_b if self.target_position == self.point_a else self.point_a
+            self.logger.info(f"reached target position, changing to next target")
+            self.target_index = (self.target_index + 1) % len(self.mediator_api.supply_zone)  # 0, 1, 2, 3, 0, ...
+            self.target_position = self.mediator_api.supply_zone[self.target_index]  # Update target position
+            self.target_position.z = self.drone_api.local_position.z  # TODO 用 drone_api?????
 
     def get_next_state(self) -> Optional[str]:
         if self.mediator_api.received_disarm_signal:
