@@ -20,6 +20,6 @@ class IdleBehavior(Behavior):
             self.mediator_api.online()
 
     def get_next_state(self) -> Optional[str]:
-        if self.mediator_api.is_ready_to_arm:
+        if self.mediator_api.is_ok_to_arm:
             return "arm"
         return None

@@ -1,11 +1,4 @@
-# TODO 角度校正
-# TODO 持續校正 heading
-
-# drone_id % 2 == 0 -> Green Supply Zone
-# drone_id % 2 == 1 -> Blue Supply Zone
-
-# Group 1: 1, 2 (drone_id)
-# Group 2: 3, 4 (drone_id)
+# TODO 角度、持續校正 heading
 
 from functools import partial
 from typing import Dict, Optional
@@ -17,20 +10,19 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool, UInt32
 
-from agent_msgs.msg import AgentStatus, DropZoneInfo, SupplyZoneInfo, ObstacleArray
+from agent_msgs.msg import (AgentStatus, DropZoneInfo, ObstacleArray,
+                            SupplyZoneInfo)
 from common.coordinate import Coordinate
 from common.logger import Logger
 from mediator.constants import NUM_DRONES, NUM_DROP_ZONES, NUM_PAYLOADS
 
 
 def get_group_id(drone_id: int) -> int:
-    if drone_id == 1 or drone_id == 2:
-        return 1
-    return 2
+    return drone_id % 2 + 1
 
 
 def is_green(drone_id: int) -> bool:
-    return drone_id % 2 == 0
+    return drone_id == 1 or drone_id == 2
 
 
 def init_status_flags(size: int):
@@ -89,37 +81,37 @@ class Mediator(Node):
         for drone_id in range(1, NUM_DRONES+1):
             self.arm_pubs[drone_id] = self.create_publisher(
                 Bool,
-                f"/agent_{drone_id+1}/arm",
+                f"/agent_{drone_id}/arm",
                 qos_profile
             )
 
             self.takeoff_pubs[drone_id] = self.create_publisher(
                 Bool,
-                f"/agent_{drone_id+1}/takeoff",
+                f"/agent_{drone_id}/takeoff",
                 qos_profile
             )
 
             self.supply_zone_info_pubs[drone_id] = self.create_publisher(
                 SupplyZoneInfo,
-                f"/agent_{drone_id+1}/supply_zone",
+                f"/agent_{drone_id}/supply_zone",
                 qos_profile
             )
 
             self.drop_zone_info_pubs[drone_id] = self.create_publisher(
                 DropZoneInfo,
-                f"/agent_{drone_id+1}/drop_zone",
+                f"/agent_{drone_id}/drop_zone",
                 qos_profile
             )
 
             self.drop_pubs[drone_id] = self.create_publisher(
                 Bool,
-                f"/agent_{drone_id+1}/drop",
+                f"/agent_{drone_id}/drop",
                 qos_profile
             )
 
             self.obstacle_array_pub[drone_id] = self.create_publisher(
                 ObstacleArray,
-                f"/agent_{drone_id+1}/obstacle_array",
+                f"/agent_{drone_id}/obstacle_array",
                 qos_profile
             )
 
@@ -167,17 +159,35 @@ class Mediator(Node):
         if supply_zone_global_position is None:
             return
 
-        supply_zone_local_position = self.get_target_local_position(
+        sign_ = 1 if is_green(drone_id) else -1
+        supply_zone_local_position_1 = self.get_target_local_position(
             agent_local_position,
             agent_global_position,
-            supply_zone_global_position
+            supply_zone_global_position + sign_ * Coordinate.front*3
+        )
+        supply_zone_local_position_2 = self.get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position - sign_ * Coordinate.front*3
+        )
+        supply_zone_local_position_3 = self.get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position - sign_ * Coordinate.front*3 + Coordinate.right*1
+        )
+        supply_zone_local_position_4 = self.get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position + sign_ * Coordinate.front*3 + Coordinate.right*1
         )
 
-        supply_zone_msg = SupplyZoneInfo()
-        supply_zone_msg.position_1 = (supply_zone_local_position + Coordinate.front * 3).to_point()
-        supply_zone_msg.position_2 = (supply_zone_local_position - Coordinate.front * 3).to_point()
-        supply_zone_msg.aruco_marker_id = 0  # TODO
-        self.supply_zone_info_pubs[drone_id].publish(supply_zone_msg)
+        sz_msg = SupplyZoneInfo()
+        sz_msg.point_1 = supply_zone_local_position_1.to_point()  # near
+        sz_msg.point_2 = supply_zone_local_position_2.to_point()  # far
+        sz_msg.point_3 = supply_zone_local_position_3.to_point()  # far
+        sz_msg.point_4 = supply_zone_local_position_4.to_point()  # near
+        sz_msg.aruco_marker_id = 0  # TODO
+        self.supply_zone_info_pubs[drone_id].publish(sz_msg)
 
         # Drop Zone Information
         drop_zone_id_1 = group_id * 2 - 1  # 1 -> 1, 2 -> 3
@@ -188,7 +198,7 @@ class Mediator(Node):
             return
 
         drop_zone_msg = DropZoneInfo()
-        drop_zone_msg.position = self.get_target_local_position(
+        drop_zone_msg.point = self.get_target_local_position(
             agent_local_position,
             agent_global_position,
             drop_zone_global_position
