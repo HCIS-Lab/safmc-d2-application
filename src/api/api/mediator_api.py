@@ -1,10 +1,12 @@
+from typing import List
 from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 from std_msgs.msg import Bool, UInt32
+from geometry_msgs.msg import Point
 
-from agent_msgs.msg import AgentStatus, DropZoneInfo, SupplyZoneInfo
+from agent_msgs.msg import AgentStatus, DropZoneInfo, SupplyZoneInfo, ObstacleArray
 from common.coordinate import Coordinate
 
 from .api import Api
@@ -24,6 +26,8 @@ class MediatorApi(Api):
 
         self.__supply_zone = [None, None]
         self.__drop_zone = None
+
+        self.__obstacle_array = []  # list
 
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
@@ -65,6 +69,13 @@ class MediatorApi(Api):
             Bool,
             f"/agent_{self.drone_id}/drop",
             self.__drop,
+            qos_profile
+        )
+
+        node.create_subscription(
+            ObstacleArray,
+            f"/agent_{drone_id+1}/obstacle_array",
+            self__set_obstacle_array,
             qos_profile
         )
 
@@ -153,6 +164,10 @@ class MediatorApi(Api):
     def drop_zone(self):
         return self.__drop_zone
 
+    @property
+    def obstacle_array(self) -> List[Point]:
+        return self.__obstacle_array
+
     def __arm(self, msg: Bool):
         self.__is_ready_to_arm = msg.data
 
@@ -180,3 +195,6 @@ class MediatorApi(Api):
             msg.position.y,
             msg.position.z,
         )
+
+    def self__set_obstacle_array(self, msg: ObstacleArray):
+        self.__obstacle_array = msg.points

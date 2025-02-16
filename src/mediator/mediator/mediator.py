@@ -59,11 +59,12 @@ class Mediator(Node):
         )
 
         # Subscriptions
+        # UInt32 for drone_id
         self.create_subscription(UInt32, '/mediator/online', self.__set_is_drone_online, qos_profile)
         self.create_subscription(UInt32, '/mediator/arm_ack', self.__set_is_drone_armed, qos_profile)
-        self.create_subscription(AgentStatus, '/mediator/status', self.__set_status, qos_profile)
         self.create_subscription(UInt32, '/mediator/wait', self.__set_wait_list, qos_profile)
         self.create_subscription(UInt32, f"/mediator/drop_ack", self.__set_drop_ack, qos_profile)
+        self.create_subscription(AgentStatus, '/mediator/status', self.__set_status, qos_profile)
 
         # 物件位置 (from UWB / Gazebo) -> setter 就先轉成 NED
         self.__model_positions: Dict[str, Optional[Coordinate]] = {
@@ -207,7 +208,7 @@ class Mediator(Node):
                 agent_global_position,
                 other_global_position
             )
-            obstacle_array_msg.positions.append(other_local_position.to_point())
+            obstacle_array_msg.points.append(other_local_position.to_point())
         self.obstacle_array_pub[drone_id].publish(obstacle_array_msg)
 
     def __set_wait_list(self, uint32_msg):
