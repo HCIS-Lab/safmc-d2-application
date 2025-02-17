@@ -19,7 +19,7 @@ class Coordinate:
         self.z = z
 
     def __str__(self) -> str:
-        return f"NED(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
+        return f"Coord(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
     def __neg__(self) -> 'Coordinate':
         return Coordinate(-self.x, -self.y, -self.z)
@@ -58,11 +58,26 @@ class Coordinate:
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
     @property
+    def magnitude_2d(self) -> float:
+        return math.sqrt(self.x ** 2 + self.y ** 2)
+
+    @property
     def normalized(self) -> 'Coordinate':
         mag = self.magnitude
         if mag == 0:
             raise ValueError("Cannot normalize a zero vector.")
         return self / mag
+
+    @property
+    def normalized_2d(self) -> 'Coordinate':
+        mag = self.magnitude_2d
+        if mag == 0:
+            raise ValueError("Cannot normalize a zero vector.")
+        return Coordinate(
+            x=self.x/mag,
+            y=self.y/mag,
+            z=self.z,
+        )
 
     def to_point(self) -> Point:
         return Point(
@@ -80,6 +95,14 @@ class Coordinate:
     @staticmethod
     def distance(coord1: 'Coordinate', coord2: 'Coordinate') -> float:
         return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2)
+
+    @staticmethod
+    def clamp_magnitude(coord: 'Coordinate', max_magnitude: float) -> 'Coordinate':
+        return coord if coord.magnitude <= max_magnitude else max_magnitude * coord.normalized
+
+    @staticmethod
+    def clamp_magnitude_2d(coord: 'Coordinate', max_magnitude: float) -> 'Coordinate':
+        return coord if coord.magnitude_2d <= max_magnitude else max_magnitude * coord.normalized_2d
 
     @staticmethod
     def ned_to_enu(ned_coord: 'Coordinate') -> 'Coordinate':

@@ -3,6 +3,7 @@ from typing import Optional
 
 from agent.constants import ARUCO_DIST_THRESHOLD
 from api import ArucoApi, DroneApi, MediatorApi
+from common.coordinate import Coordinate
 from common.logger import Logger
 
 from .behavior import Behavior
@@ -23,12 +24,10 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
         # Aruco node 的回傳是無人機要移動到 Aruco marker 的距離
 
         vel = self.aruco_api.marker_position
-        vel.z = self.drone_api.home_position - self.drone_api.local_position
+        vel.x, vel.y = -vel.y, -vel.x
+        vel = Coordinate.clamp_magnitude_2d(vel, self.speed)
 
-        if vel.magnitude > self.speed:
-            vel = self.speed * vel.normalized
-
-        self.drone_api.move_with_velocity(vel)
+        self.drone_api.move_with_velocity_2d(vel)
 
     def get_next_state(self) -> Optional[str]:
         if not self.mediator_api.is_ok_to_arm:  # disarm

@@ -16,6 +16,8 @@ class IdleBehavior(Behavior):
         self.mediator_api.reset_states()
 
     def execute(self):
+        self.drone_api.disarm()
+
         pf_pass = self.drone_api.is_each_pre_flight_check_passed
         self.logger.info(f"Preflight checks passed: {pf_pass}")
 

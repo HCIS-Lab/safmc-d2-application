@@ -93,7 +93,7 @@ class DroneApi(Api):
     @property
     def is_armed(self) -> bool:
         return self.__is_armed
-    
+
     @property
     def last_state(self) -> str:
         return self.__last_state
@@ -266,7 +266,21 @@ class DroneApi(Api):
 
         trajectory_setpoint_msg.position[0] = None
         trajectory_setpoint_msg.position[1] = None
-        trajectory_setpoint_msg.position[2] = self.__start_position.z
+        trajectory_setpoint_msg.position[2] = None
+
+        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+
+    def move_with_velocity_2d(self, velocity: Coordinate):
+        trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+
+        trajectory_setpoint_msg.velocity[0] = velocity.x
+        trajectory_setpoint_msg.velocity[1] = velocity.y
+        trajectory_setpoint_msg.velocity[2] = None
+
+        trajectory_setpoint_msg.position[0] = None
+        trajectory_setpoint_msg.position[1] = None
+        trajectory_setpoint_msg.position[2] = self.__start_position.z  # TODO ?
 
         self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
