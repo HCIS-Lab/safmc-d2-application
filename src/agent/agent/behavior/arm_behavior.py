@@ -16,7 +16,6 @@ class ArmBehavior(Behavior):
         self.logger.info(f"Armed status: {self.drone_api.is_armed}")
 
         if not self.drone_api.is_armed:
-            self.drone_api.activate_offboard_control_mode()  # TODO 要不要移動到 IDLE state?
             self.drone_api.arm()
         else:
             self.mediator_api.arm_ack()

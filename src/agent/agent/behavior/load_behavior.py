@@ -1,3 +1,5 @@
+# TODO split to 3 state: DESCEND -> LOAD -> ASCEND
+
 from typing import Optional
 
 from agent.constants import HEIGHT_THRESHOLD, LOAD_HEIGHT, NAV_THRESHOLD
@@ -43,8 +45,9 @@ class LoadBehavior(Behavior):
         if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if not self.drone_api.is_armed:
-            self.drone_api.set_resume_state("load")
+            self.drone_api.set_resume_state("load")  # TODO 留下/不留下?
             return "arm"
+
         if self.magnet_api.is_loaded and Coordinate.distance(self.drone_api.local_position, self.origin_position) <= NAV_THRESHOLD:
             return "walk_to_hotspot"
         return None

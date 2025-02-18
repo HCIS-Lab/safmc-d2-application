@@ -30,12 +30,8 @@ class BonusBehavior(Behavior):
             obstacle_points=obstacle_points,
         )
 
-        self.logger.info(f"target position: {self.target_position}, current position: {current_location}, vel: {vel}")
-
-        # 往 target_position 移動, 速度大小是 self.speed
-        # dist = NEDCoordinate.distance(current_location, self.target_position)
-        # vel = (self.target_position - current_location).normalized * min(self.speed, dist)
-        # self.drone_api.move_with_velocity(vel, DELTA_TIME)
+        self.logger.info(
+            f"target position: {self.target_position}, current position: {current_location}, vel: {vel}")  # TODO remove
 
         self.drone_api.move_with_velocity(vel)
 
@@ -43,8 +39,9 @@ class BonusBehavior(Behavior):
         if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if not self.drone_api.is_armed:
-            self.drone_api.set_resume_state("bonus")
+            self.drone_api.set_resume_state("bonus")  # TODO 留下/不留下?
             return "arm"
+
         if False:  # TODO: 如果畫面中有出現 aruco marker
             return None  # TODO 開始精準定位
         return None
