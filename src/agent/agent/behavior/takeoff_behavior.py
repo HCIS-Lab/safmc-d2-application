@@ -22,9 +22,6 @@ class TakeoffBehavior(Behavior):
     def execute(self):
         self.drone_api.move_to(self.target_position)
 
-    def on_exit(self):
-        self.drone_api.reset_start_position()
-
     def __has_reached_final_position(self) -> bool:
         return Coordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD
 
