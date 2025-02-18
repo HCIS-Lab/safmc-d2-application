@@ -13,20 +13,14 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
 
     def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi,  aruco_api: ArucoApi):
         super().__init__(logger)
-
         self.drone_api = drone_api
         self.mediator_api = mediator_api
         self.aruco_api = aruco_api
-        self.speed: float = 0.3  # 機器最大速度
+        self.speed: float = 0.3  # 最大速度
 
     def execute(self):
-        # 目前想法是依照 Aruco node 的資訊做 move with velocity
-        # Aruco node 的回傳是無人機要移動到 Aruco marker 的距離
-
-        vel = self.aruco_api.marker_position
-        vel.x, vel.y = -vel.y, -vel.x
+        vel = -self.aruco_api.marker_position
         vel = Coordinate.clamp_magnitude_2d(vel, self.speed)
-
         self.drone_api.move_with_velocity_2d(vel)
 
     def get_next_state(self) -> Optional[str]:
@@ -36,10 +30,7 @@ class AlignToHotspotBehavior(Behavior):  # 精準定位
             self.drone_api.set_resume_state("align_to_hotspot")
             return "arm"
 
-        pos = self.aruco_api.marker_position
-        pos.z = 0
-
-        if pos.magnitude <= ARUCO_DIST_THRESHOLD:
+        if self.aruco_api.marker_position.magnitude_2d <= ARUCO_DIST_THRESHOLD:
             return "wait"  # 等待
         if self.aruco_api.idle_time.nanoseconds > 3e9:  # 3sec
             return "walk_to_hotspot"                    # 偵測不到目標 marker，退回去重走

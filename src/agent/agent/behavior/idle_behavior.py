@@ -16,7 +16,10 @@ class IdleBehavior(Behavior):
         self.mediator_api.reset_states()
 
     def execute(self):
-        self.drone_api.disarm()
+        if self.drone_api.is_armed:
+            self.drone_api.disarm()
+
+        self.drone_api.activate_offboard_control_mode()  # TODO 一直發送會不會有問題?
 
         pf_pass = self.drone_api.is_each_pre_flight_check_passed
         self.logger.info(f"Preflight checks passed: {pf_pass}")

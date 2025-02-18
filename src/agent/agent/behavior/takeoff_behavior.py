@@ -30,8 +30,9 @@ class TakeoffBehavior(Behavior):
             return "idle"
         if not self.drone_api.is_armed:
             return "arm"
+
         if self.__has_reached_final_position():
-            if (self.drone_api.last_state != "walk_to_supply"):
+            if (self.drone_api.last_state != "walk_to_supply"):  # TODO 留下/不留下?
                 return self.drone_api.last_state
             return "walk_to_hotspot" if self.magnet_api.is_loaded else "walk_to_supply"
         return None

@@ -19,8 +19,9 @@ class WaitBehavior(Behavior):
         if not self.mediator_api.is_ok_to_arm:  # disarm
             return "idle"
         if not self.drone_api.is_armed:
-            self.drone_api.set_resume_state("wait")
+            self.drone_api.set_resume_state("wait")  # TODO 留下/不留下?
             return "arm"
+
         if self.mediator_api.is_ok_to_drop:
             return "drop"
         return None

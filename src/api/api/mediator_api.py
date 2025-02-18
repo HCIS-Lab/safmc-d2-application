@@ -135,9 +135,9 @@ class MediatorApi(Api):
             return
         agent_status_msg = AgentStatus()
         agent_status_msg.drone_id = self.__drone_id
-        agent_status_msg.local_position.x = float(local_position.x)
-        agent_status_msg.local_position.y = float(local_position.y)
-        agent_status_msg.local_position.z = float(local_position.z)
+        agent_status_msg.point.x = float(local_position.x)
+        agent_status_msg.point.y = float(local_position.y)
+        agent_status_msg.point.z = float(local_position.z)
         self.status_pub.publish(agent_status_msg)
 
     @property
