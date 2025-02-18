@@ -13,6 +13,7 @@ from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           VehicleLocalPosition, VehicleStatus)
 
 from .api import Api
+from agent.constants import TAKEOFF_HEIGHT
 
 
 class DroneApi(Api):
@@ -27,7 +28,11 @@ class DroneApi(Api):
         self.__is_each_pre_flight_check_passed: bool = False
         self.__heading: Optional[float] = None
         self.__local_position: Optional[Coordinate] = None
+        self.__local_velocity: Optional[Coordinate] = None
         self.__last_state = "walk_to_supply"  # TODO 留下/不留下?
+
+        # TODO
+        self.__start_position: Optional[Coordinate] = None
 
         # QoS
         qos_profile = QoSProfile(
@@ -88,6 +93,13 @@ class DroneApi(Api):
     @property
     def local_position(self) -> Coordinate:
         return self.__local_position
+
+    @property
+    def local_velocity(self) -> Coordinate:
+        return self.__local_velocity
+
+    def reset_start_position(self) -> None:
+        self.__start_position = self.__local_position
 
     def arm(self) -> None:
         """
@@ -208,6 +220,10 @@ class DroneApi(Api):
         for attr in ["position", "acceleration", "jerk"]:
             setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
 
+        # TODO
+        if self.__start_position:
+            trajectory_setpoint_msg.position[2] = self.__start_position.z - TAKEOFF_HEIGHT
+
         self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
@@ -223,6 +239,11 @@ class DroneApi(Api):
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
+        )
+        self.__local_velocity = Coordinate(
+            x=vehicle_local_position_msg.vx,
+            y=vehicle_local_position_msg.vy,
+            z=vehicle_local_position_msg.vz
         )
 
     def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs) -> VehicleCommand:
