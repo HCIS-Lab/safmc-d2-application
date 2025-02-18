@@ -97,6 +97,10 @@ class Coordinate:
         return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2)
 
     @staticmethod
+    def distance_2d(coord1: 'Coordinate', coord2: 'Coordinate') -> float:
+        return math.sqrt((coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2)
+
+    @staticmethod
     def clamp_magnitude(coord: 'Coordinate', max_magnitude: float) -> 'Coordinate':
         return coord if coord.magnitude <= max_magnitude else max_magnitude * coord.normalized
 

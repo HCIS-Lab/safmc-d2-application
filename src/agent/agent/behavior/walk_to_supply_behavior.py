@@ -35,7 +35,7 @@ class WalkToSupplyBehavior(Behavior):
 
         # TODO 加上避障 (APF)
 
-        if Coordinate.distance(current_location, self.target_position) <= NAV_THRESHOLD:
+        if Coordinate.distance_2d(current_location, self.target_position) <= NAV_THRESHOLD:
             # 換方向
             self.logger.info(f"reached target position, changing to next target")
             self.target_index = (self.target_index + 1) % len(self.mediator_api.supply_zone)  # 0, 1, 2, 3, 0, ...

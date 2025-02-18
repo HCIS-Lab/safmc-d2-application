@@ -1,3 +1,5 @@
+# TODO 有問題, 如果中間跳回來會一直上升 (飛到天上)
+
 from typing import Optional
 
 from agent.constants import NAV_THRESHOLD, TAKEOFF_HEIGHT

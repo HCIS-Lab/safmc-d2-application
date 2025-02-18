@@ -32,7 +32,7 @@ class LoadBehavior(Behavior):
 
         self.logger.info(f"target position: {self.target_position}, current position: {self.drone_api.local_position}")
 
-        if Coordinate.distance(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD and (self.drone_api.local_position.z - self.load_position.z) < HEIGHT_THRESHOLD:
+        if Coordinate.distance_2d(self.drone_api.local_position, self.load_position) <= NAV_THRESHOLD and (self.drone_api.local_position.z - self.load_position.z) < HEIGHT_THRESHOLD:
             self.magnet_api.activate_magnet()
 
         if self.magnet_api.is_loaded:

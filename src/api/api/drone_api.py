@@ -1,5 +1,5 @@
 # TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
-
+import numpy as np
 from typing import Optional
 
 from rclpy.clock import Clock
@@ -173,9 +173,6 @@ class DroneApi(Api):
         goto_setpoint_msg.flag_set_max_horizontal_speed = False
         goto_setpoint_msg.flag_set_max_vertical_speed = False
         goto_setpoint_msg.flag_set_max_heading_rate = False
-        goto_setpoint_msg.max_horizontal_speed = None
-        goto_setpoint_msg.max_vertical_speed = None
-        goto_setpoint_msg.max_heading_rate = None
 
         self.__goto_setpoint_pub.publish(goto_setpoint_msg)
 
@@ -187,12 +184,12 @@ class DroneApi(Api):
         trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, velocity.z]
 
         # 控制角度與角速度 (不變)
-        trajectory_setpoint_msg.yaw = 0
-        trajectory_setpoint_msg.yawspeed = 0
+        trajectory_setpoint_msg.yaw = float(0)
+        trajectory_setpoint_msg.yawspeed = float(0)
 
         # 其他都不控制
         for attr in ["position", "acceleration", "jerk"]:
-            setattr(trajectory_setpoint_msg, attr, [None] * 3)
+            setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
 
         self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
@@ -204,12 +201,12 @@ class DroneApi(Api):
         trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, 0.0]
 
         # 控制角度與角速度 (不變)
-        trajectory_setpoint_msg.yaw = 0
-        trajectory_setpoint_msg.yawspeed = 0
+        trajectory_setpoint_msg.yaw = float(0)
+        trajectory_setpoint_msg.yawspeed = float(0)
 
         # 其他都不控制
         for attr in ["position", "acceleration", "jerk"]:
-            setattr(trajectory_setpoint_msg, attr, [None] * 3)
+            setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
 
         self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
