@@ -27,6 +27,8 @@ class WalkToSupplyBehavior(Behavior):
         self.aruco_api.reset()  # TODO 或許可以直接把設定 target 寫在 reset() 裡面
 
     def execute(self):
+        self.drone_api.change_control_field("velocity")
+
         current_location = self.drone_api.local_position
 
         # 往 target_position 移動, 速度大小是 self.speed

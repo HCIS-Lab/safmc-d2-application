@@ -30,6 +30,7 @@ class DroneApi(Api):
         self.__local_position: Optional[Coordinate] = None
         self.__local_velocity: Optional[Coordinate] = None
         self.__last_state = "walk_to_supply"  # TODO 留下/不留下?
+        self.__control_field = "position"  # TODO
 
         # TODO
         self.__start_position: Optional[Coordinate] = None
@@ -140,19 +141,27 @@ class DroneApi(Api):
     def __get_timestamp(self) -> int:  # microseconds
         return int(self.__clock.now().nanoseconds / 1000)
 
+    # TODO
+    def change_control_field(self, field: str) -> None:
+        if field != "position" and field != "velocity":
+            # ERROR
+            return
+        self.__control_field = field
+
     def set_offboard_control_mode(self) -> None:
         """
         Set the offboard control mode for the drone.
-
-        position = True
-        velocity = True
-        timestamp = current timestamp
 
         ref: https://docs.px4.io/main/en/flight_modes/offboard.html#ros-2-messages
         """
         offboard_control_mode_msg = OffboardControlMode()
         offboard_control_mode_msg.timestamp = self.__get_timestamp()
-        offboard_control_mode_msg.position = True  # TrajectorySetpoint
+
+        for attr in ["position", "velocity", "acceleration", "attitude", "body_rate", "thrust_and_torque", "direct_actuator"]:
+            setattr(offboard_control_mode_msg, attr, False)
+        setattr(offboard_control_mode_msg, self.__control_field, True)
+        # offboard_control_mode_msg.position = True  # TrajectorySetpoint
+        # offboard_control_mode_msg.velocity = True  # TrajectorySetpoint
         self.__offboard_control_mode_pub.publish(offboard_control_mode_msg)
 
     def activate_offboard_control_mode(self) -> None:
@@ -219,10 +228,6 @@ class DroneApi(Api):
         # 其他都不控制
         for attr in ["position", "acceleration", "jerk"]:
             setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
-
-        # TODO
-        if self.__start_position:
-            trajectory_setpoint_msg.position[2] = self.__start_position.z - TAKEOFF_HEIGHT
 
         self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 

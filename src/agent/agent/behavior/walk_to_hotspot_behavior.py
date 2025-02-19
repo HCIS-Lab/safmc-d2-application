@@ -33,6 +33,8 @@ class WalkToHotspotBehavior(Behavior):
         self.aruco_api.reset()  # TODO 或許可以直接把設定 target 寫在 reset() 裡面
 
     def execute(self):
+        self.drone_api.change_control_field("velocity")
+
         obstacle_points = self.lidar_api.get_obstacle_points_2d(max_distance=5.0)
         obstacle_points.extend([(point.x, point.y) for point in self.mediator_api.obstacle_array])
 

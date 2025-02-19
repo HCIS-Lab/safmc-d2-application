@@ -18,6 +18,8 @@ class AlignToSupplyBehavior(Behavior):
         self.speed: float = 0.3  # 最大速度
 
     def execute(self):
+        self.drone_api.change_control_field("velocity")
+
         vel = -self.aruco_api.marker_position
         vel = Coordinate.clamp_magnitude_2d(vel, self.speed)
         self.drone_api.move_with_velocity_2d(vel)

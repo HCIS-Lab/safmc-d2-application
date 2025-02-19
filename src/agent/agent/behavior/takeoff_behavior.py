@@ -22,6 +22,7 @@ class TakeoffBehavior(Behavior):
         self.target_position = self.drone_api.local_position - Coordinate.down * TAKEOFF_HEIGHT
 
     def execute(self):
+        self.drone_api.change_control_field("position")
         self.drone_api.move_to(self.target_position)
 
     def __has_reached_final_position(self) -> bool:
