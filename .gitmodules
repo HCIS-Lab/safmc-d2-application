@@ -3,3 +3,6 @@
 	url = https://github.com/PX4/px4_msgs.git
 	branch = release/1.15
 	ignore = dirty
+[submodule "src/image_pipeline"]
+	path = src/image_pipeline
+	url = https://github.com/ros-perception/image_pipeline/tree/humble
