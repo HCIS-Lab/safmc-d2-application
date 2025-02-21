@@ -20,11 +20,9 @@ class DropBehavior(Behavior):
         self.magnet_api.deactivate_magnet()
 
     def get_next_state(self) -> Optional[str]:
-        if not self.mediator_api.is_ok_to_arm:  # disarm
-            return "idle"
         if not self.drone_api.is_armed:
             self.drone_api.set_resume_state("drop")  # TODO 留下/不留下?
-            return "arm"
+            return "idle"
 
         if not self.magnet_api.is_loaded:
             return "walk_to_supply"

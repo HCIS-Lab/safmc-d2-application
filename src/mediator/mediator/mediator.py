@@ -53,7 +53,6 @@ class Mediator(Node):
         # Subscriptions
         # UInt32 for drone_id
         self.create_subscription(UInt32, '/mediator/online', self.__set_is_drone_online, qos_profile)
-        self.create_subscription(UInt32, '/mediator/arm_ack', self.__set_is_drone_armed, qos_profile)
         self.create_subscription(UInt32, '/mediator/drop_request', self.__set_is_drone_waiting_at_hotspot, qos_profile)
         self.create_subscription(UInt32, f"/mediator/drop_ack", self.__unset_is_drone_waiting_at_hotspot, qos_profile)
         self.create_subscription(AgentStatus, '/mediator/status', self.__set_status, qos_profile)
@@ -71,26 +70,12 @@ class Mediator(Node):
                                      partial(self.__set_model_positions, model_name), 10)
 
         # publishers
-        self.arm_pubs = [None] * (NUM_DRONES+1)
-        self.takeoff_pubs = [None] * (NUM_DRONES+1)
         self.supply_zone_info_pubs = [None] * (NUM_DRONES+1)
         self.drop_zone_info_pubs = [None] * (NUM_DRONES+1)
         self.drop_pubs = [None] * (NUM_DRONES+1)
         self.obstacle_array_pub = [None] * (NUM_DRONES+1)
 
         for drone_id in range(1, NUM_DRONES+1):
-            self.arm_pubs[drone_id] = self.create_publisher(
-                Bool,
-                f"/agent_{drone_id}/cmd_arm",
-                qos_profile
-            )
-
-            self.takeoff_pubs[drone_id] = self.create_publisher(
-                Bool,
-                f"/agent_{drone_id}/cmd_takeoff",
-                qos_profile
-            )
-
             self.drop_pubs[drone_id] = self.create_publisher(
                 Bool,
                 f"/agent_{drone_id}/cmd_drop",
@@ -123,22 +108,6 @@ class Mediator(Node):
         if not self.is_drone_online[drone_id]:
             self.logger.ori.info(f"{drone_id} is online!")
         self.is_drone_online[drone_id] = True
-
-        self.logger.info("sending arming command")
-        msg = Bool()
-        msg.data = True
-        self.arm_pubs[drone_id].publish(msg)
-
-    def __set_is_drone_armed(self, msg: UInt32):
-        drone_id = msg.data
-        if not self.is_drone_armed[drone_id]:
-            self.logger.ori.info(f"{drone_id} is armed!")
-        self.is_drone_armed[drone_id] = True
-
-        self.logger.info("sending takeoff command")
-        msg = Bool()
-        msg.data = True
-        self.takeoff_pubs[drone_id].publish(msg)
 
     def __set_status(self, msg: AgentStatus):
         drone_id = msg.drone_id
