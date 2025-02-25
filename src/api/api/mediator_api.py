@@ -21,7 +21,6 @@ class MediatorApi(Api):
         self.__clock: Clock = node.get_clock()
 
         # Initial Values
-        self.__is_ok_to_arm = False
         self.__is_ok_to_takeoff = False
         self.__is_ok_to_drop = False
 
@@ -38,13 +37,6 @@ class MediatorApi(Api):
         )
 
         # Subscriptions
-        node.create_subscription(
-            Bool,
-            f"/agent_{self.__drone_id}/cmd_arm",
-            self.__set_is_ok_to_arm,
-            qos_profile
-        )
-
         node.create_subscription(
             Bool,
             f"/agent_{self.__drone_id}/cmd_takeoff",
@@ -94,12 +86,6 @@ class MediatorApi(Api):
             qos_profile
         )
 
-        self.arm_ack_pub = node.create_publisher(
-            UInt32,
-            '/mediator/arm_ack',
-            qos_profile
-        )
-
         self.drop_request_pub = node.create_publisher(
             UInt32,
             '/mediator/drop_request',
@@ -120,9 +106,6 @@ class MediatorApi(Api):
     def online(self):
         self.online_pub.publish(self.__get_drone_id_msg())
 
-    def arm_ack(self):
-        self.arm_ack_pub.publish(self.__get_drone_id_msg())
-
     def wait_to_drop(self):
         self.drop_request_pub.publish(self.__get_drone_id_msg())
 
@@ -141,10 +124,6 @@ class MediatorApi(Api):
         self.status_pub.publish(agent_status_msg)
 
     @property
-    def is_ok_to_arm(self):
-        return self.__is_ok_to_arm
-
-    @property
     def is_ok_to_takeoff(self):
         return self.__is_ok_to_takeoff
 
@@ -154,9 +133,8 @@ class MediatorApi(Api):
 
     def reset_states(self):
         '''
-        重置 is_ok_to_arm, is_ok_to_takeoff, is_ok_to_drop
+        重置 is_ok_to_takeoff, is_ok_to_drop
         '''
-        self.__is_ok_to_arm = False
         self.__is_ok_to_takeoff = False
         self.__is_ok_to_drop = False
 
@@ -171,9 +149,6 @@ class MediatorApi(Api):
     @property
     def obstacle_array(self) -> List[Coordinate]:
         return self.__obstacle_array
-
-    def __set_is_ok_to_arm(self, msg: Bool):
-        self.__is_ok_to_arm = msg.data
 
     def __set_is_ok_to_takeoff(self, msg: Bool):
         self.__is_ok_to_takeoff = msg.data

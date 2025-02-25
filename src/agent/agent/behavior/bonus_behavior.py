@@ -36,11 +36,9 @@ class BonusBehavior(Behavior):
         self.drone_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
-        if not self.mediator_api.is_ok_to_arm:  # disarm
-            return "idle"
         if not self.drone_api.is_armed:
             self.drone_api.set_resume_state("bonus")  # TODO 留下/不留下?
-            return "arm"
+            return "idle"
 
         if False:  # TODO: 如果畫面中有出現 aruco marker
             return None  # TODO 開始精準定位

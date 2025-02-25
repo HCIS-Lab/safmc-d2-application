@@ -3,7 +3,7 @@ from enum import Enum
 from transitions import Machine
 
 from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
-                            ArmBehavior, Behavior, BonusBehavior, DropBehavior,
+                            Behavior, BonusBehavior, DropBehavior,
                             IdleBehavior, LoadBehavior, TakeoffBehavior,
                             WaitBehavior, WalkToHotspotBehavior,
                             WalkToSupplyBehavior)
@@ -13,7 +13,6 @@ from common.logger import Logger
 
 class States(Enum):
     IDLE = 0
-    ARM = 1
     TAKEOFF = 2
     WALK_TO_SUPPLY = 3
     ALIGN_TO_SUPPLY = 4
@@ -26,11 +25,8 @@ class States(Enum):
 
 
 transitions = [
-    {'source': States.IDLE, 'dest': States.ARM},
-    {'source': States.ARM, 'dest': States.IDLE},
-    {'source': States.ARM, 'dest': States.TAKEOFF},
+    {'source': States.IDLE, 'dest': States.TAKEOFF},
     {'source': States.TAKEOFF, 'dest': States.IDLE},
-    {'source': States.TAKEOFF, 'dest': States.ARM},
     {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.TAKEOFF, 'dest': States.ALIGN_TO_SUPPLY},
     {'source': States.TAKEOFF, 'dest': States.LOAD},
@@ -40,30 +36,22 @@ transitions = [
     {'source': States.TAKEOFF, 'dest': States.DROP},
     {'source': States.TAKEOFF, 'dest': States.BONUS},
     {'source': States.WALK_TO_SUPPLY, 'dest': States.IDLE},
-    {'source': States.WALK_TO_SUPPLY, 'dest': States.ARM},
     {'source': States.WALK_TO_SUPPLY, 'dest': States.ALIGN_TO_SUPPLY},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.IDLE},
-    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.ARM},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.ALIGN_TO_SUPPLY, 'dest': States.LOAD},
     {'source': States.LOAD, 'dest': States.IDLE},
-    {'source': States.LOAD, 'dest': States.ARM},
     {'source': States.LOAD, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.WALK_TO_HOTSPOT, 'dest': States.IDLE},
-    {'source': States.WALK_TO_HOTSPOT, 'dest': States.ARM},
     {'source': States.WALK_TO_HOTSPOT, 'dest': States.ALIGN_TO_HOTSPOT},
     {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.IDLE},
-    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.ARM},
     {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WALK_TO_HOTSPOT},
     {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WAIT},
     {'source': States.WAIT, 'dest': States.IDLE},
-    {'source': States.WAIT, 'dest': States.ARM},
     {'source': States.WAIT, 'dest': States.DROP},
     {'source': States.DROP, 'dest': States.IDLE},
-    {'source': States.DROP, 'dest': States.ARM},
     {'source': States.DROP, 'dest': States.WALK_TO_SUPPLY},
     {'source': States.BONUS, 'dest': States.IDLE},
-    {'source': States.BONUS, 'dest': States.ARM}
 ]
 
 
@@ -80,7 +68,6 @@ class AgentMachine(Machine):
         # behavior binding
         self.state_behavior_map = {
             States.IDLE: IdleBehavior(logger, drone_api, mediator_api),
-            States.ARM: ArmBehavior(logger, drone_api, mediator_api),
             States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api, mediator_api),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api, mediator_api),
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, mediator_api, aruco_api),

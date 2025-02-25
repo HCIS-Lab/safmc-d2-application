@@ -16,9 +16,6 @@ class IdleBehavior(Behavior):
         self.mediator_api.reset_states()
 
     def execute(self):
-        if self.drone_api.is_armed:
-            self.drone_api.disarm()
-
         self.drone_api.reset_start_position()  # TODO
 
         self.drone_api.activate_offboard_control_mode()  # TODO 一直發送會不會有問題?
@@ -30,6 +27,6 @@ class IdleBehavior(Behavior):
             self.mediator_api.online()
 
     def get_next_state(self) -> Optional[str]:
-        if self.mediator_api.is_ok_to_arm:
-            return "arm"
+        if self.drone_api.is_armed:
+            return "takeoff"
         return None

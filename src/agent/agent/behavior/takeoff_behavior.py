@@ -29,10 +29,8 @@ class TakeoffBehavior(Behavior):
         return Coordinate.distance(self.drone_api.local_position, self.target_position) <= NAV_THRESHOLD
 
     def get_next_state(self) -> Optional[str]:
-        if not self.mediator_api.is_ok_to_arm:  # disarm
-            return "idle"
         if not self.drone_api.is_armed:
-            return "arm"
+            return "idle"
 
         if self.__has_reached_final_position():
             if (self.drone_api.last_state != "walk_to_supply"):  # TODO 留下/不留下?
