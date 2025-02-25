@@ -182,6 +182,10 @@ class Mediator(Node):
             if other_drone_id == drone_id:  # 自己
                 continue
             other_global_position = self.__model_positions[f"x500_safmc_d2_{other_drone_id}"]
+
+            if other_global_position is None:
+                continue
+
             other_local_position = self.get_target_local_position(
                 agent_local_position,
                 agent_global_position,
