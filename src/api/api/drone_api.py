@@ -32,6 +32,14 @@ class DroneApi(Api):
         self.__last_state = "walk_to_supply"  # TODO 留下/不留下?
         self.__control_field = "position"  # TODO
 
+        self.pid_integral_x = 0.0
+        self.pid_integral_y = 0.0
+        self.pid_integral_z = 0.0
+        self.last_error_x = 0.0
+        self.last_error_y = 0.0
+        self.last_error_z = 0.0
+        self.pid_last_time = self.__get_timestamp()
+
         # TODO
         self.__start_position: Optional[Coordinate] = None
 
@@ -180,22 +188,57 @@ class DroneApi(Api):
 
         self.__vehicle_command_pub.publish(vehicle_command_msg)
 
-    def move_to(self, position: Coordinate) -> None:
-        goto_setpoint_msg = GotoSetpoint()
-        goto_setpoint_msg.timestamp = self.__get_timestamp()
+    def compute_pid(self, target: float, current: float, dt: float, Kp: float, Ki: float, Kd: float,
+                    integral: float, last_error: float):
+        error = target - current
+        new_integral = integral + error * dt
+        derivative = (error - last_error) / dt
+        output = Kp * error + Ki * new_integral + Kd * derivative
+        return output, new_integral, error
+    
+    def move_to(self, target: Coordinate) -> None:
+        current_time = self.__get_timestamp()
+        dt = current_time - self.pid_last_time if (current_time - self.pid_last_time) > 0.001 else 0.01
+        self.pid_last_time = current_time
 
-        goto_setpoint_msg.position = [position.x, position.y, position.z]
+        Kp_x, Ki_x, Kd_x = 0.5, 0.01, 0.1
+        Kp_y, Ki_y, Kd_y = 0.5, 0.01, 0.1
+        Kp_z, Ki_z, Kd_z = 1.2, 0.02, 0.1
 
-        # 角度不變
-        goto_setpoint_msg.flag_control_heading = True
-        goto_setpoint_msg.heading = 0.0
+        desired_vx, self.pid_integral_x, self.last_error_x = self.compute_pid(
+            target.x, self.local_position.x, dt, Kp_x, Ki_x, Kd_x,
+            self.pid_integral_x, self.last_error_x
+        )
 
-        # 不控制的參數
-        goto_setpoint_msg.flag_set_max_horizontal_speed = False
-        goto_setpoint_msg.flag_set_max_vertical_speed = False
-        goto_setpoint_msg.flag_set_max_heading_rate = False
+        desired_vy, self.pid_integral_y, self.last_error_y = self.compute_pid(
+            target.y, self.local_position.y, dt, Kp_y, Ki_y, Kd_y,
+            self.pid_integral_y, self.last_error_y
+        )
 
-        self.__goto_setpoint_pub.publish(goto_setpoint_msg)
+        desired_vz, self.pid_integral_z, self.last_error_z = self.compute_pid(
+            target.z, self.local_position.z, dt, Kp_z, Ki_z, Kd_z,
+            self.pid_integral_z, self.last_error_z
+        )
+
+        max_vx = 1.0  
+        max_vy = 1.0
+        max_vz = 0.6  
+        desired_vx = max(-max_vx, min(desired_vx, max_vx))
+        desired_vy = max(-max_vy, min(desired_vy, max_vy))
+        desired_vz = max(-max_vz, min(desired_vz, max_vz))
+
+        trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.timestamp = current_time
+
+        trajectory_setpoint_msg.velocity = [desired_vx, desired_vy, desired_vz]
+
+        trajectory_setpoint_msg.yaw = float(0)
+        trajectory_setpoint_msg.yawspeed = float(0)
+
+        for attr in ["position", "acceleration", "jerk"]:
+            setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
+
+        self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     def move_with_velocity(self, velocity: Coordinate) -> None:
         trajectory_setpoint_msg = TrajectorySetpoint()
