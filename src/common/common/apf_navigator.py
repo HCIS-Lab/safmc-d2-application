@@ -24,6 +24,7 @@ class ApfNavigator:
         current_position: Coordinate,
         target_position: Coordinate,
         obstacle_points: list[tuple[float, float]],
+        mediator_points: list[tuple[float, float]],
         heading: float
     ) -> Coordinate:
         """
@@ -35,39 +36,31 @@ class ApfNavigator:
         Returns:
             NEDCoordinate: (vx, vy, vz) 的速度向量 (這邊 z=0 只在水平面動).
         """
+
+        static_obstacle = []
+        for (obs_x, obs_y) in obstacle_points:
+            obs_x = current_position.x + obs_x * math.cos(heading) - obs_y * math.sin(heading)
+            obs_y = current_position.y + obs_x * math.sin(heading) + obs_y * math.cos(heading)
+            static_obstacle.append((obs_x - current_position.x, obs_y - current_position.y))
+            
         # 1) 吸引力 F_att
         diff_3d = target_position - current_position
         f_att_x = self.k_att * diff_3d.x
         f_att_y = self.k_att * diff_3d.y
         f_att_z = self.k_att * diff_3d.z
+        rep_obstacle_x, rep_obstacle_y = self.compute_repulsive_force(static_obstacle)
+        rep_mediator_x, rep_mediator_y = self.compute_repulsive_force(mediator_points)
 
-        # 2) 排斥力 F_rep (對每一點做疊加)
-        f_rep_x = 0.0
-        f_rep_y = 0.0
-        for (obs_x, obs_y) in obstacle_points:
-            obs_x = current_position.x + obs_x * math.cos(heading) - obs_y * math.sin(heading)
-            obs_y = current_position.y + obs_x * math.sin(heading) + obs_y * math.cos(heading)
-            dx = obs_x - current_position.x
-            dy = obs_y - current_position.y
-            d = math.sqrt(dx*dx + dy*dy)
-            if d < self.safe_dist:
-                rep_val = self.k_rep * (1.0/d - 1.0/self.safe_dist) * (1.0/d**2)
-                norm_x = -dx / d
-                norm_y = -dy / d
-
-                f_rep_x += rep_val * norm_x
-                f_rep_y -= rep_val * norm_y
-
-        if len(obstacle_points) > 0:
-            f_rep_x /= len(obstacle_points)
-            f_rep_y /= len(obstacle_points)
+        # 將兩組排斥力各自平均後，分別賦予相等重要性
+        f_rep_x = rep_obstacle_x + rep_mediator_x
+        f_rep_y = rep_obstacle_y + rep_mediator_y
 
         # 3) 合成速度並限幅
         fx = f_att_x + f_rep_x
         fy = f_att_y + f_rep_y
         fz = f_att_z
         # fz = 0
-        print("Attract Force:", f_att_x, f_att_y, f_att_z)
+        # print("Attract Force:", f_att_x, f_att_y, f_att_z)
         # print("Repulse Force:", f_rep_x , f_rep_y, 0.0)
         speed_mag = math.sqrt(fx**2 + fy**2)
         if speed_mag > self.max_speed:
@@ -77,3 +70,22 @@ class ApfNavigator:
             # fz *= scale
 
         return Coordinate(fx, fy, fz)
+    
+    def compute_repulsive_force(self, obstacle_points: list[tuple[float, float]]) -> tuple[float, float]:
+        rep_x = 0.0
+        rep_y = 0.0
+        count = 0
+        for (obs_x, obs_y) in obstacle_points:
+            d = math.sqrt(obs_x**2 + obs_y**2)
+            if d > 0 and d < self.safe_dist:
+                rep_val = self.k_rep * (1.0/d - 1.0/self.safe_dist) * (1.0/d**2)
+                norm_x = -obs_x / d
+                norm_y = -obs_y / d
+                rep_x += rep_val * norm_x
+                rep_y -= rep_val * norm_y
+                count += 1
+        if count > 0:
+            rep_x /= count
+            rep_y /= count
+        return rep_x, rep_y
+

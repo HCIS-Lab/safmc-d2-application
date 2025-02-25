@@ -36,12 +36,13 @@ class WalkToHotspotBehavior(Behavior):
         self.drone_api.change_control_field("velocity")
 
         obstacle_points = self.lidar_api.get_obstacle_points_2d(max_distance=5.0)
-        obstacle_points.extend([(point.x, point.y) for point in self.mediator_api.obstacle_array])
+        mediator_points = [(point.x, point.y) for point in self.mediator_api.obstacle_array]
 
         vel = self.apf_navigator.compute_velocity(
             current_position=self.drone_api.local_position,
             target_position=self.target_position,
             obstacle_points=obstacle_points,
+            mediator_obstacles=mediator_points,
             heading=self.drone_api.heading
         )
 
