@@ -32,7 +32,7 @@ class VisualOdometryPublisher(Node):
         msg.position = global_position
         # 發布消息
         self.publisher_.publish(msg)
-        # self.get_logger().info(f'Published visual odometry: {msg.timestamp}, {msg.position}')
+        self.get_logger().info(f'{self.eui}: Published visual odometry: {msg.timestamp}, {msg.position}')
         self.timestamp = int(time.time() * 1e6)
 
 
