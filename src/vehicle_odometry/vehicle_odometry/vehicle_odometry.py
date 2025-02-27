@@ -18,7 +18,7 @@ class VisualOdometryPublisher(Node):
             10
         )
         # Publisher
-        self.publisher_ = self.create_publisher(VehicleOdometry, '/fmu/in/vehicle_vehicle_odometry', 10)
+        self.publisher_ = self.create_publisher(VehicleOdometry, f'/px4_1/fmu/in/vehicle_visual_odometry', 10)
         self.timestamp = int(time.time() * 1e6)
 
     def __set_vehicle_odometry(self, msg: TagPosition):
