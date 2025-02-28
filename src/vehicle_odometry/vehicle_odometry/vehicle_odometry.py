@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from px4_msgs.msg import VehicleOdometry
-from uwb_msgs.msg import TagPosition
+from agent_msgs.msg import TagPosition
 import time
 
 class VehicleVisualOdometry(Node):
