@@ -1,16 +1,33 @@
+from typing import List, Optional
+
+from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
-from std_msgs.msg import Empty, Int8
+from std_msgs.msg import Bool, UInt32
+
+from agent_msgs.msg import (AgentStatus, DropZoneInfo, ObstacleArray,
+                            SupplyZoneInfo)
+from common.coordinate import Coordinate
 
 from .api import Api
 
 
 class MediatorApi(Api):
-    def __init__(self, node: Node, drone_id: int, group_id: int):
+    def __init__(self, node: Node, drone_id: int):
 
-        self.drone_id = drone_id
-        self.group_id = group_id
+        self.__drone_id = drone_id
+
+        self.__clock: Clock = node.get_clock()
+
+        # Initial Values
+        self.__is_ok_to_takeoff = False
+        self.__is_ok_to_drop = False
+
+        self.__supply_zone: List[Optional[Coordinate]] = [None, None, None, None]
+        self.__drop_zone: Optional[Coordinate] = None
+
+        self.__obstacle_array: List[Coordinate] = []  # list
 
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
@@ -20,22 +37,133 @@ class MediatorApi(Api):
         )
 
         # Subscriptions
-        self.__signal = False
-        self.signal_sub = node.create_subscription(
-            Empty, f'/group{self.group_id}/signal', self.__set_signal, qos_profile)
+        node.create_subscription(
+            Bool,
+            f"/agent_{self.__drone_id}/cmd_takeoff",
+            self.__set_is_ok_to_takeoff,
+            qos_profile
+        )
+
+        node.create_subscription(
+            Bool,
+            f"/agent_{self.__drone_id}/cmd_drop",
+            self.__set_is_ok_to_drop,
+            qos_profile
+        )
+
+        node.create_subscription(
+            SupplyZoneInfo,
+            f"/agent_{self.__drone_id}/supply_zone",
+            self.__set_supply_zone,
+            qos_profile
+        )
+
+        node.create_subscription(
+            DropZoneInfo,
+            f"/agent_{self.__drone_id}/drop_zone",
+            self.__set_drop_zone,
+            qos_profile
+        )
+
+        node.create_subscription(
+            ObstacleArray,
+            f"/agent_{drone_id+1}/obstacle_array",
+            self.__set_obstacle_array,
+            qos_profile
+        )
 
         # Publishers
-        self.wait_pub = node.create_publisher(
-            Int8, f'/group{self.group_id}/wait', qos_profile)
+
+        self.status_pub = node.create_publisher(
+            AgentStatus,
+            '/mediator/status',
+            qos_profile
+        )
+
+        self.online_pub = node.create_publisher(
+            UInt32,
+            '/mediator/online',
+            qos_profile
+        )
+
+        self.drop_request_pub = node.create_publisher(
+            UInt32,
+            '/mediator/drop_request',
+            qos_profile
+        )
+
+        self.drop_ack_pub = node.create_publisher(
+            UInt32,
+            '/mediator/drop_ack',
+            qos_profile
+        )
+
+    def __get_drone_id_msg(self) -> UInt32:
+        uint32_msg = UInt32()
+        uint32_msg.data = self.__drone_id
+        return uint32_msg
+
+    def online(self):
+        self.online_pub.publish(self.__get_drone_id_msg())
 
     def wait_to_drop(self):
-        signal_msg = Int8()
-        signal_msg.data = self.drone_id
-        self.wait_pub.publish(signal_msg)
+        self.drop_request_pub.publish(self.__get_drone_id_msg())
+
+    def send_drop_ack(self):
+        self.drop_ack_pub.publish(self.__get_drone_id_msg())
+
+    # TODO status 重寫
+    def send_status(self, state_name: str, local_position: Coordinate):
+        if state_name is None or local_position is None:
+            return
+        agent_status_msg = AgentStatus()
+        agent_status_msg.drone_id = self.__drone_id
+        agent_status_msg.point.x = float(local_position.x)
+        agent_status_msg.point.y = float(local_position.y)
+        agent_status_msg.point.z = float(local_position.z)
+        self.status_pub.publish(agent_status_msg)
 
     @property
-    def signal(self):
-        return self.__signal
+    def is_ok_to_takeoff(self):
+        return self.__is_ok_to_takeoff
 
-    def __set_signal(self, msg: Empty):
-        self.__signal = True
+    @property
+    def is_ok_to_drop(self):
+        return self.__is_ok_to_drop
+
+    def reset_states(self):
+        '''
+        重置 is_ok_to_takeoff, is_ok_to_drop
+        '''
+        self.__is_ok_to_takeoff = False
+        self.__is_ok_to_drop = False
+
+    @property
+    def supply_zone(self):
+        return self.__supply_zone
+
+    @property
+    def drop_zone(self):
+        return self.__drop_zone
+
+    @property
+    def obstacle_array(self) -> List[Coordinate]:
+        return self.__obstacle_array
+
+    def __set_is_ok_to_takeoff(self, msg: Bool):
+        self.__is_ok_to_takeoff = msg.data
+
+    def __set_is_ok_to_drop(self, msg: Bool):
+        self.__is_ok_to_drop = msg.data
+
+    def __set_supply_zone(self, msg: SupplyZoneInfo):
+        self.__supply_zone[0] = Coordinate.from_point(msg.point_1)
+        self.__supply_zone[1] = Coordinate.from_point(msg.point_2)
+        self.__supply_zone[2] = Coordinate.from_point(msg.point_3)
+        self.__supply_zone[3] = Coordinate.from_point(msg.point_4)
+
+    def __set_drop_zone(self, msg: DropZoneInfo):
+        self.__drop_zone = Coordinate.from_point(msg.point)
+
+    def __set_obstacle_array(self, msg: ObstacleArray):
+        self.__obstacle_array = [Coordinate.from_point(point) for point in msg.points]

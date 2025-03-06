@@ -1,5 +1,5 @@
 # TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
-
+import numpy as np
 from typing import Optional
 
 from rclpy.clock import Clock
@@ -7,26 +7,35 @@ from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
 
-from common.decorators import deprecated
-from common.ned_coordinate import NEDCoordinate
+from common.coordinate import Coordinate
 from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
                           TrajectorySetpoint, VehicleCommand,
                           VehicleLocalPosition, VehicleStatus)
 
 from .api import Api
+from agent.constants import TAKEOFF_HEIGHT
 
 
 class DroneApi(Api):
-    def __init__(self, node: Node):
-
-        self.__clock: Clock = node.get_clock()
+    def __init__(self, node: Node, drone_id: int):
 
         # Initial Values
-        self.__is_armed = False
-        self.__vehicle_timestamp = -1
-        self.__is_each_pre_flight_check_passed = False
-        self.__start_position = NEDCoordinate(0, 0, 0)
+        self.__drone_id: int = drone_id
+        self.__clock: Clock = node.get_clock()
 
+        self.__is_armed: bool = False
+        self.__vehicle_timestamp: int = -1  # microseconds
+        self.__is_each_pre_flight_check_passed: bool = False
+        self.__heading: Optional[float] = None
+        self.__local_position: Optional[Coordinate] = None
+        self.__local_velocity: Optional[Coordinate] = None
+        self.__last_state = "walk_to_supply"  # TODO 留下/不留下?
+        self.__control_field = "position"  # TODO
+
+        # TODO
+        self.__start_position: Optional[Coordinate] = None
+
+        # QoS
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -35,61 +44,192 @@ class DroneApi(Api):
         )
 
         # Subscriptions
-        self.vehicle_local_position_sub = node.create_subscription(
-            VehicleLocalPosition,
-            "/fmu/out/vehicle_local_position",
-            self.__set_vehicle_local_position,
-            qos_profile)
+        topic_prefix: str = f"/px4_{self.__drone_id}/fmu/"
 
-        self.vehicle_status_sub = node.create_subscription(
-            VehicleStatus,
-            "/fmu/out/vehicle_status",
-            self.__set_vehicle_status,
-            qos_profile
-        )
+        node.create_subscription(VehicleLocalPosition,
+                                 topic_prefix+"out/vehicle_local_position",
+                                 self.__set_vehicle_local_position, qos_profile)
+
+        node.create_subscription(VehicleStatus,
+                                 topic_prefix+"out/vehicle_status",
+                                 self.__set_vehicle_status, qos_profile)
 
         # Publishers
-        self.vehicle_command_pub = node.create_publisher(
-            VehicleCommand,
-            "/fmu/in/vehicle_command",
-            qos_profile
-        )
+        self.__vehicle_command_pub = node.create_publisher(VehicleCommand,
+                                                           topic_prefix+"in/vehicle_command",
+                                                           qos_profile)
 
-        self.offboard_control_mode_pub = node.create_publisher(
-            OffboardControlMode,
-            "/fmu/in/offboard_control_mode",
-            qos_profile
-        )
+        self.__offboard_control_mode_pub = node.create_publisher(OffboardControlMode,
+                                                                 topic_prefix+"in/offboard_control_mode",
+                                                                 qos_profile)
 
-        self.goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint,
-            "/fmu/in/goto_setpoint",
-            qos_profile
-        )
+        self.__goto_setpoint_pub = node.create_publisher(GotoSetpoint,
+                                                         topic_prefix+"in/goto_setpoint",
+                                                         qos_profile)
 
-        self.goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint,
-            "/fmu/in/goto_setpoint",
-            qos_profile
-        )
-
-        self.trajectory_setpoint_pub = node.create_publisher(
-            TrajectorySetpoint,
-            "/fmu/in/trajectory_setpoint",
-            qos_profile
-        )
+        self.__trajectory_setpoint_pub = node.create_publisher(TrajectorySetpoint,
+                                                               topic_prefix+"in/trajectory_setpoint",
+                                                               qos_profile)
 
     @property
     def is_each_pre_flight_check_passed(self) -> bool:
         return self.__is_each_pre_flight_check_passed
 
     @property
-    def vehicle_timestamp(self) -> int:
-        return self.__vehicle_timestamp  # microseconds
+    def vehicle_timestamp(self) -> int:  # microseconds
+        return self.__vehicle_timestamp
 
     @property
     def is_armed(self) -> bool:
         return self.__is_armed
+
+    @property
+    def last_state(self) -> str:
+        return self.__last_state
+
+    @property
+    def heading(self) -> float:
+        return self.__heading
+
+    @property
+    def local_position(self) -> Coordinate:
+        return self.__local_position
+
+    @property
+    def local_velocity(self) -> Coordinate:
+        return self.__local_velocity
+
+    def reset_start_position(self) -> None:
+        self.__start_position = self.__local_position
+
+    def arm(self) -> None:
+        """
+        Arms the drone for flight.
+
+        Sends a command to the vehicle to arm it, allowing flight to proceed.
+        This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
+        """
+
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
+            1
+        )
+
+        self.__vehicle_command_pub.publish(vehicle_command_msg)
+
+    def disarm(self) -> None:
+        """
+        Disarms the drone, preventing flight.
+
+        Sends a command to the vehicle to disarm it, ensuring it cannot take off.
+        This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
+        """
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
+            0
+        )
+
+        self.__vehicle_command_pub.publish(vehicle_command_msg)
+
+    # TODO: 留下/不留?
+    def set_resume_state(self, state_name: str) -> None:
+        """
+        Record state under unexpected disarm circumstances
+        """
+        self.__last_state = state_name
+
+    def __get_timestamp(self) -> int:  # microseconds
+        return int(self.__clock.now().nanoseconds / 1000)
+
+    # TODO
+    def change_control_field(self, field: str) -> None:
+        if field != "position" and field != "velocity":
+            # ERROR
+            return
+        self.__control_field = field
+
+    def set_offboard_control_mode(self) -> None:
+        """
+        Set the offboard control mode for the drone.
+
+        ref: https://docs.px4.io/main/en/flight_modes/offboard.html#ros-2-messages
+        """
+        offboard_control_mode_msg = OffboardControlMode()
+        offboard_control_mode_msg.timestamp = self.__get_timestamp()
+
+        for attr in ["position", "velocity", "acceleration", "attitude", "body_rate", "thrust_and_torque", "direct_actuator"]:
+            setattr(offboard_control_mode_msg, attr, False)
+        setattr(offboard_control_mode_msg, self.__control_field, True)
+        # offboard_control_mode_msg.position = True  # TrajectorySetpoint
+        # offboard_control_mode_msg.velocity = True  # TrajectorySetpoint
+        self.__offboard_control_mode_pub.publish(offboard_control_mode_msg)
+
+    def activate_offboard_control_mode(self) -> None:
+        """
+        Activates the offboard control mode for the drone.
+
+        This method sends a `VehicleCommand` message to switch the drone to offboard mode 
+        by setting the appropriate control mode flags. The mode is switched by using the
+        `VEHICLE_CMD_DO_SET_MODE` command.
+        """
+        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+            VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
+            1,
+            6
+        )
+
+        self.__vehicle_command_pub.publish(vehicle_command_msg)
+
+    def move_to(self, position: Coordinate) -> None:
+        goto_setpoint_msg = GotoSetpoint()
+        goto_setpoint_msg.timestamp = self.__get_timestamp()
+
+        goto_setpoint_msg.position = [position.x, position.y, position.z]
+
+        # 角度不變
+        goto_setpoint_msg.flag_control_heading = True
+        goto_setpoint_msg.heading = 0.0
+
+        # 不控制的參數
+        goto_setpoint_msg.flag_set_max_horizontal_speed = False
+        goto_setpoint_msg.flag_set_max_vertical_speed = False
+        goto_setpoint_msg.flag_set_max_heading_rate = False
+
+        self.__goto_setpoint_pub.publish(goto_setpoint_msg)
+
+    def move_with_velocity(self, velocity: Coordinate) -> None:
+        trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+
+        # 控制速度
+        trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, velocity.z]
+
+        # 控制角度與角速度 (不變)
+        trajectory_setpoint_msg.yaw = float(0)
+        trajectory_setpoint_msg.yawspeed = float(0)
+
+        # 其他都不控制
+        for attr in ["position", "acceleration", "jerk"]:
+            setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
+
+        self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+
+    def move_with_velocity_2d(self, velocity: Coordinate) -> None:
+        trajectory_setpoint_msg = TrajectorySetpoint()
+        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+
+        # 控制速度
+        trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, 0.0]
+
+        # 控制角度與角速度 (不變)
+        trajectory_setpoint_msg.yaw = float(0)
+        trajectory_setpoint_msg.yawspeed = float(0)
+
+        # 其他都不控制
+        for attr in ["position", "acceleration", "jerk"]:
+            setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
+
+        self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
         self.__is_each_pre_flight_check_passed = vehicle_status_msg.pre_flight_checks_pass
@@ -98,28 +238,27 @@ class DroneApi(Api):
             vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
         )
 
-    def reset_origin(self, origin: NEDCoordinate):
-        self.__origin = origin
-
-    @property
-    def local_position(self) -> NEDCoordinate:
-        return self.__local_position - self.__origin
-
-    def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition):
-        self.__local_position = NEDCoordinate(
+    def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition) -> None:
+        self.__heading = vehicle_local_position_msg.heading
+        self.__local_position = Coordinate(
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z
         )
+        self.__local_velocity = Coordinate(
+            x=vehicle_local_position_msg.vx,
+            y=vehicle_local_position_msg.vy,
+            z=vehicle_local_position_msg.vz
+        )
 
-    def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs):
+    def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs) -> VehicleCommand:
         '''
         Generate the vehicle command.\n
         defaults:\n
             params[0:7] = 0
-            target_system = 1\n
+            target_system = self.drone_id - 1\n
             target_component = 1\n
-            source_system = 1\n
+            source_system = self.drone_id - 1\n
             source_component = 1\n
             from_external = True\n
             timestamp = int(timestamp / 1000)
@@ -136,10 +275,10 @@ class DroneApi(Api):
             setattr(vehicle_command_msg, f'param{i}', float(param))
 
         # defaults
-        vehicle_command_msg.target_system = 1
-        vehicle_command_msg.target_component = 1
-        vehicle_command_msg.source_system = 1
-        vehicle_command_msg.source_component = 1
+        vehicle_command_msg.target_system = 0
+        vehicle_command_msg.target_component = 0  # all components
+        vehicle_command_msg.source_system = 0
+        vehicle_command_msg.source_component = 0  # all components
         vehicle_command_msg.from_external = True
 
         # other kwargs
@@ -150,154 +289,3 @@ class DroneApi(Api):
                 print(e)
 
         return vehicle_command_msg
-
-    def arm(self) -> None:
-        """
-        Arms the drone for flight.
-
-        Sends a command to the vehicle to arm it, allowing flight to proceed.
-        This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
-        """
-
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            1
-        )
-
-        self.vehicle_command_pub.publish(vehicle_command_msg)
-
-    def disarm(self) -> None:
-        """
-        Disarms the drone, preventing flight.
-
-        Sends a command to the vehicle to disarm it, ensuring it cannot take off.
-        This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
-        """
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            0
-        )
-
-        self.vehicle_command_pub.publish(vehicle_command_msg)
-
-    def reset_start_position(self) -> None:
-        """
-        Resets the starting position to the current local position.
-        """
-        self.__start_position = self.local_position
-
-    @property
-    def start_position(self) -> NEDCoordinate:
-        """
-        The position of the drone at the moment of takeoff.
-        """
-        return self.__start_position
-
-    def __get_timestamp(self) -> int:
-        return int(self.__clock.now().nanoseconds / 1000)  # microseconds
-
-    def set_offboard_control_mode(self) -> None:
-        """
-        Set the offboard control mode for the drone.
-
-        position = True
-        velocity = True
-        timestamp = current timestamp
-
-        ref: https://docs.px4.io/main/en/flight_modes/offboard.html#ros-2-messages
-        """
-        offboard_control_mode_msg = OffboardControlMode()
-        offboard_control_mode_msg.timestamp = self.__get_timestamp()
-        offboard_control_mode_msg.position = True  # TrajectorySetpoint
-        self.offboard_control_mode_pub.publish(offboard_control_mode_msg)
-
-    def activate_offboard_control_mode(self) -> None:
-        """
-        Activates the offboard control mode for the drone.
-
-        This method sends a `VehicleCommand` message to switch the drone to offboard mode 
-        by setting the appropriate control mode flags. The mode is switched by using the
-        `VEHICLE_CMD_DO_SET_MODE` command.
-        """
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
-            1,
-            6
-        )
-
-        self.vehicle_command_pub.publish(vehicle_command_msg)
-
-    def move_to(self, position: NEDCoordinate):
-
-        trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
-
-        trajectory_setpoint_msg.position[0] = position.x
-        trajectory_setpoint_msg.position[1] = position.y
-        trajectory_setpoint_msg.position[2] = position.z
-
-        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
-
-    def move_with_velocity(self, velocity: NEDCoordinate, delta_time: float):
-        trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
-
-        trajectory_setpoint_msg.velocity[0] = velocity.x
-        trajectory_setpoint_msg.velocity[1] = velocity.y
-        trajectory_setpoint_msg.velocity[2] = velocity.z
-
-        trajectory_setpoint_msg.position[0] = self.local_position.x + \
-            delta_time * velocity.x
-        trajectory_setpoint_msg.position[1] = self.local_position.y + \
-            delta_time * velocity.y
-        trajectory_setpoint_msg.position[2] = self.local_position.z + \
-            delta_time * velocity.z
-
-        self.trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
-
-    @deprecated
-    def publish_goto_setpoint(self,
-                              timestamp: int,
-                              coord: NEDCoordinate,
-                              heading: Optional[float] = None,
-                              max_horizontal_speed: Optional[float] = None,
-                              max_vertical_speed: Optional[float] = None,
-                              max_heading_rate: Optional[float] = None) -> None:
-
-        goto_setpoint_msg = GotoSetpoint()
-        goto_setpoint_msg.timestamp = int(
-            timestamp / 1000)  # microseconds
-
-        goto_setpoint_msg.position[0] = coord.x
-        goto_setpoint_msg.position[1] = coord.y
-        goto_setpoint_msg.position[2] = coord.z
-
-        if heading is None:
-            goto_setpoint_msg.flag_control_heading = False
-            goto_setpoint_msg.heading = 0.0
-        else:
-            goto_setpoint_msg.flag_control_heading = True
-            goto_setpoint_msg.heading = heading
-
-        if max_horizontal_speed is None:
-            goto_setpoint_msg.flag_set_max_horizontal_speed = False
-            goto_setpoint_msg.max_horizontal_speed = 0.0
-        else:
-            goto_setpoint_msg.flag_set_max_horizontal_speed = False
-            goto_setpoint_msg.max_horizontal_speed = max_horizontal_speed
-
-        if max_vertical_speed is None:
-            goto_setpoint_msg.flag_set_max_vertical_speed = False
-            goto_setpoint_msg.max_vertical_speed = 0.0
-        else:
-            goto_setpoint_msg.flag_set_max_vertical_speed = False
-            goto_setpoint_msg.max_vertical_speed = max_vertical_speed
-
-        if max_heading_rate is None:
-            goto_setpoint_msg.flag_set_max_heading_rate = False
-            goto_setpoint_msg.max_heading_rate = 0.0
-        else:
-            goto_setpoint_msg.flag_set_max_heading_rate = False
-            goto_setpoint_msg.max_heading_rate = max_heading_rate
-
-        self.goto_setpoint_pub.publish(goto_setpoint_msg)
