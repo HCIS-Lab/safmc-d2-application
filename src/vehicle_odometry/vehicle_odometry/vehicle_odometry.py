@@ -38,12 +38,14 @@ class VehicleVisualOdometry(Node):
         self.get_logger().info(f"recv msg ")
         self.publish_odometry([msg.x, msg.y, msg.z], int(msg.eui[-1]), msg.timestamp)
 
-    def publish_odometry(self, global_position, publisher_num, timestamp_sample):
+    def publish_odometry(self, XYZ_position, publisher_num, timestamp_sample):
+        NED_position = [XYZ_position[1], XYZ_position[0], XYZ_position[2]]
+
         msg = VehicleOdometry()
         msg.timestamp = self.timestamp
         msg.timestamp_sample = timestamp_sample
         msg.pose_frame = msg.POSE_FRAME_NED
-        msg.position = global_position
+        msg.position = NED_position
         msg.position_variance = [0.000101, 8.64E-05, 0.000712]
         # 發布消息
         self.publisher_[publisher_num - 1].publish(msg)
