@@ -2,6 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 from px4_msgs.msg import VehicleOdometry
 from agent_msgs.msg import TagPosition
 import time
@@ -11,11 +12,17 @@ class VehicleVisualOdometry(Node):
         super().__init__('vehicle_visual_odometry')
 
         # Subscriptions
+        ## 指定 ROS Topic 的傳輸行為與品質（QoS, Quality of Service)
+        qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,   # 不保證傳輸成功
+            durability=QoSDurabilityPolicy.VOLATILE,        # 不為 Subscriber 保留資料
+            history=QoSHistoryPolicy.KEEP_LAST, depth=10    # 只保留最新的 depth (= 10) 筆資料
+        )
         self.vehicle_global_position_sub = self.create_subscription(
             TagPosition,
             "/tag_position",
             self.__set_vehicle_odometry,
-            10
+            qos_profile
         )
         # Publisher
         self.publisher_ = [ 
@@ -28,6 +35,7 @@ class VehicleVisualOdometry(Node):
 
     def __set_vehicle_odometry(self, msg: TagPosition):
         # msg.eui is a string from '01:01' to '04:04'
+        self.get_logger().info(f"recv msg ")
         self.publish_odometry([msg.x, msg.y, msg.z], int(msg.eui[-1]))
 
     def publish_odometry(self, global_position, publisher_num):
