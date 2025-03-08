@@ -12,12 +12,13 @@ from .api import Api
 
 
 class ArucoApi(Api):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, drone_id: int):
 
         # Initial Values
         self.__target_marker_id = 6
         self.__is_marker_detected = False
         self.__marker_position = Coordinate(0, 0, 0)
+        self.__drone_id = drone_id
 
         # QoS
         qos_profile = QoSProfile(
@@ -30,7 +31,7 @@ class ArucoApi(Api):
         # Subscriptions
         node.create_subscription(
             ArucoInfo,
-            '/aruco_info',
+            f'/drone_{self.__drone_id}/aruco_info',
             self.__aruco_info_callback,
             qos_profile
         )

@@ -1,0 +1,3 @@
+/**/vehicle_odometry:
+  ros__parameters:
+    drone_id: 3

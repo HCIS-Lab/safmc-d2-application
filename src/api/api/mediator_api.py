@@ -67,7 +67,7 @@ class MediatorApi(Api):
 
         node.create_subscription(
             ObstacleArray,
-            f"/agent_{drone_id+1}/obstacle_array",
+            f"/agent_{drone_id+1}/obstacle_array", # TODO +1??
             self.__set_obstacle_array,
             qos_profile
         )

@@ -12,11 +12,14 @@ from sensor_msgs.msg import Image
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
 from agent_msgs.msg import ArucoInfo
 from common.coordinate import Coordinate
+from common.parameters import get_parameter
 
 
 class ArucoTracker(Node):
     def __init__(self):
         super().__init__('aruco_tracker')
+
+        self.__drone_id = get_parameter(self, 'drone_id', 1)
 
         self.bridge = CvBridge()
         self.dictionary = aruco.getPredefinedDictionary(ARUCO_DICT)
@@ -56,18 +59,18 @@ class ArucoTracker(Node):
         else:
             self.subscription = self.create_subscription(
                 Image,
-                '/world/safmc_d2/model/x500_safmc_d2_1/link/pi3_cam_link/sensor/pi3_cam_sensor/image',
+                f'/world/safmc_d2/model/x500_safmc_d2_{self.__drone_id}/link/pi3_cam_link/sensor/pi3_cam_sensor/image',
                 self.image_callback,
                 image_qos
             )
 
             self.detected_image_pub = self.create_publisher(
                 Image,
-                "/detected/aruco",
+                f"/detected/aruco_{self.__drone_id}",
                 image_qos
             )
 
-        self.publisher = self.create_publisher(ArucoInfo, '/aruco_info', qos_profile)
+        self.publisher = self.create_publisher(ArucoInfo, f'/drone_{self.__drone_id}/aruco_info', qos_profile)
 
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
