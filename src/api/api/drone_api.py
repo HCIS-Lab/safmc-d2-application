@@ -17,10 +17,9 @@ from agent.constants import TAKEOFF_HEIGHT
 
 
 class DroneApi(Api):
-    def __init__(self, node: Node, drone_id: int):
+    def __init__(self, node: Node):
 
         # Initial Values
-        self.__drone_id: int = drone_id
         self.__clock: Clock = node.get_clock()
 
         self.__is_armed: bool = False

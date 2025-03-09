@@ -12,13 +12,12 @@ from .api import Api
 
 
 class ArucoApi(Api):
-    def __init__(self, node: Node, drone_id: int):
+    def __init__(self, node: Node):
 
         # Initial Values
         self.__target_marker_id = 6
         self.__is_marker_detected = False
         self.__marker_position = Coordinate(0, 0, 0)
-        self.__drone_id = drone_id
 
         # QoS
         qos_profile = QoSProfile(

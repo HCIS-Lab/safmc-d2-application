@@ -9,10 +9,9 @@ from .api import Api
 
 
 class MagnetApi(Api):
-    def __init__(self, node: Node, drone_id : int):
+    def __init__(self, node: Node):
 
         self.__is_loaded = False
-        self.__drone_id = drone_id
 
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
