@@ -12,11 +12,14 @@ from sensor_msgs.msg import Image
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
 from agent_msgs.msg import ArucoInfo
 from common.coordinate import Coordinate
+from common.parameters import get_parameter
 
 
 class ArucoTracker(Node):
     def __init__(self):
         super().__init__('aruco_tracker')
+
+        self.__drone_id = get_parameter(self, 'drone_id', 1)
 
         self.bridge = CvBridge()
         self.dictionary = aruco.getPredefinedDictionary(ARUCO_DICT)
@@ -45,29 +48,29 @@ class ArucoTracker(Node):
 
         # use calibration or not
         # ref: http://wiki.ros.org/image_proc?distro=noetic
-        use_calibration = False
+        use_calibration = True
         if use_calibration:
             self.subscription = self.create_subscription(
                 Image,
-                '/camera/image_rect',
+                'camera/image_rect', # TODO topic name
                 self.image_callback,
                 qos_profile
-            )
-        else:
-            self.subscription = self.create_subscription(
-                Image,
-                '/world/safmc_d2/model/x500_safmc_d2_1/link/pi3_cam_link/sensor/pi3_cam_sensor/image',
-                self.image_callback,
-                image_qos
             )
 
             self.detected_image_pub = self.create_publisher(
                 Image,
-                "/detected/aruco",
+                f"detected/aruco",
                 image_qos
             )
 
-        self.publisher = self.create_publisher(ArucoInfo, '/aruco_info', qos_profile)
+        else:
+            self.subscription = self.create_subscription(
+                Image,
+                f'/world/safmc_d2/model/x500_safmc_d2_{self.__drone_id}/link/pi3_cam_link/sensor/pi3_cam_sensor/image',
+                self.image_callback,
+                image_qos
+            )
+        self.publisher = self.create_publisher(ArucoInfo, f'aruco_info', qos_profile)
 
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')

@@ -18,10 +18,10 @@ class Agent(Node):
 
         self.logger.info(f"New agent: drone_id={drone_id}")
 
-        self.drone_api = DroneApi(self, drone_id)
+        self.drone_api = DroneApi(self)
         self.mediator_api = MediatorApi(self, drone_id)
-        self.magnet_api = MagnetApi(self, drone_id)
-        self.lidar_api = LidarApi(self, drone_id)
+        self.magnet_api = MagnetApi(self)
+        self.lidar_api = LidarApi(self)
         self.aruco_api = ArucoApi(self)
 
         # State Machine

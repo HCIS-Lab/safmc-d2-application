@@ -30,7 +30,7 @@ class ArucoApi(Api):
         # Subscriptions
         node.create_subscription(
             ArucoInfo,
-            '/aruco_info',
+            f'aruco_info',
             self.__aruco_info_callback,
             qos_profile
         )
