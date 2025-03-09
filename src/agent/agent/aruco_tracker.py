@@ -48,14 +48,21 @@ class ArucoTracker(Node):
 
         # use calibration or not
         # ref: http://wiki.ros.org/image_proc?distro=noetic
-        use_calibration = False
+        use_calibration = True
         if use_calibration:
             self.subscription = self.create_subscription(
                 Image,
-                '/camera/image_rect',
+                'camera/image_rect', # TODO topic name
                 self.image_callback,
                 qos_profile
             )
+
+            self.detected_image_pub = self.create_publisher(
+                Image,
+                f"detected/aruco",
+                image_qos
+            )
+
         else:
             self.subscription = self.create_subscription(
                 Image,
@@ -63,14 +70,7 @@ class ArucoTracker(Node):
                 self.image_callback,
                 image_qos
             )
-
-            self.detected_image_pub = self.create_publisher(
-                Image,
-                f"/detected/aruco_{self.__drone_id}",
-                image_qos
-            )
-
-        self.publisher = self.create_publisher(ArucoInfo, f'/drone_{self.__drone_id}/aruco_info', qos_profile)
+        self.publisher = self.create_publisher(ArucoInfo, f'aruco_info', qos_profile)
 
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')

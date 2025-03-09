@@ -44,7 +44,7 @@ class DroneApi(Api):
         )
 
         # Subscriptions
-        topic_prefix: str = f"/px4_{self.__drone_id}/fmu/"
+        topic_prefix: str = f"fmu/"
 
         node.create_subscription(VehicleLocalPosition,
                                  topic_prefix+"out/vehicle_local_position",

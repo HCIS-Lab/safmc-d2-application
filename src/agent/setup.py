@@ -31,6 +31,7 @@ setup(
     entry_points={
         'console_scripts': [
                 'agent = agent.agent:main',
+                'aruco_tracker = agent.aruco_tracker:main'
         ],
     },
 )

@@ -6,15 +6,22 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    pkg_dir = get_package_share_directory('agent')
-    params_path = os.path.join(pkg_dir, 'config', 'params.yaml')
+
+    drone_id = int(os.environ["DRONE_ID"])
 
     return LaunchDescription([
         Node(
             package='agent',
             executable='agent',
-            name='agent',
+            namespace=f'px4_{drone_id}',
             output='screen',
-            parameters=[params_path]
+            parameters=[{'drone_id' : drone_id}]
+        ),
+        Node(
+            package='agent',
+            executable='aruco_tracker',
+            namespace=f'px4_{drone_id}',
+            output='screen',
+            parameters=[{'drone_id' : drone_id}]
         )
     ])

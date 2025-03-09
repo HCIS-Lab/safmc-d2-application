@@ -1,3 +1,0 @@
-/**/aruco_tracker:
-  ros__parameters:
-    drone_id: 3

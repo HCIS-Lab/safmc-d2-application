@@ -24,7 +24,7 @@ class MagnetApi(Api):
         # Subscriptions
         self.is_loaded_sub = node.create_subscription(
             Payload,
-            f"/drone_{self.__drone_id}/out/payload",
+            f"out/payload",
             self.__set_is_loaded,
             qos_profile
         )
@@ -33,7 +33,7 @@ class MagnetApi(Api):
         self.magnet_control_pub = node.create_publisher(
             Magnet,
             # payload system subscribe to /drone_{i}/magnet_control, for i from 0 to 3
-            f"/drone_{self.__drone_id}/in/magnet",
+            f"in/magnet",
             qos_profile
         )
 

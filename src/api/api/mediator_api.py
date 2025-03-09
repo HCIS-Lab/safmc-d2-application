@@ -39,35 +39,35 @@ class MediatorApi(Api):
         # Subscriptions
         node.create_subscription(
             Bool,
-            f"/agent_{self.__drone_id}/cmd_takeoff",
+            f"cmd_takeoff",
             self.__set_is_ok_to_takeoff,
             qos_profile
         )
 
         node.create_subscription(
             Bool,
-            f"/agent_{self.__drone_id}/cmd_drop",
+            f"cmd_drop",
             self.__set_is_ok_to_drop,
             qos_profile
         )
 
         node.create_subscription(
             SupplyZoneInfo,
-            f"/agent_{self.__drone_id}/supply_zone",
+            f"supply_zone",
             self.__set_supply_zone,
             qos_profile
         )
 
         node.create_subscription(
             DropZoneInfo,
-            f"/agent_{self.__drone_id}/drop_zone",
+            f"drop_zone",
             self.__set_drop_zone,
             qos_profile
         )
 
         node.create_subscription(
             ObstacleArray,
-            f"/agent_{drone_id+1}/obstacle_array", # TODO +1??
+            f"obstacle_array", # TODO +1??
             self.__set_obstacle_array,
             qos_profile
         )
