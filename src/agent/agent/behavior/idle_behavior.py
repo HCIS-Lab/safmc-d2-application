@@ -1,25 +1,26 @@
 from typing import Optional
 
-from api import DroneApi, MediatorApi
+from api import ApiRegistry, DroneApi, MediatorApi
 from common.logger import Logger
 
 from .behavior import Behavior
 
 
 class IdleBehavior(Behavior):
-    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi):
+    drone_api: DroneApi
+    mediator_api: MediatorApi
+
+    def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = drone_api
-        self.mediator_api = mediator_api
+        self.drone_api = ApiRegistry.get(DroneApi)
+        self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def on_enter(self):
-        self.mediator_api.reset_states()
+        self.mediator_api.reset_states()  # TODO
 
     def execute(self):
         self.drone_api.reset_start_position()  # TODO
-
         self.drone_api.activate_offboard_control_mode()  # TODO 一直發送會不會有問題?
-
         pf_pass = self.drone_api.is_each_pre_flight_check_passed
         self.logger.info(f"Preflight checks passed: {pf_pass}")
 

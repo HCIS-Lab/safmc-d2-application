@@ -1,16 +1,20 @@
 from typing import Optional
 
-from api import DroneApi, MediatorApi
+from api import ApiRegistry, DroneApi, MediatorApi
 from common.logger import Logger
 
 from .behavior import Behavior
 
 
 class WaitBehavior(Behavior):
-    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi):
+
+    drone_api: DroneApi
+    mediator_api: MediatorApi
+
+    def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = drone_api
-        self.mediator_api = mediator_api
+        self.drone_api = ApiRegistry.get(DroneApi)
+        self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):
         self.mediator_api.wait_to_drop()

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import ARUCO_DIST_THRESHOLD
-from api import ArucoApi, DroneApi, MediatorApi
+from api import ApiRegistry, ArucoApi, DroneApi, MediatorApi
 from common.coordinate import Coordinate
 from common.logger import Logger
 
@@ -10,16 +10,20 @@ from .behavior import Behavior
 
 class AlignToSupplyBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi, aruco_api: ArucoApi):
+    aruco_api: ArucoApi
+    drone_api: DroneApi
+    mediator_api: MediatorApi
+
+    speed = 0.3  # 最大速度 TODO move to yaml/constant file
+
+    def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = drone_api
-        self.mediator_api = mediator_api
-        self.aruco_api = aruco_api
-        self.speed: float = 0.3  # 最大速度
+        self.aruco_api = ApiRegistry.get(ArucoApi)
+        self.drone_api = ApiRegistry.get(DroneApi)
+        self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):
         self.drone_api.change_control_field("velocity")
-
         vel = -self.aruco_api.marker_position
         vel = Coordinate.clamp_magnitude_2d(vel, self.speed)
         self.drone_api.move_with_velocity_2d(vel)
@@ -32,6 +36,6 @@ class AlignToSupplyBehavior(Behavior):
         if self.aruco_api.marker_position.magnitude_2d <= ARUCO_DIST_THRESHOLD:
             return "load"  # 等待
         if self.aruco_api.idle_time.nanoseconds > 3e9:  # 3sec
-            return "walk_to_supply"                    # 偵測不到目標 marker，退回去重走
+            return "walk_to_supply"  # 偵測不到目標 marker，退回去重走
 
         return None

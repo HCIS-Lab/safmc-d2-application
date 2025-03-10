@@ -3,39 +3,39 @@ from rclpy.node import Node
 
 from agent.agent_machine import AgentMachine
 from agent.constants import DELTA_TIME
-from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
+from api import ApiRegistry, ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
 from common.logger import Logger
-from common.parameters import get_parameter
 
 
 class Agent(Node):
-    def __init__(self):
-        super().__init__('agent')
 
+    logger: Logger
+
+    def __init__(self):
+        super().__init__("agent")
         self.logger = Logger(self.get_logger(), self.get_clock())
 
-        drone_id = get_parameter(self, 'drone_id', 1)
+        # self.mediator_api = MediatorApi(self, drone_id) TODO
+        self._register_apis()
+        self.machine = AgentMachine(self.logger)
+        self.timer = self.create_timer(DELTA_TIME, self._update)
 
-        self.logger.info(f"New agent: drone_id={drone_id}")
+    def _register_apis(self):
+        ApiRegistry.register(DroneApi)
+        ApiRegistry.register(MediatorApi)
+        ApiRegistry.register(MagnetApi)
+        ApiRegistry.register(LidarApi)
+        ApiRegistry.register(ArucoApi)
 
-        self.drone_api = DroneApi(self)
-        self.mediator_api = MediatorApi(self, drone_id)
-        self.magnet_api = MagnetApi(self)
-        self.lidar_api = LidarApi(self)
-        self.aruco_api = ArucoApi(self)
-
-        # State Machine
-        self.machine = AgentMachine(
-            self.logger, self.drone_api, self.magnet_api, self.mediator_api, self.lidar_api, self.aruco_api)
-
-        self.timer = self.create_timer(DELTA_TIME, self.update)
-
-    def update(self):
+    def _update(self):
+        # TODO: 進入 offboard 再搞
         # 要 2 Hz 發送, 否則會退出 offboard control mode
-        self.drone_api.set_offboard_control_mode()
+        # self.drone_api.set_offboard_control_mode()
 
         # 傳送 agent status 給 mediator
-        self.mediator_api.send_status(self.machine.state.value, self.drone_api.local_position)
+        # self.mediator_api.send_status(
+        #     self.machine.state.value, self.drone_api.local_position
+        # )
 
         self.machine.proceed()
         self.machine.execute()
@@ -53,5 +53,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

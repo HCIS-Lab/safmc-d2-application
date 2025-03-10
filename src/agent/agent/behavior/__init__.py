@@ -1,6 +1,5 @@
 from .align_to_hotspot_behavior import AlignToHotspotBehavior
 from .align_to_supply_behavior import AlignToSupplyBehavior
-from .arm_behavior import ArmBehavior
 from .behavior import Behavior
 from .bonus_behavior import BonusBehavior
 from .drop_behavior import DropBehavior

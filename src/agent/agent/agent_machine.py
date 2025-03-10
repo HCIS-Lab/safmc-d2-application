@@ -2,12 +2,19 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
-                            Behavior, BonusBehavior, DropBehavior,
-                            IdleBehavior, LoadBehavior, TakeoffBehavior,
-                            WaitBehavior, WalkToHotspotBehavior,
-                            WalkToSupplyBehavior)
-from api import ArucoApi, DroneApi, LidarApi, MagnetApi, MediatorApi
+from agent.behavior import (
+    AlignToHotspotBehavior,
+    AlignToSupplyBehavior,
+    Behavior,
+    BonusBehavior,
+    DropBehavior,
+    IdleBehavior,
+    LoadBehavior,
+    TakeoffBehavior,
+    WaitBehavior,
+    WalkToHotspotBehavior,
+    WalkToSupplyBehavior,
+)
 from common.logger import Logger
 
 
@@ -25,66 +32,64 @@ class States(Enum):
 
 
 transitions = [
-    {'source': States.IDLE, 'dest': States.TAKEOFF},
-    {'source': States.TAKEOFF, 'dest': States.IDLE},
-    {'source': States.TAKEOFF, 'dest': States.WALK_TO_SUPPLY},
-    {'source': States.TAKEOFF, 'dest': States.ALIGN_TO_SUPPLY},
-    {'source': States.TAKEOFF, 'dest': States.LOAD},
-    {'source': States.TAKEOFF, 'dest': States.WALK_TO_HOTSPOT},
-    {'source': States.TAKEOFF, 'dest': States.ALIGN_TO_HOTSPOT},
-    {'source': States.TAKEOFF, 'dest': States.WAIT},
-    {'source': States.TAKEOFF, 'dest': States.DROP},
-    {'source': States.TAKEOFF, 'dest': States.BONUS},
-    {'source': States.WALK_TO_SUPPLY, 'dest': States.IDLE},
-    {'source': States.WALK_TO_SUPPLY, 'dest': States.ALIGN_TO_SUPPLY},
-    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.IDLE},
-    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.WALK_TO_SUPPLY},
-    {'source': States.ALIGN_TO_SUPPLY, 'dest': States.LOAD},
-    {'source': States.LOAD, 'dest': States.IDLE},
-    {'source': States.LOAD, 'dest': States.WALK_TO_HOTSPOT},
-    {'source': States.WALK_TO_HOTSPOT, 'dest': States.IDLE},
-    {'source': States.WALK_TO_HOTSPOT, 'dest': States.ALIGN_TO_HOTSPOT},
-    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.IDLE},
-    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WALK_TO_HOTSPOT},
-    {'source': States.ALIGN_TO_HOTSPOT, 'dest': States.WAIT},
-    {'source': States.WAIT, 'dest': States.IDLE},
-    {'source': States.WAIT, 'dest': States.DROP},
-    {'source': States.DROP, 'dest': States.IDLE},
-    {'source': States.DROP, 'dest': States.WALK_TO_SUPPLY},
-    {'source': States.BONUS, 'dest': States.IDLE},
+    {"source": States.IDLE, "dest": States.TAKEOFF},
+    {"source": States.TAKEOFF, "dest": States.IDLE},
+    {"source": States.TAKEOFF, "dest": States.WALK_TO_SUPPLY},
+    {"source": States.TAKEOFF, "dest": States.ALIGN_TO_SUPPLY},
+    {"source": States.TAKEOFF, "dest": States.LOAD},
+    {"source": States.TAKEOFF, "dest": States.WALK_TO_HOTSPOT},
+    {"source": States.TAKEOFF, "dest": States.ALIGN_TO_HOTSPOT},
+    {"source": States.TAKEOFF, "dest": States.WAIT},
+    {"source": States.TAKEOFF, "dest": States.DROP},
+    {"source": States.TAKEOFF, "dest": States.BONUS},
+    {"source": States.WALK_TO_SUPPLY, "dest": States.IDLE},
+    {"source": States.WALK_TO_SUPPLY, "dest": States.ALIGN_TO_SUPPLY},
+    {"source": States.ALIGN_TO_SUPPLY, "dest": States.IDLE},
+    {"source": States.ALIGN_TO_SUPPLY, "dest": States.WALK_TO_SUPPLY},
+    {"source": States.ALIGN_TO_SUPPLY, "dest": States.LOAD},
+    {"source": States.LOAD, "dest": States.IDLE},
+    {"source": States.LOAD, "dest": States.WALK_TO_HOTSPOT},
+    {"source": States.WALK_TO_HOTSPOT, "dest": States.IDLE},
+    {"source": States.WALK_TO_HOTSPOT, "dest": States.ALIGN_TO_HOTSPOT},
+    {"source": States.ALIGN_TO_HOTSPOT, "dest": States.IDLE},
+    {"source": States.ALIGN_TO_HOTSPOT, "dest": States.WALK_TO_HOTSPOT},
+    {"source": States.ALIGN_TO_HOTSPOT, "dest": States.WAIT},
+    {"source": States.WAIT, "dest": States.IDLE},
+    {"source": States.WAIT, "dest": States.DROP},
+    {"source": States.DROP, "dest": States.IDLE},
+    {"source": States.DROP, "dest": States.WALK_TO_SUPPLY},
+    {"source": States.BONUS, "dest": States.IDLE},
 ]
 
 
 class AgentMachine(Machine):
-    def __init__(self, logger: Logger,
-                 drone_api: DroneApi,
-                 magnet_api: MagnetApi,
-                 mediator_api: MediatorApi,
-                 lidar_api: LidarApi,
-                 aruco_api: ArucoApi):
+
+    logger: Logger
+
+    def __init__(self, logger: Logger):
 
         self.logger = logger
 
         # behavior binding
         self.state_behavior_map = {
-            States.IDLE: IdleBehavior(logger, drone_api, mediator_api),
-            States.TAKEOFF: TakeoffBehavior(logger, drone_api, magnet_api, mediator_api),
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger, drone_api, aruco_api, mediator_api),
-            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger, drone_api, mediator_api, aruco_api),
-            States.LOAD: LoadBehavior(logger, drone_api, magnet_api, mediator_api),
-            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger, drone_api, lidar_api, aruco_api, mediator_api),
-            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger, drone_api, mediator_api, aruco_api),
-            States.WAIT: WaitBehavior(logger, drone_api, mediator_api),
-            States.DROP: DropBehavior(logger, drone_api, mediator_api, magnet_api),
-            States.BONUS: BonusBehavior(logger, drone_api, mediator_api, lidar_api)
+            States.IDLE: IdleBehavior(logger),
+            States.TAKEOFF: TakeoffBehavior(logger),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger),
+            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger),
+            States.LOAD: LoadBehavior(logger),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger),
+            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger),
+            States.WAIT: WaitBehavior(logger),
+            States.DROP: DropBehavior(logger),
+            States.BONUS: BonusBehavior(logger),
         }
 
         # add state on_enter/on_exit callback
         states = [
             {
-                'name': state_name,
-                'on_enter': getattr(behavior, 'on_enter', None),
-                'on_exit': getattr(behavior, 'on_exit', None)
+                "name": state_name,
+                "on_enter": getattr(behavior, "on_enter", None),
+                "on_exit": getattr(behavior, "on_exit", None),
             }
             for state_name, behavior in self.state_behavior_map.items()
         ]
@@ -100,12 +105,16 @@ class AgentMachine(Machine):
             - States.WALK_TO_SUPPLY → "walk_to_supply"
             """
             return [
-                {**transition, 'trigger': transition['dest'].name.lower()}
+                {**transition, "trigger": transition["dest"].name.lower()}
                 for transition in transitions
             ]
 
-        super().__init__(self, states=states,
-                         transitions=populate_triggers(transitions), initial=States.IDLE)
+        super().__init__(
+            self,
+            states=states,
+            transitions=populate_triggers(transitions),
+            initial=States.IDLE,
+        )
 
     def execute(self):
         """
@@ -122,5 +131,5 @@ class AgentMachine(Machine):
         """
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
-            if (next_state := behavior.get_next_state()):
+            if next_state := behavior.get_next_state():
                 self.trigger(next_state)

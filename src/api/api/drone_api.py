@@ -1,19 +1,28 @@
 # TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
-import numpy as np
 from typing import Optional
 
+import numpy as np
 from rclpy.clock import Clock
 from rclpy.node import Node
-from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
-                       QoSReliabilityPolicy)
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 
+from agent.constants import TAKEOFF_HEIGHT
 from common.coordinate import Coordinate
-from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
-                          TrajectorySetpoint, VehicleCommand,
-                          VehicleLocalPosition, VehicleStatus)
+from px4_msgs.msg import (
+    GotoSetpoint,
+    OffboardControlMode,
+    TrajectorySetpoint,
+    VehicleCommand,
+    VehicleLocalPosition,
+    VehicleStatus,
+)
 
 from .api import Api
-from agent.constants import TAKEOFF_HEIGHT
 
 
 class DroneApi(Api):
@@ -39,36 +48,42 @@ class DroneApi(Api):
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Subscriptions
         topic_prefix: str = f"fmu/"
 
-        node.create_subscription(VehicleLocalPosition,
-                                 topic_prefix+"out/vehicle_local_position",
-                                 self.__set_vehicle_local_position, qos_profile)
+        node.create_subscription(
+            VehicleLocalPosition,
+            topic_prefix + "out/vehicle_local_position",
+            self.__set_vehicle_local_position,
+            qos_profile,
+        )
 
-        node.create_subscription(VehicleStatus,
-                                 topic_prefix+"out/vehicle_status",
-                                 self.__set_vehicle_status, qos_profile)
+        node.create_subscription(
+            VehicleStatus,
+            topic_prefix + "out/vehicle_status",
+            self.__set_vehicle_status,
+            qos_profile,
+        )
 
         # Publishers
-        self.__vehicle_command_pub = node.create_publisher(VehicleCommand,
-                                                           topic_prefix+"in/vehicle_command",
-                                                           qos_profile)
+        self.__vehicle_command_pub = node.create_publisher(
+            VehicleCommand, topic_prefix + "in/vehicle_command", qos_profile
+        )
 
-        self.__offboard_control_mode_pub = node.create_publisher(OffboardControlMode,
-                                                                 topic_prefix+"in/offboard_control_mode",
-                                                                 qos_profile)
+        self.__offboard_control_mode_pub = node.create_publisher(
+            OffboardControlMode, topic_prefix + "in/offboard_control_mode", qos_profile
+        )
 
-        self.__goto_setpoint_pub = node.create_publisher(GotoSetpoint,
-                                                         topic_prefix+"in/goto_setpoint",
-                                                         qos_profile)
+        self.__goto_setpoint_pub = node.create_publisher(
+            GotoSetpoint, topic_prefix + "in/goto_setpoint", qos_profile
+        )
 
-        self.__trajectory_setpoint_pub = node.create_publisher(TrajectorySetpoint,
-                                                               topic_prefix+"in/trajectory_setpoint",
-                                                               qos_profile)
+        self.__trajectory_setpoint_pub = node.create_publisher(
+            TrajectorySetpoint, topic_prefix + "in/trajectory_setpoint", qos_profile
+        )
 
     @property
     def is_each_pre_flight_check_passed(self) -> bool:
@@ -110,8 +125,7 @@ class DroneApi(Api):
         """
 
         vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            1
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1
         )
 
         self.__vehicle_command_pub.publish(vehicle_command_msg)
@@ -124,8 +138,7 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
         vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM,
-            0
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 0
         )
 
         self.__vehicle_command_pub.publish(vehicle_command_msg)
@@ -156,7 +169,15 @@ class DroneApi(Api):
         offboard_control_mode_msg = OffboardControlMode()
         offboard_control_mode_msg.timestamp = self.__get_timestamp()
 
-        for attr in ["position", "velocity", "acceleration", "attitude", "body_rate", "thrust_and_torque", "direct_actuator"]:
+        for attr in [
+            "position",
+            "velocity",
+            "acceleration",
+            "attitude",
+            "body_rate",
+            "thrust_and_torque",
+            "direct_actuator",
+        ]:
             setattr(offboard_control_mode_msg, attr, False)
         setattr(offboard_control_mode_msg, self.__control_field, True)
         # offboard_control_mode_msg.position = True  # TrajectorySetpoint
@@ -167,14 +188,12 @@ class DroneApi(Api):
         """
         Activates the offboard control mode for the drone.
 
-        This method sends a `VehicleCommand` message to switch the drone to offboard mode 
+        This method sends a `VehicleCommand` message to switch the drone to offboard mode
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
         vehicle_command_msg = self.__get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_DO_SET_MODE,
-            1,
-            6
+            VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6
         )
 
         self.__vehicle_command_pub.publish(vehicle_command_msg)
@@ -231,27 +250,33 @@ class DroneApi(Api):
         self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
-        self.__is_each_pre_flight_check_passed = vehicle_status_msg.pre_flight_checks_pass
+        self.__is_each_pre_flight_check_passed = (
+            vehicle_status_msg.pre_flight_checks_pass
+        )
         self.__vehicle_timestamp = vehicle_status_msg.timestamp
         self.__is_armed = (
             vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
         )
 
-    def __set_vehicle_local_position(self, vehicle_local_position_msg: VehicleLocalPosition) -> None:
+    def __set_vehicle_local_position(
+        self, vehicle_local_position_msg: VehicleLocalPosition
+    ) -> None:
         self.__heading = vehicle_local_position_msg.heading
         self.__local_position = Coordinate(
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
-            z=vehicle_local_position_msg.z
+            z=vehicle_local_position_msg.z,
         )
         self.__local_velocity = Coordinate(
             x=vehicle_local_position_msg.vx,
             y=vehicle_local_position_msg.vy,
-            z=vehicle_local_position_msg.vz
+            z=vehicle_local_position_msg.vz,
         )
 
-    def __get_default_vehicle_command_msg(self, command, *params: float, **kwargs) -> VehicleCommand:
-        '''
+    def __get_default_vehicle_command_msg(
+        self, command, *params: float, **kwargs
+    ) -> VehicleCommand:
+        """
         Generate the vehicle command.\n
         defaults:\n
             params[0:7] = 0
@@ -261,7 +286,7 @@ class DroneApi(Api):
             source_component = 1\n
             from_external = True\n
             timestamp = int(timestamp / 1000)
-        '''
+        """
         vehicle_command_msg = VehicleCommand()
         vehicle_command_msg.timestamp = self.__get_timestamp()
 
@@ -271,7 +296,7 @@ class DroneApi(Api):
         # params
         params = list(params) + [0] * (7 - len(params))
         for i, param in enumerate(params[:7], start=1):
-            setattr(vehicle_command_msg, f'param{i}', float(param))
+            setattr(vehicle_command_msg, f"param{i}", float(param))
 
         # defaults
         vehicle_command_msg.target_system = 0

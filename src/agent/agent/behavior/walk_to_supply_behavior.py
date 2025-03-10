@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import NAV_THRESHOLD
-from api import ArucoApi, DroneApi, MediatorApi
+from api import ApiRegistry, ArucoApi, DroneApi, MediatorApi
 from common.coordinate import Coordinate
 from common.logger import Logger
 
@@ -10,16 +10,23 @@ from .behavior import Behavior
 
 class WalkToSupplyBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, aruco_api: ArucoApi, mediator_api: MediatorApi):
+    aruco_api: ArucoApi
+    drone_api: DroneApi
+    mediator_api: MediatorApi
+
+    speed: float = 0.5
+
+    def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = drone_api
-        self.aruco_api = aruco_api
-        self.mediator_api = mediator_api
-        self.speed: float = 0.5
+        self.aruco_api = ApiRegistry.get(ArucoApi)
+        self.drone_api = ApiRegistry.get(DroneApi)
+        self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def on_enter(self):
         self.target_index: int = 0
-        self.target_position: Coordinate = self.mediator_api.supply_zone[self.target_index]
+        self.target_position: Coordinate = self.mediator_api.supply_zone[
+            self.target_index
+        ]
         self.log_position(self.target_position, self.drone_api.local_position)
 
         # 重設 ArUco Marker
@@ -32,16 +39,25 @@ class WalkToSupplyBehavior(Behavior):
         current_location = self.drone_api.local_position
 
         # 往 target_position 移動, 速度大小是 self.speed
-        vel = Coordinate.clamp_magnitude_2d(self.target_position - current_location, self.speed)
+        vel = Coordinate.clamp_magnitude_2d(
+            self.target_position - current_location, self.speed
+        )
         self.drone_api.move_with_velocity_2d(vel)
 
         # TODO 加上避障 (APF)
 
-        if Coordinate.distance_2d(current_location, self.target_position) <= NAV_THRESHOLD:
+        if (
+            Coordinate.distance_2d(current_location, self.target_position)
+            <= NAV_THRESHOLD
+        ):
             # 換方向
             self.logger.info(f"reached target position, changing to next target")
-            self.target_index = (self.target_index + 1) % len(self.mediator_api.supply_zone)  # 0, 1, 2, 3, 0, ...
-            self.target_position = self.mediator_api.supply_zone[self.target_index]  # Update target position
+            self.target_index = (self.target_index + 1) % len(
+                self.mediator_api.supply_zone
+            )  # 0, 1, 2, 3, 0, ...
+            self.target_position = self.mediator_api.supply_zone[
+                self.target_index
+            ]  # Update target position
             self.log_position(self.target_position, current_location)
 
     def get_next_state(self) -> Optional[str]:

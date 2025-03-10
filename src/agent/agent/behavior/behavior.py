@@ -9,8 +9,10 @@ class Behavior(ABC):
     def __init__(self, logger: Logger):
         self.logger = logger
 
-    def _execute(self):  # TODO
-        self.logger.info(f"Vehicle timestamp: {self.drone_api.vehicle_timestamp}")
+    def _execute(self):
+        self.logger.info(
+            f"Vehicle timestamp: {self.drone_api.vehicle_timestamp}"
+        )  # TODO
 
     @abstractmethod
     def execute(self):
@@ -20,8 +22,11 @@ class Behavior(ABC):
     def get_next_state(self) -> Optional[str]:
         pass
 
+    # TODO
     def log_position(self, target_position, current_position):
         """
         Log the target and current position.
         """
-        self.logger.info(f"Target position: {target_position}\nCurrent position: {current_position}\n\n")
+        self.logger.info(
+            f"Target position: {target_position}\nCurrent position: {current_position}\n\n"
+        )

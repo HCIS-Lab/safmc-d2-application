@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import DroneApi, MagnetApi, MediatorApi
+from api import ApiRegistry, DroneApi, MagnetApi, MediatorApi
 from common.logger import Logger
 
 from .behavior import Behavior
@@ -8,11 +8,15 @@ from .behavior import Behavior
 
 class DropBehavior(Behavior):
 
-    def __init__(self, logger: Logger, drone_api: DroneApi, mediator_api: MediatorApi, magnet_api: MagnetApi):
+    drone_api: DroneApi
+    magnet_api: MagnetApi
+    mediator_api: MediatorApi
+
+    def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = drone_api
-        self.mediator_api = mediator_api
-        self.magnet_api = magnet_api
+        self.drone_api = ApiRegistry.get(DroneApi)
+        self.magnet_api = ApiRegistry.get(MagnetApi)
+        self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):
         self.logger.info("Deactivating magnet to drop payload.")
