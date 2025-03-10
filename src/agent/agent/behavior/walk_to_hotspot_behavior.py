@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import ApiRegistry, ArucoApi, DroneApi, LidarApi, MediatorApi
+from api import ApiRegistry, ArucoApi, LidarApi, MediatorApi, Px4Api
 from common.apf_navigator import ApfNavigator
 from common.coordinate import Coordinate
 from common.logger import Logger
@@ -11,7 +11,7 @@ from .behavior import Behavior
 class WalkToHotspotBehavior(Behavior):
 
     aruco_api: ArucoApi
-    drone_api: DroneApi
+    drone_api: Px4Api
     lidar_api: LidarApi
     mediator_api: MediatorApi
 
@@ -20,7 +20,7 @@ class WalkToHotspotBehavior(Behavior):
     def __init__(self, logger: Logger):
         super().__init__(logger)
         self.aruco_api = ApiRegistry.get(ArucoApi)
-        self.drone_api = ApiRegistry.get(DroneApi)
+        self.drone_api = ApiRegistry.get(Px4Api)
         self.lidar_api = ApiRegistry.get(LidarApi)
         self.mediator_api = ApiRegistry.get(MediatorApi)
 

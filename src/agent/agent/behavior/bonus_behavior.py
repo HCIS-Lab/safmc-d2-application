@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import ApiRegistry, DroneApi, LidarApi, MediatorApi
+from api import ApiRegistry, LidarApi, MediatorApi, Px4Api
 from common.bug_navigator import BugNavigator
 from common.logger import Logger
 
@@ -9,13 +9,13 @@ from .behavior import Behavior
 
 class BonusBehavior(Behavior):
 
-    drone_api: DroneApi
+    drone_api: Px4Api
     mediator_api: MediatorApi
     lidar_api: LidarApi
 
     def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = ApiRegistry.get(DroneApi)
+        self.drone_api = ApiRegistry.get(Px4Api)
         self.mediator_api = ApiRegistry.get(MediatorApi)
         self.lidar_api = ApiRegistry.get(LidarApi)
 

@@ -3,7 +3,7 @@
 from typing import Optional
 
 from agent.constants import HEIGHT_THRESHOLD, LOAD_HEIGHT, NAV_THRESHOLD
-from api import ApiRegistry, DroneApi, MagnetApi, MediatorApi
+from api import ApiRegistry, MagnetApi, MediatorApi, Px4Api
 from common.coordinate import Coordinate
 from common.logger import Logger
 
@@ -12,13 +12,13 @@ from .behavior import Behavior
 
 class LoadBehavior(Behavior):
 
-    drone_api: DroneApi
+    drone_api: Px4Api
     magnet_api: MagnetApi
     mediator_api: MediatorApi
 
     def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = ApiRegistry.get(DroneApi)
+        self.drone_api = ApiRegistry.get(Px4Api)
         self.magnet_api = ApiRegistry.get(MagnetApi)
         self.mediator_api = ApiRegistry.get(MediatorApi)
 

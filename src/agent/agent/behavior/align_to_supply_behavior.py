@@ -1,7 +1,7 @@
 from typing import Optional
 
 from agent.constants import ARUCO_DIST_THRESHOLD
-from api import ApiRegistry, ArucoApi, DroneApi, MediatorApi
+from api import ApiRegistry, ArucoApi, MediatorApi, Px4Api
 from common.coordinate import Coordinate
 from common.logger import Logger
 
@@ -11,7 +11,7 @@ from .behavior import Behavior
 class AlignToSupplyBehavior(Behavior):
 
     aruco_api: ArucoApi
-    drone_api: DroneApi
+    drone_api: Px4Api
     mediator_api: MediatorApi
 
     speed = 0.3  # 最大速度 TODO move to yaml/constant file
@@ -19,7 +19,7 @@ class AlignToSupplyBehavior(Behavior):
     def __init__(self, logger: Logger):
         super().__init__(logger)
         self.aruco_api = ApiRegistry.get(ArucoApi)
-        self.drone_api = ApiRegistry.get(DroneApi)
+        self.drone_api = ApiRegistry.get(Px4Api)
         self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):

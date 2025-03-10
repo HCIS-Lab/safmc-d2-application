@@ -5,12 +5,8 @@ import rclpy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Vector3
 from rclpy.node import Node
-from rclpy.qos import (
-    QoSDurabilityPolicy,
-    QoSHistoryPolicy,
-    QoSProfile,
-    QoSReliabilityPolicy,
-)
+from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
+                       QoSReliabilityPolicy)
 from sensor_msgs.msg import Image
 
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
@@ -71,7 +67,7 @@ class ArucoTracker(Node):
                 self.image_callback,
                 image_qos,
             )
-        self.publisher = self.create_publisher(ArucoInfo, f"aruco_info", qos_profile)
+        self.publisher = self.create_publisher(ArucoInfo, "aruco_info", qos_profile)
 
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")

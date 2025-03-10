@@ -8,13 +8,13 @@ from geometry_msgs.msg import Point
 from rclpy.node import Node
 from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
                        QoSReliabilityPolicy)
-from std_msgs.msg import Bool, UInt32
+from std_msgs.msg import Bool
 
 from agent_msgs.msg import (AgentStatus, DropZoneInfo, ObstacleArray,
                             SupplyZoneInfo)
 from common.coordinate import Coordinate
 from common.logger import Logger
-from mediator.constants import NUM_DRONES, NUM_DROP_ZONES, NUM_PAYLOADS
+from mediator.constants import NUM_DRONES
 
 
 def get_group_id(drone_id: int) -> int:
@@ -25,185 +25,132 @@ def is_green(drone_id: int) -> bool:
     return drone_id == 1 or drone_id == 2
 
 
-def init_status_flags(size: int):
-    flags = [False] * (size + 1)
-    flags[0] = True
-    return flags
-
-
 class Mediator(Node):
+    _is_drone_online = [i == 0 for i in range(NUM_DRONES)]  # [True, False, False, ...]
+    _is_drone_armed = [i == 0 for i in range(NUM_DRONES)]
+    _is_drone_waiting_at_hotspot = [i == 0 for i in range(NUM_DRONES)]
+    _has_drop_zone_completed = [i == 0 for i in range(NUM_DRONES)]
+    _has_payload_been_taken = [i == 0 for i in range(NUM_DRONES)]
+    _model_positions: Dict[str, Optional[Coordinate]] = {
+        name: None
+        for name in (
+            "blue_supply_zone",
+            "green_supply_zone",
+            *(f"drop_zone_{i}" for i in range(1, 5)),
+            *(f"x500_safmc_d2_{i}" for i in range(1, 5)),
+        )
+    }
 
     def __init__(self):
-        super().__init__('mediator')
+        super().__init__("mediator")
         self.logger = Logger(self.get_logger(), self.get_clock())
 
-        self.is_drone_online = init_status_flags(NUM_DRONES)
-        self.is_drone_armed = init_status_flags(NUM_DRONES)
-        self.is_drone_waiting_at_hotspot = init_status_flags(NUM_DRONES)
-        self.has_drop_zone_completed = init_status_flags(NUM_DROP_ZONES)
-        self.has_payload_been_taken = init_status_flags(NUM_PAYLOADS)
-
+        # TODO
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Subscriptions
-        # UInt32 for drone_id
-        self.create_subscription(UInt32, '/mediator/online', self.__set_is_drone_online, qos_profile)
-        self.create_subscription(UInt32, '/mediator/drop_request', self.__set_is_drone_waiting_at_hotspot, qos_profile)
-        self.create_subscription(UInt32, f"/mediator/drop_ack", self.__unset_is_drone_waiting_at_hotspot, qos_profile)
-        self.create_subscription(AgentStatus, '/mediator/status', self.__set_status, qos_profile)
-
         # 物件位置 (from UWB / Gazebo) -> setter 就先轉成 NED
-        self.__model_positions: Dict[str, Optional[Coordinate]] = {
-            name: None for name in (
-                "blue_supply_zone", "green_supply_zone",
-                *(f"drop_zone_{i}" for i in range(1, 5)),
-                *(f"x500_safmc_d2_{i}" for i in range(1, 5))
+        for model_name in self._model_positions:  # TODO 跟 UWB 小組商量
+            self.create_subscription(
+                Point,
+                f"/position/{model_name}",
+                partial(self._set_model_positions, model_name),
+                10,  # TODO
             )
-        }
-        for model_name in self.__model_positions:
-            self.create_subscription(Point, f"/position/{model_name}",
-                                     partial(self.__set_model_positions, model_name), 10)
 
-        # publishers
-        self.supply_zone_info_pubs = [None] * (NUM_DRONES+1)
-        self.drop_zone_info_pubs = [None] * (NUM_DRONES+1)
-        self.drop_pubs = [None] * (NUM_DRONES+1)
-        self.obstacle_array_pub = [None] * (NUM_DRONES+1)
+        # Publishers
+        self._cmd_takeoff_pubs = [None] * (NUM_DRONES + 1)
+        self._cmd_drop_pubs = [None] * (NUM_DRONES + 1)
+        self._supply_zone_pubs = [None] * (NUM_DRONES + 1)
+        self._drop_zone_pubs = [None] * (NUM_DRONES + 1)
+        self._obstacle_array_pubs = [None] * (NUM_DRONES + 1)
 
-        for drone_id in range(1, NUM_DRONES+1):
-            self.drop_pubs[drone_id] = self.create_publisher(
+        for drone_id in range(1, NUM_DRONES + 1):
+
+            prefix = f"/px4_{drone_id}/mediator/"
+
+            # Online
+            self.create_subscription(
                 Bool,
-                f"/agent_{drone_id}/cmd_drop",
-                qos_profile
+                prefix + "online",
+                lambda msg: self._set_is_drone_online(msg, drone_id),
+                qos_profile,
             )
 
-            self.supply_zone_info_pubs[drone_id] = self.create_publisher(
-                SupplyZoneInfo,
-                f"/agent_{drone_id}/supply_zone",
-                qos_profile
+            # Takeoff
+            self._cmd_takeoff_pubs[drone_id] = self.create_publisher(
+                Bool, prefix + "cmd_takeoff", qos_profile
             )
 
-            self.drop_zone_info_pubs[drone_id] = self.create_publisher(
-                DropZoneInfo,
-                f"/agent_{drone_id}/drop_zone",
-                qos_profile
+            # Anytime
+            self.create_subscription(
+                AgentStatus,
+                prefix + "status",
+                lambda msg: self._set_status(msg, drone_id),
+                qos_profile,
             )
 
-            self.obstacle_array_pub[drone_id] = self.create_publisher(
-                ObstacleArray,
-                f"/agent_{drone_id}/obstacle_array",
-                qos_profile
+            self._supply_zone_pubs[drone_id] = self.create_publisher(
+                SupplyZoneInfo, prefix + "supply_zone", qos_profile
             )
 
-    def __set_model_positions(self, model_name: str, msg: Point):
-        self.__model_positions[model_name] = Coordinate.enu_to_ned(Coordinate.from_point(msg))
-
-    def __set_is_drone_online(self, msg: UInt32):
-        drone_id = msg.data
-        if not self.is_drone_online[drone_id]:
-            self.logger.ori.info(f"{drone_id} is online!")
-        self.is_drone_online[drone_id] = True
-
-    def __set_status(self, msg: AgentStatus):
-        drone_id = msg.drone_id
-        group_id = get_group_id(drone_id)
-
-        agent_local_position = Coordinate(
-            msg.point.x,
-            msg.point.y,
-            msg.point.z,
-        )
-        agent_global_position: Optional[Coordinate] = self.__model_positions[f"x500_safmc_d2_{drone_id}"]
-        if agent_global_position is None:
-            return
-
-        # Supply Zone Information
-        supply_zone_name = "green_supply_zone" if is_green(drone_id) else "blue_supply_zone"
-        supply_zone_global_position: Optional[Coordinate] = self.__model_positions[supply_zone_name]
-        if supply_zone_global_position is None:
-            return
-
-        sign_ = 1 if is_green(drone_id) else -1
-        supply_zone_local_position_1 = self.get_target_local_position(
-            agent_local_position,
-            agent_global_position,
-            supply_zone_global_position + sign_ * Coordinate.front*3
-        )
-        supply_zone_local_position_2 = self.get_target_local_position(
-            agent_local_position,
-            agent_global_position,
-            supply_zone_global_position - sign_ * Coordinate.front*3
-        )
-        supply_zone_local_position_3 = self.get_target_local_position(
-            agent_local_position,
-            agent_global_position,
-            supply_zone_global_position - sign_ * Coordinate.front*3 + Coordinate.right*1
-        )
-        supply_zone_local_position_4 = self.get_target_local_position(
-            agent_local_position,
-            agent_global_position,
-            supply_zone_global_position + sign_ * Coordinate.front*3 + Coordinate.right*1
-        )
-
-        sz_msg = SupplyZoneInfo()
-        sz_msg.point_1 = supply_zone_local_position_1.to_point()  # near
-        sz_msg.point_2 = supply_zone_local_position_2.to_point()  # far
-        sz_msg.point_3 = supply_zone_local_position_3.to_point()  # far
-        sz_msg.point_4 = supply_zone_local_position_4.to_point()  # near
-        sz_msg.aruco_marker_id = 0  # TODO
-        self.supply_zone_info_pubs[drone_id].publish(sz_msg)
-
-        # Drop Zone Information
-        drop_zone_id_1 = group_id * 2 - 1  # 1 -> 1, 2 -> 3
-        drop_zone_id_2 = drop_zone_id_1 + 1  # 1 -> 2, 2 -> 4
-        drop_zone_id = drop_zone_id_1 if not self.has_drop_zone_completed[drop_zone_id_1] else drop_zone_id_2
-        drop_zone_global_position: Optional[Coordinate] = self.__model_positions[f"drop_zone_{drop_zone_id}"]
-        if drop_zone_global_position is None:
-            return
-
-        drop_zone_msg = DropZoneInfo()
-        drop_zone_msg.point = self.get_target_local_position(
-            agent_local_position,
-            agent_global_position,
-            drop_zone_global_position
-        ).to_point()
-        drop_zone_msg.aruco_marker_id = 0  # TODO
-        self.drop_zone_info_pubs[drone_id].publish(drop_zone_msg)
-
-        # Other hidden obstacles
-        # ObstacleArray
-        obstacle_array_msg = ObstacleArray()
-        for other_drone_id in range(1, NUM_DRONES + 1):
-            if other_drone_id == drone_id:  # 自己
-                continue
-            other_global_position = self.__model_positions[f"x500_safmc_d2_{other_drone_id}"]
-
-            if other_global_position is None:
-                continue
-
-            other_local_position = self.get_target_local_position(
-                agent_local_position,
-                agent_global_position,
-                other_global_position
+            self._drop_zone_pubs[drone_id] = self.create_publisher(
+                DropZoneInfo, prefix + "drop_zone", qos_profile
             )
-            obstacle_array_msg.points.append(other_local_position.to_point())
-        self.obstacle_array_pub[drone_id].publish(obstacle_array_msg)
 
-    def __set_is_drone_waiting_at_hotspot(self, msg: UInt32):
-        drone_id = msg.data
+            self._obstacle_array_pubs[drone_id] = self.create_publisher(
+                ObstacleArray, prefix + "obstacle_array", qos_profile
+            )
+
+            # Drop
+            self.create_subscription(
+                Bool,
+                prefix + "drop_request",
+                lambda msg: self._set_is_drone_waiting_at_hotspot(msg, drone_id),
+                qos_profile,
+            )
+            self._cmd_drop_pubs[drone_id] = self.create_publisher(
+                Bool, prefix + "cmd_drop", qos_profile
+            )
+            self.create_subscription(
+                Bool,
+                prefix + "drop_ack",
+                lambda msg: self._unset_is_drone_waiting_at_hotspot(msg, drone_id),
+                qos_profile,
+            )
+
+    def _set_model_positions(self, model_name: str, msg: Point):
+        self._model_positions[model_name] = Coordinate.enu_to_ned(
+            Coordinate.from_point(msg)
+        )
+
+    def _set_is_drone_online(self, msg: Bool, drone_id: int):
+        self._is_drone_online[drone_id] = msg
+
+        # Command TAKEOFF
+        msg = Bool()
+        msg.data = True
+        self._cmd_takeoff_pubs[drone_id].publish(msg)
+
+    def _set_is_drone_waiting_at_hotspot(
+        self, msg: Bool, drone_id: int
+    ):  # TODO refactor
         group_id = get_group_id(drone_id)
 
         # 標記該無人機已到達熱點
-        self.is_drone_waiting_at_hotspot[drone_id] = True
+        self._is_drone_waiting_at_hotspot[drone_id] = msg
+
+        if not msg:
+            return
 
         # 檢查同組無人機是否全部到達
         all_group_members_arrived = all(
-            self.is_drone_waiting_at_hotspot[other_drone_id]
+            self._is_drone_waiting_at_hotspot[other_drone_id]
             for other_drone_id in range(1, NUM_DRONES + 1)
             if get_group_id(other_drone_id) == group_id
         )
@@ -215,17 +162,152 @@ class Mediator(Node):
         bool_msg.data = True
         for other_drone_id in range(1, NUM_DRONES + 1):
             if get_group_id(other_drone_id) == group_id:
-                self.drop_pubs[other_drone_id].publish(bool_msg)
+                self._cmd_drop_pubs[other_drone_id].publish(bool_msg)
 
-    def __unset_is_drone_waiting_at_hotspot(self, msg: UInt32):
-        drone_id = msg.data
+    def _get_supply_zone_info_msg(
+        self,
+        drone_id: int,
+        agent_local_position: Coordinate,
+        agent_global_position: Coordinate,
+        supply_zone_global_position: Coordinate,
+    ):
+        sign_ = 1 if is_green(drone_id) else -1
+        supply_zone_local_position_1 = self._get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position + sign_ * Coordinate.front * 3,
+        )
+        supply_zone_local_position_2 = self._get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position - sign_ * Coordinate.front * 3,
+        )
+        supply_zone_local_position_3 = self._get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position
+            - sign_ * Coordinate.front * 3
+            + Coordinate.right * 1,
+        )
+        supply_zone_local_position_4 = self._get_target_local_position(
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position
+            + sign_ * Coordinate.front * 3
+            + Coordinate.right * 1,
+        )
+
+        sz_msg = SupplyZoneInfo()
+        sz_msg.point_1 = supply_zone_local_position_1.to_point()  # near
+        sz_msg.point_2 = supply_zone_local_position_2.to_point()  # far
+        sz_msg.point_3 = supply_zone_local_position_3.to_point()  # far
+        sz_msg.point_4 = supply_zone_local_position_4.to_point()  # near
+        sz_msg.aruco_marker_id = 0  # TODO
+
+        return sz_msg
+
+    def _get_drop_zone_info_msg(
+        self,
+        drone_id: int,
+        agent_local_position: Coordinate,
+        agent_global_position: Coordinate,
+        drop_zone_global_position: Coordinate,
+    ):
+        dz_msg = DropZoneInfo()
+        dz_msg.point = self._get_target_local_position(
+            agent_local_position, agent_global_position, drop_zone_global_position
+        ).to_point()
+        dz_msg.aruco_marker_id = 0  # TODO
+
+        return dz_msg
+
+    def _set_status(self, msg: AgentStatus, drone_id: int):
+
+        agent_local_position = Coordinate(msg.point.x, msg.point.y, msg.point.z)
+        agent_global_position: Optional[Coordinate] = self._model_positions[
+            f"x500_safmc_d2_{drone_id}"
+        ]
+        if agent_global_position is None:
+            raise Exception()
+            # TODO log error
+
+        # Supply Zone Information
+        supply_zone_global_position: Optional[Coordinate] = self._model_positions[
+            "green_supply_zone" if is_green(drone_id) else "blue_supply_zone"
+        ]
+        if supply_zone_global_position is None:
+            raise Exception()
+            # TODO log error
+
+        supply_zone_info_msg = self._get_supply_zone_info_msg(
+            drone_id,
+            agent_local_position,
+            agent_global_position,
+            supply_zone_global_position,
+        )
+        self._supply_zone_pubs[drone_id].publish(supply_zone_info_msg)
+
+        # Drop Zone Information
+        group_id = get_group_id(drone_id)
+
+        drop_zone_id_1 = group_id * 2 - 1  # 1 -> 1, 2 -> 3
+        drop_zone_id_2 = drop_zone_id_1 + 1  # 1 -> 2, 2 -> 4
+        drop_zone_id = (
+            drop_zone_id_1
+            if not self._has_drop_zone_completed[drop_zone_id_1]
+            else drop_zone_id_2
+        )
+
+        drop_zone_global_position: Optional[Coordinate] = self._model_positions[
+            f"drop_zone_{drop_zone_id}"
+        ]
+        if drop_zone_global_position is None:
+            raise Exception()
+            # TODO log error
+
+        drop_zone_info_msg = self._get_drop_zone_info_msg(
+            drone_id,
+            agent_local_position,
+            agent_global_position,
+            drop_zone_global_position,
+        )
+        self._drop_zone_pubs[drone_id].publish(drop_zone_info_msg)
+
+        # Other hidden obstacles
+        # ObstacleArray
+        obstacle_array_msg = ObstacleArray()
+        for other_drone_id in range(1, NUM_DRONES + 1):
+            if other_drone_id == drone_id:  # 自己
+                continue
+            other_global_position = self._model_positions[
+                f"x500_safmc_d2_{other_drone_id}"
+            ]
+
+            if other_global_position is None:
+                continue
+
+            other_local_position = self._get_target_local_position(
+                agent_local_position, agent_global_position, other_global_position
+            )
+            obstacle_array_msg.points.append(other_local_position.to_point())
+        self._obstacle_array_pubs[drone_id].publish(obstacle_array_msg)
+
+    def _unset_is_drone_waiting_at_hotspot(self, msg: Bool, drone_id: int):
+        if not msg.data:
+            return
+
         group_id = get_group_id(drone_id)
 
         for other_drone_id in range(1, NUM_DRONES + 1):
             if get_group_id(other_drone_id) == group_id:
-                self.is_drone_waiting_at_hotspot[other_drone_id] = False  # 重置
+                self._is_drone_waiting_at_hotspot[other_drone_id] = False  # 重置
 
-    def get_target_local_position(self, agent_local_position: Coordinate, agent_global_position: Coordinate, target_global_position: Coordinate):
+    def _get_target_local_position(
+        self,
+        agent_local_position: Coordinate,
+        agent_global_position: Coordinate,
+        target_global_position: Coordinate,
+    ):
         assert agent_local_position is not None, f"agent_local_position is None"
         assert agent_global_position is not None, f"agent_global_position is None"
         assert target_global_position is not None, f"target_global_position is None"
@@ -248,5 +330,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

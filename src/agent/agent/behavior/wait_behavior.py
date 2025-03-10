@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import ApiRegistry, DroneApi, MediatorApi
+from api import ApiRegistry, MediatorApi, Px4Api
 from common.logger import Logger
 
 from .behavior import Behavior
@@ -8,12 +8,12 @@ from .behavior import Behavior
 
 class WaitBehavior(Behavior):
 
-    drone_api: DroneApi
+    drone_api: Px4Api
     mediator_api: MediatorApi
 
     def __init__(self, logger: Logger):
         super().__init__(logger)
-        self.drone_api = ApiRegistry.get(DroneApi)
+        self.drone_api = ApiRegistry.get(Px4Api)
         self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):
