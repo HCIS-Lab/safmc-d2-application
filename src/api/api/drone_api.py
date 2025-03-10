@@ -11,7 +11,6 @@ from rclpy.qos import (
     QoSReliabilityPolicy,
 )
 
-from agent.constants import TAKEOFF_HEIGHT
 from common.coordinate import Coordinate
 from px4_msgs.msg import (
     GotoSetpoint,
@@ -26,24 +25,21 @@ from .api import Api
 
 
 class DroneApi(Api):
+
+    _is_armed: bool = False
+    _vehicle_timestamp: int = -1  # microseconds
+    _is_each_pre_flight_check_passed: bool = False
+    _heading: Optional[float] = None
+    _local_position: Optional[Coordinate] = None
+    _local_velocity: Optional[Coordinate] = None
+    _last_state = "walk_to_supply"  # TODO 留下/不留下?
+    _control_field = "position"  # TODO
+
     def __init__(self, node: Node):
-
         # Initial Values
-        self.__clock: Clock = node.get_clock()
+        self._clock: Clock = node.get_clock()
 
-        self.__is_armed: bool = False
-        self.__vehicle_timestamp: int = -1  # microseconds
-        self.__is_each_pre_flight_check_passed: bool = False
-        self.__heading: Optional[float] = None
-        self.__local_position: Optional[Coordinate] = None
-        self.__local_velocity: Optional[Coordinate] = None
-        self.__last_state = "walk_to_supply"  # TODO 留下/不留下?
-        self.__control_field = "position"  # TODO
-
-        # TODO
-        self.__start_position: Optional[Coordinate] = None
-
-        # QoS
+        # QoS TODO
         qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -51,20 +47,19 @@ class DroneApi(Api):
             depth=1,
         )
 
-        # Subscriptions
-        topic_prefix: str = f"fmu/"
+        topic_prefix = f"fmu/"
 
+        # Subscriptions
         node.create_subscription(
             VehicleLocalPosition,
             topic_prefix + "out/vehicle_local_position",
-            self.__set_vehicle_local_position,
+            self._set_vehicle_local_position,
             qos_profile,
         )
-
         node.create_subscription(
             VehicleStatus,
             topic_prefix + "out/vehicle_status",
-            self.__set_vehicle_status,
+            self._set_vehicle_status,
             qos_profile,
         )
 
@@ -72,49 +67,43 @@ class DroneApi(Api):
         self.__vehicle_command_pub = node.create_publisher(
             VehicleCommand, topic_prefix + "in/vehicle_command", qos_profile
         )
-
         self.__offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode, topic_prefix + "in/offboard_control_mode", qos_profile
         )
-
         self.__goto_setpoint_pub = node.create_publisher(
             GotoSetpoint, topic_prefix + "in/goto_setpoint", qos_profile
         )
-
         self.__trajectory_setpoint_pub = node.create_publisher(
             TrajectorySetpoint, topic_prefix + "in/trajectory_setpoint", qos_profile
         )
 
     @property
     def is_each_pre_flight_check_passed(self) -> bool:
-        return self.__is_each_pre_flight_check_passed
+        return self._is_each_pre_flight_check_passed
 
     @property
     def vehicle_timestamp(self) -> int:  # microseconds
-        return self.__vehicle_timestamp
+        return self._vehicle_timestamp
 
     @property
     def is_armed(self) -> bool:
-        return self.__is_armed
+        return self._is_armed
 
     @property
     def last_state(self) -> str:
-        return self.__last_state
+        return self._last_state
 
     @property
     def heading(self) -> float:
-        return self.__heading
+        return self._heading
 
     @property
     def local_position(self) -> Coordinate:
-        return self.__local_position
+        return self._local_position
 
     @property
     def local_velocity(self) -> Coordinate:
-        return self.__local_velocity
-
-    def reset_start_position(self) -> None:
-        self.__start_position = self.__local_position
+        return self._local_velocity
 
     def arm(self) -> None:
         """
@@ -124,7 +113,7 @@ class DroneApi(Api):
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
         """
 
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+        vehicle_command_msg = self._get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1
         )
 
@@ -137,7 +126,7 @@ class DroneApi(Api):
         Sends a command to the vehicle to disarm it, ensuring it cannot take off.
         This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
         """
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+        vehicle_command_msg = self._get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 0
         )
 
@@ -148,17 +137,17 @@ class DroneApi(Api):
         """
         Record state under unexpected disarm circumstances
         """
-        self.__last_state = state_name
+        self._last_state = state_name
 
     def __get_timestamp(self) -> int:  # microseconds
-        return int(self.__clock.now().nanoseconds / 1000)
+        return int(self._clock.now().nanoseconds / 1000)
 
     # TODO
     def change_control_field(self, field: str) -> None:
         if field != "position" and field != "velocity":
             # ERROR
             return
-        self.__control_field = field
+        self._control_field = field
 
     def set_offboard_control_mode(self) -> None:
         """
@@ -179,7 +168,7 @@ class DroneApi(Api):
             "direct_actuator",
         ]:
             setattr(offboard_control_mode_msg, attr, False)
-        setattr(offboard_control_mode_msg, self.__control_field, True)
+        setattr(offboard_control_mode_msg, self._control_field, True)
         # offboard_control_mode_msg.position = True  # TrajectorySetpoint
         # offboard_control_mode_msg.velocity = True  # TrajectorySetpoint
         self.__offboard_control_mode_pub.publish(offboard_control_mode_msg)
@@ -192,7 +181,7 @@ class DroneApi(Api):
         by setting the appropriate control mode flags. The mode is switched by using the
         `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = self.__get_default_vehicle_command_msg(
+        vehicle_command_msg = self._get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6
         )
 
@@ -249,31 +238,31 @@ class DroneApi(Api):
 
         self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
-    def __set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
-        self.__is_each_pre_flight_check_passed = (
+    def _set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
+        self._is_each_pre_flight_check_passed = (
             vehicle_status_msg.pre_flight_checks_pass
         )
-        self.__vehicle_timestamp = vehicle_status_msg.timestamp
-        self.__is_armed = (
+        self._vehicle_timestamp = vehicle_status_msg.timestamp
+        self._is_armed = (
             vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
         )
 
-    def __set_vehicle_local_position(
+    def _set_vehicle_local_position(
         self, vehicle_local_position_msg: VehicleLocalPosition
     ) -> None:
-        self.__heading = vehicle_local_position_msg.heading
-        self.__local_position = Coordinate(
+        self._heading = vehicle_local_position_msg.heading
+        self._local_position = Coordinate(
             x=vehicle_local_position_msg.x,
             y=vehicle_local_position_msg.y,
             z=vehicle_local_position_msg.z,
         )
-        self.__local_velocity = Coordinate(
+        self._local_velocity = Coordinate(
             x=vehicle_local_position_msg.vx,
             y=vehicle_local_position_msg.vy,
             z=vehicle_local_position_msg.vz,
         )
 
-    def __get_default_vehicle_command_msg(
+    def _get_default_vehicle_command_msg(
         self, command, *params: float, **kwargs
     ) -> VehicleCommand:
         """
