@@ -46,7 +46,13 @@ class VehicleVisualOdometry(Node):
         msg.timestamp_sample = timestamp_sample // 1000 # nanosecond to microsecond 
         msg.pose_frame = msg.POSE_FRAME_NED
         msg.position = NED_position
+        msg.q = [float('nan'), float('nan'), float('nan'), float('nan')]
+        msg.velocity_frame = msg.VELOCITY_FRAME_UNKNOWN
+        msg.velocity = [float('nan'), float('nan'), float('nan')]
+        msg.angular_velocity = [float('nan'), float('nan'), float('nan')]
         msg.position_variance = [0.000101, 8.64E-05, 0.000712]
+        msg.orientation_variance = [float('nan'), float('nan'), float('nan')]
+        msg.velocity_variance = [float('nan'), float('nan'), float('nan')]
         # 發布消息
         self.publisher_[publisher_num - 1].publish(msg)
         self.get_logger().info(f'px4_{publisher_num} Published visual odometry: {msg.position}')
