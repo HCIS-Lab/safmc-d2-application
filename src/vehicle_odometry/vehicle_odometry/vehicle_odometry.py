@@ -43,7 +43,7 @@ class VehicleVisualOdometry(Node):
 
         msg = VehicleOdometry()
         msg.timestamp = self.timestamp
-        msg.timestamp_sample = timestamp_sample // 1e3 # nanosecond to microsecond 
+        msg.timestamp_sample = timestamp_sample // 1000 # nanosecond to microsecond 
         msg.pose_frame = msg.POSE_FRAME_NED
         msg.position = NED_position
         msg.position_variance = [0.000101, 8.64E-05, 0.000712]
