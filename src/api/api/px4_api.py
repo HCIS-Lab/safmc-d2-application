@@ -7,9 +7,14 @@ from rclpy.node import Node
 
 from common.coordinate import Coordinate
 from common.qos import cmd_qos_profile
-from px4_msgs.msg import (GotoSetpoint, OffboardControlMode,
-                          TrajectorySetpoint, VehicleCommand,
-                          VehicleLocalPosition, VehicleStatus)
+from px4_msgs.msg import (
+    GotoSetpoint,
+    OffboardControlMode,
+    TrajectorySetpoint,
+    VehicleCommand,
+    VehicleLocalPosition,
+    VehicleStatus,
+)
 
 from .api import Api
 
