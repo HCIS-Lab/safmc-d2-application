@@ -39,7 +39,7 @@ class VehicleVisualOdometry(Node):
         self.publish_odometry([msg.x, msg.y, msg.z], int(msg.eui[-1]), msg.timestamp)
 
     def publish_odometry(self, XYZ_position, publisher_num, timestamp_sample):
-        NED_position = [XYZ_position[1], XYZ_position[0], XYZ_position[2]]
+        NED_position = [XYZ_position[1], XYZ_position[0], float('nan')]
 
         msg = VehicleOdometry()
         msg.timestamp = self.timestamp
