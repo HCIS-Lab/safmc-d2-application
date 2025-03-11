@@ -94,33 +94,6 @@ class Px4Api(Api):
     def local_velocity(self) -> Coordinate:
         return self._local_velocity
 
-    def arm(self) -> None:
-        """
-        Arms the drone for flight.
-
-        Sends a command to the vehicle to arm it, allowing flight to proceed.
-        This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=1` to arm the vehicle.
-        """
-
-        vehicle_command_msg = self._get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1
-        )
-
-        self.__vehicle_command_pub.publish(vehicle_command_msg)
-
-    def disarm(self) -> None:
-        """
-        Disarms the drone, preventing flight.
-
-        Sends a command to the vehicle to disarm it, ensuring it cannot take off.
-        This command uses `VEHICLE_CMD_COMPONENT_ARM_DISARM` with `param1=0` to disarm the vehicle.
-        """
-        vehicle_command_msg = self._get_default_vehicle_command_msg(
-            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 0
-        )
-
-        self.__vehicle_command_pub.publish(vehicle_command_msg)
-
     # TODO: 留下/不留?
     def set_resume_state(self, state_name: str) -> None:
         """

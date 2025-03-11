@@ -19,7 +19,6 @@ class IdleBehavior(Behavior):
         self.mediator_api.reset_states()  # TODO
 
     def execute(self):
-        self.drone_api.reset_start_position()  # TODO
         self.drone_api.activate_offboard_control_mode()  # TODO 一直發送會不會有問題?
         pf_pass = self.drone_api.is_each_pre_flight_check_passed
         self.logger.info(f"Preflight checks passed: {pf_pass}")
@@ -28,6 +27,6 @@ class IdleBehavior(Behavior):
             self.mediator_api.online()
 
     def get_next_state(self) -> Optional[str]:
-        if self.drone_api.is_armed:
+        if self.drone_api.is_armed and self.mediator_api.is_ok_to_takeoff:
             return "takeoff"
         return None

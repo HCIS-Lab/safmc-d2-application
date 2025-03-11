@@ -20,11 +20,11 @@ class Agent(Node):
         self.timer = self.create_timer(DELTA_TIME, self._update)
 
     def _register_apis(self):
-        ApiRegistry.register(Px4Api)
-        ApiRegistry.register(MediatorApi)
-        ApiRegistry.register(MagnetApi)
-        ApiRegistry.register(LidarApi)
-        ApiRegistry.register(ArucoApi)
+        ApiRegistry.register(Px4Api, self)
+        ApiRegistry.register(MediatorApi, self)
+        ApiRegistry.register(MagnetApi, self)
+        ApiRegistry.register(LidarApi, self)
+        ApiRegistry.register(ArucoApi, self)
 
     def _update(self):
         # TODO: 進入 offboard 再搞
