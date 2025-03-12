@@ -11,6 +11,7 @@ from rclpy.qos import (
     QoSProfile,
     QoSReliabilityPolicy,
 )
+from common.qos import sensor_qos_profile, cmd_qos_profile
 from sensor_msgs.msg import Image
 
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
@@ -19,65 +20,53 @@ from common.parameters import get_parameter
 
 
 class ArucoTracker(Node):
+    _bridge = CvBridge()
+    _parameters = aruco.DetectorParameters()
+    _dictionary = aruco.getPredefinedDictionary(ARUCO_DICT)
+
+    # aruco實際大小
+    _aruco_marker_size = ARUCO_MARKER_SIZE
+
     def __init__(self):
         super().__init__("aruco_tracker")
 
-        self.__drone_id = get_parameter(self, "drone_id", 1)
+        self._drone_id = get_parameter(self, "drone_id", 1)
 
-        self.bridge = CvBridge()
-        self.dictionary = aruco.getPredefinedDictionary(ARUCO_DICT)
-        self.parameters = aruco.DetectorParameters_create()
-
-        # 相機資訊 之後要校正
+        # TODO[lnfu] 相機資訊 之後要校正 (from yaml)
         self.camera_matrix = np.array([[1400, 0, 640], [0, 1400, 360], [0, 0, 1]])
         self.dist_coeffs = np.zeros((5, 1))
-
-        # aruco實際大小
-        self.aruco_marker_size = ARUCO_MARKER_SIZE
-
-        qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1,
-        )
-
-        image_qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.VOLATILE,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1,
-        )
 
         # use calibration or not
         # ref: http://wiki.ros.org/image_proc?distro=noetic
         use_calibration = True
         if use_calibration:
-            self.subscription = self.create_subscription(
+            self.create_subscription(
                 Image,
                 "camera/image_rect",  # TODO[lnfu] topic name
                 self.image_callback,
-                qos_profile,
+                sensor_qos_profile,
             )
 
-            self.detected_image_pub = self.create_publisher(
-                Image, f"detected/aruco", image_qos
+            self.image_aruco_pub = self.create_publisher(
+                Image, f"camera/image_aruco", sensor_qos_profile
             )
 
         else:
-            self.subscription = self.create_subscription(
+            self.create_subscription(
                 Image,
-                f"/world/safmc_d2/model/x500_safmc_d2_{self.__drone_id}/link/pi3_cam_link/sensor/pi3_cam_sensor/image",
+                f"/world/safmc_d2/model/x500_safmc_d2_{self._drone_id}/link/pi3_cam_link/sensor/pi3_cam_sensor/image",
                 self.image_callback,
-                image_qos,
+                sensor_qos_profile,
             )
-        self.publisher = self.create_publisher(ArucoInfo, "aruco_info", qos_profile)
+        self.aruco_info_pub = self.create_publisher(
+            ArucoInfo, "aruco_info", cmd_qos_profile
+        )
 
     def image_callback(self, msg):
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        frame = self._bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         corners, ids, _ = aruco.detectMarkers(
-            gray, self.dictionary, parameters=self.parameters
+            gray, self._dictionary, parameters=self._parameters
         )
 
         aruco_msg = ArucoInfo()
@@ -86,7 +75,7 @@ class ArucoTracker(Node):
 
         if ids is not None:
             rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(
-                corners, self.aruco_marker_size, self.camera_matrix, self.dist_coeffs
+                corners, self._aruco_marker_size, self.camera_matrix, self.dist_coeffs
             )
 
             for rvec, tvec, marker_corner, id in zip(
@@ -148,15 +137,15 @@ class ArucoTracker(Node):
                     lineType=cv2.LINE_AA,
                 )
 
-                image_msg = self.bridge.cv2_to_imgmsg(marked_frame)
-                self.detected_image_pub.publish(image_msg)
+                image_msg = self._bridge.cv2_to_imgmsg(marked_frame)
+                self.image_aruco_pub.publish(image_msg)
 
                 aruco_msg = ArucoInfo()
                 aruco_msg.aruco_marker_id = int(id[0])
                 aruco_msg.position.x = tvec[0][0]
                 aruco_msg.position.y = tvec[0][1]
                 aruco_msg.position.z = tvec[0][2]
-                self.publisher.publish(aruco_msg)
+                self.aruco_info_pub.publish(aruco_msg)
         else:
             print("No Aruco markers detected.")  # TODO[lnfu]
 
