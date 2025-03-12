@@ -20,17 +20,18 @@ def prepare_multiple_nodes(context, *args, **kwargs):
         # Nodes for Gazebo-ROS2 bridge
         bridge_nodes = [
             Node(
-                package='ros_gz_bridge',
-                executable='parameter_bridge',
-                namespace=f'agent_{i+1}',
-                output='screen',
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                namespace=f"px4_{i+1}",
+                output="screen",
                 arguments=[
-                    f'/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/lidar_2d_link/sensor/lidar_2d_sensor/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-                    f'/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/lidar_2d_link/sensor/lidar_2d_sensor/scan/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
-                        f'/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/pi3_cam_link/sensor/pi3_cam_sensor/image@sensor_msgs/msg/Image[gz.msgs.Image',
-                        f'/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/pi3_cam_link/sensor/pi3_cam_sensor/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
-                ]
-            ) for i in range(num_drones)
+                    f"/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/lidar_2d_link/sensor/lidar_2d_sensor/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+                    f"/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/lidar_2d_link/sensor/lidar_2d_sensor/scan/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+                    f"/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/pi3_cam_link/sensor/pi3_cam_sensor/image@sensor_msgs/msg/Image[gz.msgs.Image",
+                    f"/world/safmc_d2/model/x500_safmc_d2_{i+1}/link/pi3_cam_link/sensor/pi3_cam_sensor/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+                ],
+            )
+            for i in range(num_drones)
         ]
 
     return bridge_nodes + [message]
@@ -46,5 +47,5 @@ def generate_launch_description():
     ]
 
     return LaunchDescription(
-        declared_args +
-        [OpaqueFunction(function=prepare_multiple_nodes)])
+        declared_args + [OpaqueFunction(function=prepare_multiple_nodes)]
+    )
