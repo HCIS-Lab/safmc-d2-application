@@ -89,6 +89,9 @@ class MediatorApi(Api):
         self.status_pub.publish(msg)
 
     def send_agent_local_position(self, agent_local_position: Coordinate):
+        if agent_local_position is None:
+            # TODO[lnfu] log warning
+            return
         msg = Point(
             x=agent_local_position.x, y=agent_local_position.y, z=agent_local_position.z
         )

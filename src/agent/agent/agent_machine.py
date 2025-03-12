@@ -2,11 +2,19 @@ from enum import Enum
 
 from transitions import Machine
 
-from agent.behavior import (AlignToHotspotBehavior, AlignToSupplyBehavior,
-                            Behavior, BonusBehavior, DropBehavior,
-                            IdleBehavior, LoadBehavior, TakeoffBehavior,
-                            WaitBehavior, WalkToHotspotBehavior,
-                            WalkToSupplyBehavior)
+from agent.behavior import (
+    AlignToHotspotBehavior,
+    AlignToSupplyBehavior,
+    Behavior,
+    BonusBehavior,
+    DropBehavior,
+    IdleBehavior,
+    LoadBehavior,
+    TakeoffBehavior,
+    WaitBehavior,
+    WalkToHotspotBehavior,
+    WalkToSupplyBehavior,
+)
 from common.logger import Logger
 
 

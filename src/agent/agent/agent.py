@@ -34,7 +34,7 @@ class Agent(Node):
 
         # 傳送 agent status 給 mediator
         mediator_api = ApiRegistry.get(MediatorApi)
-        mediator_api.send_status(self.machine.state)
+        mediator_api.send_status(self.machine.state.value)
         mediator_api.send_agent_local_position(px4_api.local_position)
 
         self.machine.proceed()

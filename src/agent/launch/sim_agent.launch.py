@@ -23,12 +23,17 @@ def prepare_multiple_nodes(context, *args, **kwargs):
         # Nodes for agent
         agent_nodes = [
             Node(
-                package='agent',
-                executable='agent',
-                namespace=f'agent_{i+1}',
-                output='screen',
-                parameters=[os.path.join(get_package_share_directory('agent'), 'config',
-                                         f'params.yaml.{i+1}')]  # TODO: 如果 yaml 找不到, ERROR
+                package="agent",
+                executable="agent",
+                namespace=f"px4_{i+1}",
+                output="screen",
+                parameters=[
+                    os.path.join(
+                        get_package_share_directory("agent"),
+                        "config",
+                        f"params.yaml.{i+1}",
+                    )
+                ],  # TODO: 如果 yaml 找不到, ERROR
             )
             for i in range(num_drones)
         ]
@@ -40,12 +45,10 @@ def generate_launch_description():
 
     declared_args = [
         DeclareLaunchArgument(
-            "num_drones",
-            default_value="4",
-            description='Select the number of drones'
+            "num_drones", default_value="4", description="Select the number of drones"
         )
     ]
 
     return LaunchDescription(
-        declared_args +
-        [OpaqueFunction(function=prepare_multiple_nodes)])
+        declared_args + [OpaqueFunction(function=prepare_multiple_nodes)]
+    )
