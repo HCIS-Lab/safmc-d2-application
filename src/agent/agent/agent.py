@@ -27,14 +27,15 @@ class Agent(Node):
         ApiRegistry.register(ArucoApi, self)
 
     def _update(self):
-        # TODO: 進入 offboard 再搞
+        # TODO[lnfu]: 進入 offboard 再搞?
         # 要 2 Hz 發送, 否則會退出 offboard control mode
-        # self.drone_api.set_offboard_control_mode()
+        px4_api = ApiRegistry.get(Px4Api)
+        px4_api.set_offboard_control_mode()
 
         # 傳送 agent status 給 mediator
-        # self.mediator_api.send_status(
-        #     self.machine.state.value, self.drone_api.local_position
-        # )
+        mediator_api = ApiRegistry.get(MediatorApi)
+        mediator_api.send_status(self.machine.state)
+        mediator_api.send_agent_local_position(px4_api.local_position)
 
         self.machine.proceed()
         self.machine.execute()

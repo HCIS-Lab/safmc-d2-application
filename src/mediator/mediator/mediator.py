@@ -1,4 +1,4 @@
-# TODO 角度、持續校正 heading
+# TODO[lnfu] 角度、持續校正 heading
 
 from functools import partial
 from typing import Dict, Optional
@@ -6,14 +6,12 @@ from typing import Dict, Optional
 import rclpy
 from geometry_msgs.msg import Point
 from rclpy.node import Node
-from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
-                       QoSReliabilityPolicy)
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import (AgentStatus, DropZoneInfo, ObstacleArray,
-                            SupplyZoneInfo)
+from agent_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
 from common.coordinate import Coordinate
 from common.logger import Logger
+from common.qos import cmd_qos_profile
 from mediator.constants import NUM_DRONES
 
 
@@ -45,14 +43,6 @@ class Mediator(Node):
         super().__init__("mediator")
         self.logger = Logger(self.get_logger(), self.get_clock())
 
-        # TODO
-        qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1,
-        )
-
         # Subscriptions
         # 物件位置 (from UWB / Gazebo) -> setter 就先轉成 NED
         for model_name in self._model_positions:  # TODO 跟 UWB 小組商量
@@ -60,7 +50,7 @@ class Mediator(Node):
                 Point,
                 f"/position/{model_name}",
                 partial(self._set_model_positions, model_name),
-                10,  # TODO
+                cmd_qos_profile,
             )
 
         # Publishers
@@ -79,32 +69,35 @@ class Mediator(Node):
                 Bool,
                 prefix + "online",
                 lambda msg: self._set_is_drone_online(msg, drone_id),
-                qos_profile,
+                cmd_qos_profile,
             )
 
             # Takeoff
             self._cmd_takeoff_pubs[drone_id] = self.create_publisher(
-                Bool, prefix + "cmd_takeoff", qos_profile
+                Bool, prefix + "cmd_takeoff", cmd_qos_profile
             )
 
             # Anytime
+            # TODO[lnfu] status
             self.create_subscription(
-                AgentStatus,
-                prefix + "status",
-                lambda msg: self._set_status(msg, drone_id),
-                qos_profile,
+                Point,
+                prefix + "agent_local_pos",
+                lambda msg: self._set_agent_local_pos(
+                    msg, drone_id
+                ),  # 收到後會回傳 supply/drop zone 位置
+                cmd_qos_profile,
             )
 
             self._supply_zone_pubs[drone_id] = self.create_publisher(
-                SupplyZoneInfo, prefix + "supply_zone", qos_profile
+                SupplyZoneInfo, prefix + "supply_zone", cmd_qos_profile
             )
 
             self._drop_zone_pubs[drone_id] = self.create_publisher(
-                DropZoneInfo, prefix + "drop_zone", qos_profile
+                DropZoneInfo, prefix + "drop_zone", cmd_qos_profile
             )
 
             self._obstacle_array_pubs[drone_id] = self.create_publisher(
-                ObstacleArray, prefix + "obstacle_array", qos_profile
+                ObstacleArray, prefix + "obstacle_array", cmd_qos_profile
             )
 
             # Drop
@@ -112,16 +105,16 @@ class Mediator(Node):
                 Bool,
                 prefix + "drop_request",
                 lambda msg: self._set_is_drone_waiting_at_hotspot(msg, drone_id),
-                qos_profile,
+                cmd_qos_profile,
             )
             self._cmd_drop_pubs[drone_id] = self.create_publisher(
-                Bool, prefix + "cmd_drop", qos_profile
+                Bool, prefix + "cmd_drop", cmd_qos_profile
             )
             self.create_subscription(
                 Bool,
                 prefix + "drop_ack",
                 lambda msg: self._unset_is_drone_waiting_at_hotspot(msg, drone_id),
-                qos_profile,
+                cmd_qos_profile,
             )
 
     def _set_model_positions(self, model_name: str, msg: Point):
@@ -139,7 +132,7 @@ class Mediator(Node):
 
     def _set_is_drone_waiting_at_hotspot(
         self, msg: Bool, drone_id: int
-    ):  # TODO refactor
+    ):  # TODO[lnfu] refactor
         group_id = get_group_id(drone_id)
 
         # 標記該無人機已到達熱點
@@ -221,15 +214,15 @@ class Mediator(Node):
 
         return dz_msg
 
-    def _set_status(self, msg: AgentStatus, drone_id: int):
+    def _set_agent_local_pos(self, msg: Point, drone_id: int):
 
-        agent_local_position = Coordinate(msg.point.x, msg.point.y, msg.point.z)
+        agent_local_position = Coordinate.from_point(msg)
         agent_global_position: Optional[Coordinate] = self._model_positions[
             f"x500_safmc_d2_{drone_id}"
         ]
         if agent_global_position is None:
             raise Exception()
-            # TODO log error
+            # TODO[lnfu] log error
 
         # Supply Zone Information
         supply_zone_global_position: Optional[Coordinate] = self._model_positions[
@@ -237,7 +230,7 @@ class Mediator(Node):
         ]
         if supply_zone_global_position is None:
             raise Exception()
-            # TODO log error
+            # TODO[lnfu] log error
 
         supply_zone_info_msg = self._get_supply_zone_info_msg(
             drone_id,
@@ -263,7 +256,7 @@ class Mediator(Node):
         ]
         if drop_zone_global_position is None:
             raise Exception()
-            # TODO log error
+            # TODO[lnfu] log error
 
         drop_zone_info_msg = self._get_drop_zone_info_msg(
             drone_id,

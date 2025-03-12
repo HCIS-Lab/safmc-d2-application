@@ -51,18 +51,18 @@ class Px4Api(Api):
         )
 
         # Publishers
-        self.__vehicle_command_pub = node.create_publisher(
+        self._vehicle_command_pub = node.create_publisher(
             VehicleCommand, topic_prefix + "in/vehicle_command", cmd_qos_profile
         )
-        self.__offboard_control_mode_pub = node.create_publisher(
+        self._offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode,
             topic_prefix + "in/offboard_control_mode",
             cmd_qos_profile,
         )
-        self.__goto_setpoint_pub = node.create_publisher(
+        self._goto_setpoint_pub = node.create_publisher(
             GotoSetpoint, topic_prefix + "in/goto_setpoint", cmd_qos_profile
         )
-        self.__trajectory_setpoint_pub = node.create_publisher(
+        self._trajectory_setpoint_pub = node.create_publisher(
             TrajectorySetpoint, topic_prefix + "in/trajectory_setpoint", cmd_qos_profile
         )
 
@@ -101,7 +101,7 @@ class Px4Api(Api):
         """
         self._last_state = state_name
 
-    def __get_timestamp(self) -> int:  # microseconds
+    def _get_timestamp(self) -> int:  # microseconds
         return int(self._clock.now().nanoseconds / 1000)
 
     # TODO
@@ -118,7 +118,7 @@ class Px4Api(Api):
         ref: https://docs.px4.io/main/en/flight_modes/offboard.html#ros-2-messages
         """
         offboard_control_mode_msg = OffboardControlMode()
-        offboard_control_mode_msg.timestamp = self.__get_timestamp()
+        offboard_control_mode_msg.timestamp = self._get_timestamp()
 
         for attr in [
             "position",
@@ -133,25 +133,21 @@ class Px4Api(Api):
         setattr(offboard_control_mode_msg, self._control_field, True)
         # offboard_control_mode_msg.position = True  # TrajectorySetpoint
         # offboard_control_mode_msg.velocity = True  # TrajectorySetpoint
-        self.__offboard_control_mode_pub.publish(offboard_control_mode_msg)
+        self._offboard_control_mode_pub.publish(offboard_control_mode_msg)
 
     def activate_offboard_control_mode(self) -> None:
         """
-        Activates the offboard control mode for the drone.
-
-        This method sends a `VehicleCommand` message to switch the drone to offboard mode
-        by setting the appropriate control mode flags. The mode is switched by using the
-        `VEHICLE_CMD_DO_SET_MODE` command.
+        Switches the drone to offboard mode using a `VehicleCommand` message
+        with the `VEHICLE_CMD_DO_SET_MODE` command.
         """
-        vehicle_command_msg = self._get_default_vehicle_command_msg(
+        msg = self._get_default_vehicle_command_msg(
             VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6
         )
-
-        self.__vehicle_command_pub.publish(vehicle_command_msg)
+        self._vehicle_command_pub.publish(msg)
 
     def move_to(self, position: Coordinate) -> None:
         goto_setpoint_msg = GotoSetpoint()
-        goto_setpoint_msg.timestamp = self.__get_timestamp()
+        goto_setpoint_msg.timestamp = self._get_timestamp()
 
         goto_setpoint_msg.position = [position.x, position.y, position.z]
 
@@ -164,11 +160,11 @@ class Px4Api(Api):
         goto_setpoint_msg.flag_set_max_vertical_speed = False
         goto_setpoint_msg.flag_set_max_heading_rate = False
 
-        self.__goto_setpoint_pub.publish(goto_setpoint_msg)
+        self._goto_setpoint_pub.publish(goto_setpoint_msg)
 
     def move_with_velocity(self, velocity: Coordinate) -> None:
         trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+        trajectory_setpoint_msg.timestamp = self._get_timestamp()
 
         # 控制速度
         trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, velocity.z]
@@ -181,11 +177,11 @@ class Px4Api(Api):
         for attr in ["position", "acceleration", "jerk"]:
             setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
 
-        self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+        self._trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     def move_with_velocity_2d(self, velocity: Coordinate) -> None:
         trajectory_setpoint_msg = TrajectorySetpoint()
-        trajectory_setpoint_msg.timestamp = self.__get_timestamp()
+        trajectory_setpoint_msg.timestamp = self._get_timestamp()
 
         # 控制速度
         trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, 0.0]
@@ -198,7 +194,7 @@ class Px4Api(Api):
         for attr in ["position", "acceleration", "jerk"]:
             setattr(trajectory_setpoint_msg, attr, [np.nan] * 3)
 
-        self.__trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
+        self._trajectory_setpoint_pub.publish(trajectory_setpoint_msg)
 
     def _set_vehicle_status(self, vehicle_status_msg: VehicleStatus) -> None:
         self._is_each_pre_flight_check_passed = (
@@ -239,7 +235,7 @@ class Px4Api(Api):
             timestamp = int(timestamp / 1000)
         """
         vehicle_command_msg = VehicleCommand()
-        vehicle_command_msg.timestamp = self.__get_timestamp()
+        vehicle_command_msg.timestamp = self._get_timestamp()
 
         # command
         vehicle_command_msg.command = command

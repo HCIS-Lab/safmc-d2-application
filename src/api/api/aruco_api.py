@@ -47,9 +47,9 @@ class ArucoApi(Api):
         return self._latest_msg_time
 
     def __aruco_info_callback(self, aruco_info_msg):
-        id = aruco_info_msg.id
+        marker_id = aruco_info_msg.aruco_marker_id
 
-        if id != self._target_marker_id:
+        if marker_id != self._target_marker_id:
             return
 
         self._is_marker_detected = True

@@ -12,7 +12,7 @@ class Behavior(ABC):
     def _execute(self):
         self.logger.info(
             f"Vehicle timestamp: {self.drone_api.vehicle_timestamp}"
-        )  # TODO
+        )  # TODO[lnfu]
 
     @abstractmethod
     def execute(self):
@@ -22,7 +22,7 @@ class Behavior(ABC):
     def get_next_state(self) -> Optional[str]:
         pass
 
-    # TODO
+    # TODO[lnfu]
     def log_position(self, target_position, current_position):
         """
         Log the target and current position.

@@ -1,2 +1,2 @@
-int32 id
+uint8 aruco_marker_id
 geometry_msgs/Vector3 position

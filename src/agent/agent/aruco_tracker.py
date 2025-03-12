@@ -5,8 +5,12 @@ import rclpy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Vector3
 from rclpy.node import Node
-from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
-                       QoSReliabilityPolicy)
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from sensor_msgs.msg import Image
 
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
@@ -51,7 +55,7 @@ class ArucoTracker(Node):
         if use_calibration:
             self.subscription = self.create_subscription(
                 Image,
-                "camera/image_rect",  # TODO topic name
+                "camera/image_rect",  # TODO[lnfu] topic name
                 self.image_callback,
                 qos_profile,
             )
@@ -77,7 +81,7 @@ class ArucoTracker(Node):
         )
 
         aruco_msg = ArucoInfo()
-        aruco_msg.id = -1
+        aruco_msg.aruco_marker_id = -1
         aruco_msg.position = Vector3()
 
         if ids is not None:
@@ -148,13 +152,13 @@ class ArucoTracker(Node):
                 self.detected_image_pub.publish(image_msg)
 
                 aruco_msg = ArucoInfo()
-                aruco_msg.id = int(id[0])
+                aruco_msg.aruco_marker_id = int(id[0])
                 aruco_msg.position.x = tvec[0][0]
                 aruco_msg.position.y = tvec[0][1]
                 aruco_msg.position.z = tvec[0][2]
                 self.publisher.publish(aruco_msg)
         else:
-            print("No Aruco markers detected.")  # TODO
+            print("No Aruco markers detected.")  # TODO[lnfu]
 
 
 def main(args=None):
