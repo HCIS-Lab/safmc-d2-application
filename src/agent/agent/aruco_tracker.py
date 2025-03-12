@@ -34,6 +34,8 @@ class ArucoTracker(Node):
         # self.dist_coeffs = np.zeros((5, 1))
         self.camera_matrix, self.dist_coeffs = self.load_camera_info(CAMERA_CALIBRATION_FILE)
 
+        print("camera matrix: ", self.camera_matrix, "dist_coeffs: ", self.dist_coeffs)
+
         # aruco實際大小
         self.aruco_marker_size = ARUCO_MARKER_SIZE
 
@@ -137,9 +139,9 @@ class ArucoTracker(Node):
             for rvec, tvec, marker_corner, id in zip(
                 rvecs, tvecs, list(corners)[0], ids
             ):
-                tvec = tvecs[i][0]  # position (x, y, z)
-                rvec = rvecs[i][0]  # rotation
-                print(frame.shape)
+                # tvec = tvecs[i][0]  # position (x, y, z)
+                # rvec = rvecs[i][0]  # rotation
+                # print(frame.shape)
 
                 marked_frame = frame
                 cv2.line(
@@ -202,6 +204,7 @@ class ArucoTracker(Node):
                 aruco_msg.position.y = tvec[0][1]
                 aruco_msg.position.z = tvec[0][2]
                 self.publisher.publish(aruco_msg)
+                print("x: ", tvec[0][0], "y", tvec[0][1], "z: ", tvec[0][2])
         else:
             print("No Aruco markers detected.")  # TODO[lnfu]
 
