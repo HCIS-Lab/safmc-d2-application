@@ -34,3 +34,5 @@ ARUCO_DIST_THRESHOLD = 0.015
 """
 Distance threashold (meters) to the target Aruco Marker. Alignment is treated as complete if the distance is lower than this.
 """
+
+CAMERA_CALIBRATION_FILE = "/home/nycu/.ros/camera_info/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_1600x1200.yaml"
