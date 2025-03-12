@@ -6,12 +6,15 @@ from typing import Dict, Optional
 import rclpy
 from geometry_msgs.msg import Point
 from rclpy.node import Node
-from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
-                       QoSReliabilityPolicy)
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import (AgentStatus, DropZoneInfo, ObstacleArray,
-                            SupplyZoneInfo)
+from agent_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
 from common.coordinate import Coordinate
 from common.logger import Logger
 from mediator.constants import NUM_DRONES
@@ -88,10 +91,13 @@ class Mediator(Node):
             )
 
             # Anytime
+            # TODO[lnfu] status
             self.create_subscription(
-                AgentStatus,
-                prefix + "status",
-                lambda msg: self._set_status(msg, drone_id),
+                Point,
+                prefix + "agent_local_pos",
+                lambda msg: self._set_agent_local_pos(
+                    msg, drone_id
+                ),  # 收到後會回傳 supply/drop zone 位置
                 qos_profile,
             )
 
@@ -221,9 +227,9 @@ class Mediator(Node):
 
         return dz_msg
 
-    def _set_status(self, msg: AgentStatus, drone_id: int):
+    def _set_agent_local_pos(self, msg: Point, drone_id: int):
 
-        agent_local_position = Coordinate(msg.point.x, msg.point.y, msg.point.z)
+        agent_local_position = Coordinate.from_point(msg)
         agent_global_position: Optional[Coordinate] = self._model_positions[
             f"x500_safmc_d2_{drone_id}"
         ]

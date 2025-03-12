@@ -3,8 +3,9 @@ from typing import List, Optional
 from rclpy.node import Node
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import (AgentStatus, DropZoneInfo, ObstacleArray,
-                            SupplyZoneInfo)
+from agent_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
+from geometry_msgs.msg import Point
+from std_msgs.msg import Int32
 from common.coordinate import Coordinate
 from common.qos import cmd_qos_profile
 
@@ -49,9 +50,12 @@ class MediatorApi(Api):
         )
 
         # Publishers
-
         self.status_pub = node.create_publisher(
-            AgentStatus, prefix + "status", cmd_qos_profile
+            Int32, prefix + "status", cmd_qos_profile
+        )
+
+        self.agent_local_pos_pub = node.create_publisher(
+            Point, prefix + "agent_local_pos", cmd_qos_profile
         )
 
         self.online_pub = node.create_publisher(
@@ -75,19 +79,18 @@ class MediatorApi(Api):
         self.drop_request_pub.publish(msg)
 
     def send_drop_ack(self):
-        msg = Bool()
-        msg.data = True
+        msg = Bool(data=True)
         self.drop_ack_pub.publish(msg)
 
-    # TODO status 重寫
-    def send_status(self, state_name: str, local_position: Coordinate):
-        if state_name is None or local_position is None:
-            return
-        agent_status_msg = AgentStatus()
-        agent_status_msg.point.x = float(local_position.x)
-        agent_status_msg.point.y = float(local_position.y)
-        agent_status_msg.point.z = float(local_position.z)
-        self.status_pub.publish(agent_status_msg)
+    def send_status(self, state_value: int):
+        msg = Int32(data=state_value)
+        self.status_pub.publish(msg)
+
+    def send_agent_local_position(self, agent_local_position: Coordinate):
+        msg = Point(
+            x=agent_local_position.x, y=agent_local_position.y, z=agent_local_position.z
+        )
+        self.agent_local_pos_pub.publish(msg)
 
     @property
     def is_ok_to_takeoff(self):

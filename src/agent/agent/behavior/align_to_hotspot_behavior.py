@@ -11,7 +11,7 @@ from .behavior import Behavior
 class AlignToHotspotBehavior(Behavior):
 
     aruco_api: ArucoApi
-    drone_api: Px4Api
+    px4_api: Px4Api
     mediator_api: MediatorApi
 
     speed = 0.3  # 最大速度 TODO move to yaml/constant file
@@ -19,17 +19,17 @@ class AlignToHotspotBehavior(Behavior):
     def __init__(self, logger: Logger):
         super().__init__(logger)
         self.aruco_api = ApiRegistry.get(ArucoApi)
-        self.drone_api = ApiRegistry.get(Px4Api)
+        self.px4_api = ApiRegistry.get(Px4Api)
         self.mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):
-        self.drone_api.change_control_field("velocity")
+        self.px4_api.change_control_field("velocity")
         vel = Coordinate.clamp_magnitude_2d(-self.aruco_api.marker_position, self.speed)
-        self.drone_api.move_with_velocity_2d(vel)
+        self.px4_api.move_with_velocity_2d(vel)
 
     def get_next_state(self) -> Optional[str]:
-        if not self.drone_api.is_armed:
-            self.drone_api.set_resume_state("align_to_hotspot")
+        if not self.px4_api.is_armed:
+            self.px4_api.set_resume_state("align_to_hotspot")
             return "idle"
 
         if self.aruco_api.marker_position.magnitude_2d <= ARUCO_DIST_THRESHOLD:
