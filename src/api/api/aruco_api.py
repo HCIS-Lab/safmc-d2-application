@@ -1,7 +1,7 @@
 from rclpy.node import Node
 from rclpy.time import Time
 
-from agent_msgs.msg import ArucoInfo
+from agent_msgs.msg import ArucoPose
 from common.coordinate import Coordinate
 from common.qos import sensor_qos_profile
 
@@ -21,7 +21,7 @@ class ArucoApi(Api):
 
         # Subscriptions
         node.create_subscription(
-            ArucoInfo, f"aruco_info", self.__aruco_info_callback, sensor_qos_profile
+            ArucoPose, f"aruco_pose", self.__aruco_pose_callback, sensor_qos_profile
         )
 
     def reset(self):
@@ -46,14 +46,14 @@ class ArucoApi(Api):
     def latest_timestamp(self) -> Time:
         return self._latest_msg_time
 
-    def __aruco_info_callback(self, aruco_info_msg):
-        marker_id = aruco_info_msg.aruco_marker_id
+    def __aruco_pose_callback(self, msg):
+        marker_id = msg.aruco_marker_id
 
         if marker_id != self._target_marker_id:
             return
 
         self._is_marker_detected = True
-        self._marker_position.x = aruco_info_msg.position.x
-        self._marker_position.y = aruco_info_msg.position.y
-        self._marker_position.z = aruco_info_msg.position.z
+        self._marker_position.x = msg.position.x
+        self._marker_position.y = msg.position.y
+        self._marker_position.z = msg.position.z
         self._latest_msg_time = self._clock.now()

@@ -1,212 +1,161 @@
 import cv2
-import cv2.aruco as aruco
 import numpy as np
 import yaml
 import rclpy
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Vector3
 from rclpy.node import Node
-from rclpy.qos import (
-    QoSDurabilityPolicy,
-    QoSHistoryPolicy,
-    QoSProfile,
-    QoSReliabilityPolicy,
-)
 from sensor_msgs.msg import Image
-
-from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE, CAMERA_CALIBRATION_FILE
-from agent_msgs.msg import ArucoInfo
-from common.parameters import get_parameter
+from common.qos import sensor_qos_profile, status_qos_profile
+from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
+from agent_msgs.msg import ArucoPose
+import transforms3d
 
 
 class ArucoTracker(Node):
+    # use calibration or not (image_rect)
+    # ref: http://wiki.ros.org/image_proc?distro=noetic
+    _use_calibration = False
+
+    _cv_bridge = CvBridge()
+    _aruco_dict = cv2.aruco.getPredefinedDictionary(ARUCO_DICT)
+    _detector_parameters = cv2.aruco.DetectorParameters()
+    _detector = cv2.aruco.ArucoDetector(_aruco_dict, _detector_parameters)
+    _image_encoding = "bgr8"
+    _camera_yaml_file = "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_800x600.yaml"
+
+    _marker_points = np.array(
+        [
+            [-ARUCO_MARKER_SIZE / 2, ARUCO_MARKER_SIZE / 2, 0],  # 左上角
+            [ARUCO_MARKER_SIZE / 2, ARUCO_MARKER_SIZE / 2, 0],  # 右上角
+            [ARUCO_MARKER_SIZE / 2, -ARUCO_MARKER_SIZE / 2, 0],  # 右下角
+            [-ARUCO_MARKER_SIZE / 2, -ARUCO_MARKER_SIZE / 2, 0],  # 左下角
+        ],
+        dtype=np.float32,
+    )
+
     def __init__(self):
         super().__init__("aruco_tracker")
 
-        self.__drone_id = get_parameter(self, "drone_id", 1)
-
-        self.bridge = CvBridge()
-        self.dictionary = aruco.getPredefinedDictionary(ARUCO_DICT)
-        self.parameters = aruco.DetectorParameters_create()
-
         # 相機資訊 之後要校正
-        # self.camera_matrix = np.array([[1400, 0, 640], [0, 1400, 360], [0, 0, 1]])
-        # self.dist_coeffs = np.zeros((5, 1))
-        self.camera_matrix, self.dist_coeffs = self.load_camera_info(CAMERA_CALIBRATION_FILE)
-
-        print("camera matrix: ", self.camera_matrix, "dist_coeffs: ", self.dist_coeffs)
-
-        # aruco實際大小
-        self.aruco_marker_size = ARUCO_MARKER_SIZE
-
-        qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1,
+        self._camera_matrix, self._dist_coeffs = self._load_camera_intrinsic_params(
+            self._camera_yaml_file
         )
 
-        image_qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.VOLATILE,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1,
-        )
+        self.get_logger().info(f"camera matrix: {self._camera_matrix}")
+        self.get_logger().info(f"dist coeffs: {self._dist_coeffs}")
 
-        # use calibration or not
-        # ref: http://wiki.ros.org/image_proc?distro=noetic
-        use_calibration = False
-        if use_calibration:
-            self.subscription = self.create_subscription(
+        if self._use_calibration:
+            self.create_subscription(
                 Image,
                 "camera/image_rect",  # TODO[lnfu] topic name
-                self.image_callback,
-                qos_profile,
+                self._image_callback,
+                sensor_qos_profile,
             )
         else:
-            # self.subscription = self.create_subscription(
-            #     Image,
-            #     f"/world/safmc_d2/model/x500_safmc_d2_{self.__drone_id}/link/pi3_cam_link/sensor/pi3_cam_sensor/image",
-            #     self.image_callback,
-            #     image_qos,
-            # )
-            self.subscription = self.create_subscription(Image, "camera/image_raw", self.image_callback, qos_profile)
-
-        self.detected_image_pub = self.create_publisher(
-                Image, f"detected/aruco", image_qos
+            self.create_subscription(
+                Image, "camera/image_raw", self._image_callback, sensor_qos_profile
             )
-        self.publisher = self.create_publisher(ArucoInfo, "aruco_info", qos_profile)
 
-    # estimatePoseSingleMarkers no longer exist in newer version cv, use this to adapt 
-    def my_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
-        '''
-        This will estimate the rvec and tvec for each of the marker corners detected by:
-        corners, ids, rejectedImgPoints = detector.detectMarkers(image)
-        corners - is an array of detected corners for each detected marker in the image
-        marker_size - is the size of the detected markers
-        mtx - is the camera matrix
-        distortion - is the camera distortion matrix
-        RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
-        '''
-        marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
-                                [marker_size / 2, marker_size / 2, 0],
-                                [marker_size / 2, -marker_size / 2, 0],
-                                [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
-        trash = []
-        rvecs = []
-        tvecs = []
-        
-        for c in corners:
-            nada, R, t = cv2.solvePnP(marker_points, c, mtx, distortion, False, cv2.SOLVEPNP_IPPE_SQUARE)
-            rvecs.append(R)
-            tvecs.append(t)
-            trash.append(nada)
-        return np.array([rvecs]), np.array([tvecs]), trash
+        self._image_aruco_pub = self.create_publisher(
+            Image, f"camera/image_aruco", sensor_qos_profile
+        )
 
-    def load_camera_info(yaml_file):
+        self._aruco_pose_pub = self.create_publisher(
+            ArucoPose, "aruco_pose", status_qos_profile
+        )
+
+    def _load_camera_intrinsic_params(self, yaml_file):
         with open(yaml_file, "r") as file:
             camera_data = yaml.safe_load(file)
 
-        # Extract camera matrix
         camera_matrix = np.array(camera_data["camera_matrix"]["data"]).reshape(
             (camera_data["camera_matrix"]["rows"], camera_data["camera_matrix"]["cols"])
         )
 
-        # Extract distortion coefficients
         dist_coeffs = np.array(camera_data["distortion_coefficients"]["data"]).reshape(
-            (camera_data["distortion_coefficients"]["rows"], camera_data["distortion_coefficients"]["cols"])
+            (
+                camera_data["distortion_coefficients"]["rows"],
+                camera_data["distortion_coefficients"]["cols"],
+            )
         )
-
         return camera_matrix, dist_coeffs
 
-    def image_callback(self, msg):
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        corners, ids, _ = aruco.detectMarkers(
-            gray, self.dictionary, parameters=self.parameters
-        )
+    def _image_callback(self, msg):
+        self.get_logger().debug("receive image")
 
-        aruco_msg = ArucoInfo()
-        aruco_msg.aruco_marker_id = -1
-        aruco_msg.position = Vector3()
+        frame = self._cv_bridge.imgmsg_to_cv2(
+            msg, desired_encoding=self._image_encoding
+        )
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        corners, ids, _ = self._detector.detectMarkers(gray)
 
         if ids is not None:
-            rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(
-            # rvecs, tvecs, _ = self.my_estimatePoseSingleMarkers(
-                corners, self.aruco_marker_size, self.camera_matrix, self.dist_coeffs
-            )
+            for i in range(len(ids)):
+                cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-            for rvec, tvec, marker_corner, id in zip(
-                rvecs, tvecs, list(corners)[0], ids
-            ):
-                # tvec = tvecs[i][0]  # position (x, y, z)
-                # rvec = rvecs[i][0]  # rotation
-                # print(frame.shape)
-
-                marked_frame = frame
-                cv2.line(
-                    marked_frame,
-                    (int(marker_corner[0][0]), int(marker_corner[0][1])),
-                    (int(marker_corner[1][0]), int(marker_corner[1][1])),
-                    (0, 255, 0),
-                    6,
-                )
-                cv2.line(
-                    marked_frame,
-                    (int(marker_corner[1][0]), int(marker_corner[1][1])),
-                    (int(marker_corner[2][0]), int(marker_corner[2][1])),
-                    (0, 255, 0),
-                    6,
-                )
-                cv2.line(
-                    marked_frame,
-                    (int(marker_corner[2][0]), int(marker_corner[2][1])),
-                    (int(marker_corner[3][0]), int(marker_corner[3][1])),
-                    (0, 255, 0),
-                    6,
-                )
-                cv2.line(
-                    marked_frame,
-                    (int(marker_corner[3][0]), int(marker_corner[3][1])),
-                    (int(marker_corner[0][0]), int(marker_corner[0][1])),
-                    (0, 255, 0),
-                    6,
+                # 使用 `solvePnP()` 計算 3D 姿態
+                success, rvec, tvec = cv2.solvePnP(
+                    self._marker_points,
+                    corners[i][0],
+                    self._camera_matrix,
+                    self._dist_coeffs,
                 )
 
-                cv2.line(
-                    marked_frame,
-                    (
-                        int((marker_corner[0][0] + marker_corner[2][0]) / 2),
-                        int((marker_corner[0][1] + marker_corner[2][1]) / 2),
-                    ),
-                    (int(frame.shape[1] / 2), int(frame.shape[0] / 2)),
-                    (0, 255, 0),
-                    6,
-                )
+                if success:
+                    # 繪製 3D 坐標軸
+                    cv2.drawFrameAxes(
+                        frame,
+                        self._camera_matrix,
+                        self._dist_coeffs,
+                        rvec,
+                        tvec,
+                        0.03,
+                        1,
+                    )
 
-                cv2.putText(
-                    marked_frame,
-                    f"x:{tvec[0][1]:.3f}, y:{tvec[0][0]:.3f}",
-                    (int(marker_corner[3][0]), int(marker_corner[3][1]) - 10),
-                    fontScale=1.5,
-                    thickness=3,
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                    color=(0, 255, 0),
-                    lineType=cv2.LINE_AA,
-                )
+                    # 顯示標記 ID 和座標
+                    x, y, z = tvec.flatten()
+                    cv2.putText(
+                        img=frame,
+                        text=f"ID: {ids[i][0]} Pos: ({x:.2f}, {y:.2f}, {z:.2f})",
+                        org=(int(corners[i][0][0][0]), int(corners[i][0][0][1])),
+                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale=1.0,
+                        color=(0, 255, 0),
+                        thickness=1,
+                    )
 
-                image_msg = self.bridge.cv2_to_imgmsg(marked_frame)
-                self.detected_image_pub.publish(image_msg)
+                    msg = self._cv_bridge.cv2_to_imgmsg(
+                        frame, encoding=self._image_encoding
+                    )
 
-                aruco_msg = ArucoInfo()
-                aruco_msg.aruco_marker_id = int(id[0])
-                aruco_msg.position.x = tvec[0][0]
-                aruco_msg.position.y = tvec[0][1]
-                aruco_msg.position.z = tvec[0][2]
-                self.publisher.publish(aruco_msg)
-                print("x: ", tvec[0][0], "y", tvec[0][1], "z: ", tvec[0][2])
+                    rotation_matrix, _ = cv2.Rodrigues(rvec)
+                    print(rotation_matrix.shape)
+
+                    quaternion = transforms3d.quaternions.mat2quat(rotation_matrix)
+
+                    aruco_pose_msg = ArucoPose()
+                    aruco_pose_msg.aruco_marker_id = int(ids[i])
+                    aruco_pose_msg.position.x = x
+                    aruco_pose_msg.position.y = y
+                    aruco_pose_msg.position.z = z
+                    aruco_pose_msg.orientation.x = quaternion[0]
+                    aruco_pose_msg.orientation.y = quaternion[1]
+                    aruco_pose_msg.orientation.z = quaternion[2]
+                    aruco_pose_msg.orientation.w = quaternion[3]
+                    self._aruco_pose_pub.publish(aruco_pose_msg)
+                    self.get_logger().debug(
+                        f"position: x={x:.3f}, y={y:.3f}, z={z:.3f}",
+                    )
+                    self.get_logger().debug(
+                        f"orientation: x={quaternion[0]:.3f}, y={quaternion[1]:.3f}, z={quaternion[2]:.3f}, w={quaternion[3]:.3f}",
+                    )
+                else:
+                    self.get_logger().info("solvePnP() error")
         else:
-            print("No Aruco markers detected.")  # TODO[lnfu]
+            self.get_logger().info("aruco marker not found")
+
+        self._image_aruco_pub.publish(msg)
 
 
 def main(args=None):
