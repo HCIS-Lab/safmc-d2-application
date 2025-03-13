@@ -1,7 +1,7 @@
 from rclpy.node import Node
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import Magnet, Payload
+from safmc_msgs.msg import Magnet, Payload
 from common.qos import cmd_qos_profile
 
 from .api import Api

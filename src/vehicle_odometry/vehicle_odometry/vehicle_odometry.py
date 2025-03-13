@@ -5,7 +5,7 @@ import time
 import rclpy
 from rclpy.node import Node
 
-from agent_msgs.msg import TagPosition
+from safmc_msgs.msg import TagPosition
 from px4_msgs.msg import VehicleOdometry
 
 

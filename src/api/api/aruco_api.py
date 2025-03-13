@@ -1,7 +1,7 @@
 from rclpy.node import Node
 from rclpy.time import Time
 
-from agent_msgs.msg import ArucoPose
+from safmc_msgs.msg import ArucoPose
 from common.coordinate import Coordinate
 from common.qos import sensor_qos_profile
 

@@ -3,7 +3,7 @@ from typing import List, Optional
 from rclpy.node import Node
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
+from safmc_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
 from geometry_msgs.msg import Point
 from std_msgs.msg import Int32
 from common.coordinate import Coordinate

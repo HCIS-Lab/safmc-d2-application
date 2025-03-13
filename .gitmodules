@@ -3,3 +3,6 @@
 	url = https://github.com/PX4/px4_msgs.git
 	branch = release/1.15
 	ignore = dirty
+[submodule "src/safmc_msgs"]
+	path = src/safmc_msgs
+	url = git@github.com:HCIS-Lab/safmc-d2-msgs.git

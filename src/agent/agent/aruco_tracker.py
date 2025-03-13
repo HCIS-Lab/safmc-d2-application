@@ -7,7 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from common.qos import sensor_qos_profile, status_qos_profile
 from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
-from agent_msgs.msg import ArucoPose
+from safmc_msgs.msg import ArucoPose
 import transforms3d
 
 

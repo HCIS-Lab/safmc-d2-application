@@ -8,7 +8,7 @@ from geometry_msgs.msg import Point
 from rclpy.node import Node
 from std_msgs.msg import Bool
 
-from agent_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
+from safmc_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
 from common.coordinate import Coordinate
 from common.logger import Logger
 from common.qos import cmd_qos_profile
