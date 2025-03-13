@@ -15,7 +15,7 @@ set(msg_files
     "msg/Payload.msg"
     "msg/DropZoneInfo.msg"
     "msg/SupplyZoneInfo.msg"
-    "msg/ArucoInfo.msg"
+    "msg/ArucoPose.msg"
     "msg/ObstacleArray.msg"
     "msg/TagPosition.msg"
 )
