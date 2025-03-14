@@ -16,7 +16,7 @@ class MediatorApi(Api):
     _is_ok_to_takeoff = False
     _is_ok_to_drop = False
     _supply_zone: List[Optional[Coordinate]] = [None, None, None, None]
-    _supply_zone_marker_id = -1
+    _supply_zone_marker_id = 0  # TODO[lnfu]
     _drop_zone: Optional[Coordinate] = None
     _drop_zone_marker_id = -1
     _obstacle_array: List[Coordinate] = []  # list

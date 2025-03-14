@@ -24,11 +24,13 @@ def is_green(drone_id: int) -> bool:
 
 
 class Mediator(Node):
-    _is_drone_online = [i == 0 for i in range(NUM_DRONES)]  # [True, False, False, ...]
-    _is_drone_armed = [i == 0 for i in range(NUM_DRONES)]
-    _is_drone_waiting_at_hotspot = [i == 0 for i in range(NUM_DRONES)]
-    _has_drop_zone_completed = [i == 0 for i in range(NUM_DRONES)]
-    _has_payload_been_taken = [i == 0 for i in range(NUM_DRONES)]
+    _is_drone_online = [
+        i == 0 for i in range(NUM_DRONES + 1)
+    ]  # [True, False, False, ...]
+    _is_drone_armed = [i == 0 for i in range(NUM_DRONES + 1)]
+    _is_drone_waiting_at_hotspot = [i == 0 for i in range(NUM_DRONES + 1)]
+    _has_drop_zone_completed = [i == 0 for i in range(NUM_DRONES + 1)]
+    _has_payload_been_taken = [i == 0 for i in range(NUM_DRONES + 1)]
     _model_positions: Dict[str, Optional[Coordinate]] = {
         name: None
         for name in (
@@ -68,7 +70,7 @@ class Mediator(Node):
             self.create_subscription(
                 Bool,
                 prefix + "online",
-                lambda msg: self._set_is_drone_online(msg, drone_id),
+                partial(self._set_is_drone_online, drone_id=drone_id),
                 cmd_qos_profile,
             )
 
@@ -82,8 +84,8 @@ class Mediator(Node):
             self.create_subscription(
                 Point,
                 prefix + "agent_local_pos",
-                lambda msg: self._set_agent_local_pos(
-                    msg, drone_id
+                partial(
+                    self._set_agent_local_pos, drone_id=drone_id
                 ),  # 收到後會回傳 supply/drop zone 位置
                 cmd_qos_profile,
             )
@@ -104,7 +106,7 @@ class Mediator(Node):
             self.create_subscription(
                 Bool,
                 prefix + "drop_request",
-                lambda msg: self._set_is_drone_waiting_at_hotspot(msg, drone_id),
+                partial(self._set_is_drone_waiting_at_hotspot, drone_id=drone_id),
                 cmd_qos_profile,
             )
             self._cmd_drop_pubs[drone_id] = self.create_publisher(
@@ -113,7 +115,7 @@ class Mediator(Node):
             self.create_subscription(
                 Bool,
                 prefix + "drop_ack",
-                lambda msg: self._unset_is_drone_waiting_at_hotspot(msg, drone_id),
+                partial(self._unset_is_drone_waiting_at_hotspot, drone_id=drone_id),
                 cmd_qos_profile,
             )
 
@@ -221,7 +223,8 @@ class Mediator(Node):
             f"x500_safmc_d2_{drone_id}"
         ]
         if agent_global_position is None:
-            raise Exception()
+            # raise Exception()
+            return
             # TODO[lnfu] log error
 
         # Supply Zone Information

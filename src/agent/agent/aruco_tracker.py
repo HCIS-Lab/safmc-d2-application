@@ -21,7 +21,7 @@ class ArucoTracker(Node):
     _detector_parameters = cv2.aruco.DetectorParameters()
     _detector = cv2.aruco.ArucoDetector(_aruco_dict, _detector_parameters)
     _image_encoding = "bgr8"
-    _camera_yaml_file = "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_800x600.yaml"
+    _camera_yaml_file = "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_320x240.yaml"  # TODO[lnfu] better location?
 
     _marker_points = np.array(
         [
@@ -81,7 +81,7 @@ class ArucoTracker(Node):
         return camera_matrix, dist_coeffs
 
     def _image_callback(self, msg):
-        self.get_logger().debug("receive image")
+        self.get_logger().info("receive image")
 
         frame = self._cv_bridge.imgmsg_to_cv2(
             msg, desired_encoding=self._image_encoding
@@ -130,7 +130,6 @@ class ArucoTracker(Node):
                     )
 
                     rotation_matrix, _ = cv2.Rodrigues(rvec)
-                    print(rotation_matrix.shape)
 
                     quaternion = transforms3d.quaternions.mat2quat(rotation_matrix)
 
@@ -144,10 +143,10 @@ class ArucoTracker(Node):
                     aruco_pose_msg.orientation.z = quaternion[2]
                     aruco_pose_msg.orientation.w = quaternion[3]
                     self._aruco_pose_pub.publish(aruco_pose_msg)
-                    self.get_logger().debug(
+                    self.get_logger().info(  # TODO[lnfu] debug
                         f"position: x={x:.3f}, y={y:.3f}, z={z:.3f}",
                     )
-                    self.get_logger().debug(
+                    self.get_logger().info(  # TODO[lnfu] debug
                         f"orientation: x={quaternion[0]:.3f}, y={quaternion[1]:.3f}, z={quaternion[2]:.3f}, w={quaternion[3]:.3f}",
                     )
                 else:

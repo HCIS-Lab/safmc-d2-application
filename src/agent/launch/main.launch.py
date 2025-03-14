@@ -9,19 +9,21 @@ def generate_launch_description():
 
     drone_id = int(os.environ["DRONE_ID"])
 
-    return LaunchDescription([
-        Node(
-            package='agent',
-            executable='agent',
-            namespace=f'px4_{drone_id}',
-            output='screen',
-            parameters=[{'drone_id' : drone_id}]
-        ),
-        Node(
-            package='agent',
-            executable='aruco_tracker',
-            namespace=f'px4_{drone_id}',
-            output='screen',
-            parameters=[{'drone_id' : drone_id}]
-        )
-    ])
+    return LaunchDescription(
+        [
+            Node(
+                package="agent",
+                executable="agent",
+                namespace=f"px4_{drone_id}",
+                output="screen",
+                parameters=[{"drone_id": drone_id}],
+            ),
+            Node(
+                package="agent",
+                executable="aruco_tracker",
+                namespace=f"px4_{drone_id}",
+                output="screen",
+                parameters=[{"drone_id": drone_id}],
+            ),
+        ]
+    )

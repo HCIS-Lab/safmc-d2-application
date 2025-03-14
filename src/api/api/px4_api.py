@@ -6,7 +6,7 @@ from rclpy.clock import Clock
 from rclpy.node import Node
 
 from common.coordinate import Coordinate
-from common.qos import cmd_qos_profile
+from common.qos import px4_qos_profile
 from px4_msgs.msg import (
     GotoSetpoint,
     OffboardControlMode,
@@ -34,36 +34,36 @@ class Px4Api(Api):
         # Initial Values
         self._clock: Clock = node.get_clock()
 
-        topic_prefix = f"fmu/"
+        topic_prefix = "/fmu/"  # TODO 現在 rpi4 px4 怪怪的 (被洗掉?) 沒有 prefix
 
         # Subscriptions
         node.create_subscription(
             VehicleLocalPosition,
             topic_prefix + "out/vehicle_local_position",
             self._set_vehicle_local_position,
-            cmd_qos_profile,
+            px4_qos_profile,
         )
         node.create_subscription(
             VehicleStatus,
             topic_prefix + "out/vehicle_status",
             self._set_vehicle_status,
-            cmd_qos_profile,
+            px4_qos_profile,
         )
 
         # Publishers
         self._vehicle_command_pub = node.create_publisher(
-            VehicleCommand, topic_prefix + "in/vehicle_command", cmd_qos_profile
+            VehicleCommand, topic_prefix + "in/vehicle_command", px4_qos_profile
         )
         self._offboard_control_mode_pub = node.create_publisher(
             OffboardControlMode,
             topic_prefix + "in/offboard_control_mode",
-            cmd_qos_profile,
+            px4_qos_profile,
         )
         self._goto_setpoint_pub = node.create_publisher(
-            GotoSetpoint, topic_prefix + "in/goto_setpoint", cmd_qos_profile
+            GotoSetpoint, topic_prefix + "in/goto_setpoint", px4_qos_profile
         )
         self._trajectory_setpoint_pub = node.create_publisher(
-            TrajectorySetpoint, topic_prefix + "in/trajectory_setpoint", cmd_qos_profile
+            TrajectorySetpoint, topic_prefix + "in/trajectory_setpoint", px4_qos_profile
         )
 
     @property
@@ -167,6 +167,7 @@ class Px4Api(Api):
         trajectory_setpoint_msg.timestamp = self._get_timestamp()
 
         # 控制速度
+        # TODO[lnfu] 為什麼 velocity = [vel.x, vel.y, 0.0] 會錯誤?
         trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, velocity.z]
 
         # 控制角度與角速度 (不變)
@@ -184,7 +185,11 @@ class Px4Api(Api):
         trajectory_setpoint_msg.timestamp = self._get_timestamp()
 
         # 控制速度
-        trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, 0.0]
+        # TODO[lnfu] 為什麼原本 velocity = [vel.x, vel.y, 0.0] 會錯誤?
+        trajectory_setpoint_msg.velocity[0] = velocity.x
+        trajectory_setpoint_msg.velocity[1] = velocity.y
+        trajectory_setpoint_msg.velocity[2] = 0.0
+        # [velocity.y, 0.0]
 
         # 控制角度與角速度 (不變)
         trajectory_setpoint_msg.yaw = float(0)
