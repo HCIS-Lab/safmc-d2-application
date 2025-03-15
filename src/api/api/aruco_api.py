@@ -12,7 +12,7 @@ class ArucoApi(Api):
 
     _target_marker_id = 6
     _is_marker_detected = False
-    _marker_position = Coordinate(0, 0, 0)
+    _marker_position_diff = Coordinate(0, 0, 0)
 
     def __init__(self, node: Node):
         # Initial Values
@@ -35,8 +35,13 @@ class ArucoApi(Api):
         return self._is_marker_detected
 
     @property
-    def marker_position(self) -> Coordinate:
-        return self._marker_position
+    def marker_position_diff(self) -> Coordinate:
+        """
+        marker_position_diff 是 aruco marker 相對飛機的位置
+
+        換言之, local_position + marker_position_diff 就是 marker 在飛機 local 座標系下的位置
+        """
+        return self._marker_position_diff
 
     @property
     def idle_time(self) -> Time:
@@ -53,7 +58,7 @@ class ArucoApi(Api):
             return
 
         self._is_marker_detected = True
-        self._marker_position.x = msg.position.x
-        self._marker_position.y = msg.position.y
-        self._marker_position.z = msg.position.z
+        self._marker_position_diff.x = msg.position.x
+        self._marker_position_diff.y = msg.position.y
+        self._marker_position_diff.z = msg.position.z
         self._latest_msg_time = self._clock.now()

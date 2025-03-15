@@ -1,4 +1,3 @@
-# TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
 from typing import Optional
 
 import numpy as np
@@ -79,10 +78,6 @@ class Px4Api(Api):
         return self._is_armed
 
     @property
-    def last_state(self) -> str:
-        return self._last_state
-
-    @property
     def heading(self) -> float:
         return self._heading
 
@@ -93,13 +88,6 @@ class Px4Api(Api):
     @property
     def local_velocity(self) -> Coordinate:
         return self._local_velocity
-
-    # TODO: 留下/不留?
-    def set_resume_state(self, state_name: str) -> None:
-        """
-        Record state under unexpected disarm circumstances
-        """
-        self._last_state = state_name
 
     def _get_timestamp(self) -> int:  # microseconds
         return int(self._clock.now().nanoseconds / 1000)

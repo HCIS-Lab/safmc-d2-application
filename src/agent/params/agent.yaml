@@ -1,11 +1,12 @@
 /**/agent:
   ros__parameters:
-    delta_time: 0.1
+    delta_time: 0.1 # > 2Hz (offboard)
     takeoff_height: 0.9
     load_height: 0.15
-    navigation_goal_tolerance: 0.1
+    walk_goal_radius: 0.25
+    align_goal_radius: 0.05
     navigation_height_tolerance: 0.05
-    navigation_aruco_tolerance: 0.015
+    speed: 0.5 # TODO[lnfu] 可能有多種速度
 /**/aruco_tracker:
   ros__parameters:
     aruco_marker_size: 0.05

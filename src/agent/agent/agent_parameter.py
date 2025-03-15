@@ -6,15 +6,17 @@ class AgentParameter:
 
         self._node = node
         node.declare_parameter("delta_time", 0.1)
+
+        node.declare_parameter("walk_speed", 0.3)
+        node.declare_parameter("align_speed", 0.3)
+
         node.declare_parameter("takeoff_height", 0.9)
         node.declare_parameter("load_height", 0.15)
-        node.declare_parameter("navigation_goal_tolerance", 0.1)
+
+        node.declare_parameter("walk_goal_radius", 0.1)
+        node.declare_parameter("align_goal_radius", 0.015)
+
         node.declare_parameter("navigation_height_tolerance", 0.05)
-        node.declare_parameter("navigation_aruco_tolerance", 0.015)
-        node.declare_parameter(
-            "camera_calibration_file_path",
-            "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_800x600.yaml",
-        )
 
     @property
     def delta_time(self) -> float:
@@ -24,6 +26,15 @@ class AgentParameter:
         單位: second
         """
         return self._node.get_parameter("delta_time").value
+
+    @property
+    def speed(self) -> float:
+        """
+        飛行速度
+
+        單位: meter/second
+        """
+        return self._node.get_parameter("speed").value
 
     @property
     def takeoff_height(self) -> float:
@@ -40,9 +51,9 @@ class AgentParameter:
         return self._node.get_parameter("load_height").value
 
     @property
-    def navigation_goal_tolerance(self) -> float:
+    def walk_goal_radius(self) -> float:
         """移動過程到達目標範圍 TODO[lnfu] 註解 docstring 重寫"""
-        return self._node.get_parameter("navigation_goal_tolerance").value
+        return self._node.get_parameter("walk_goal_radius").value
 
     @property
     def navigation_height_tolerance(self) -> float:
@@ -50,11 +61,15 @@ class AgentParameter:
         return self._node.get_parameter("navigation_height_tolerance").value
 
     @property
-    def navigation_aruco_tolerance(self) -> float:
+    def align_goal_radius(self) -> float:
         """aruco alignment 範圍 TODO[lnfu] rename & 註解 docstring 重寫"""
-        return self._node.get_parameter("navigation_aruco_tolerance").value
+        return self._node.get_parameter("align_goal_radius").value
 
     @property
     def camera_calibration_file_path(self) -> str:
         """相機校正參數檔案路徑"""
         return self._node.get_parameter("camera_calibration_file_path").value
+
+    @property
+    def align_speed(self) -> float:
+        return self._node.get_parameter("align_speed").value

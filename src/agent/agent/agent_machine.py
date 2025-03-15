@@ -2,6 +2,8 @@ from enum import Enum
 
 from transitions import Machine
 
+from api import ApiRegistry, Px4Api, MediatorApi
+
 from agent.behavior import (
     AlignToHotspotBehavior,
     AlignToSupplyBehavior,
@@ -65,33 +67,31 @@ transitions = [
 
 class AgentMachine(Machine):
 
-    logger: Logger
-
-    def __init__(self, logger: Logger, agent_parameter: AgentParameter):
-
-        self.logger = logger
+    def __init__(self, agent_parameter: AgentParameter):
 
         # behavior binding
         self.state_behavior_map = {
-            States.IDLE: IdleBehavior(logger),
-            States.TAKEOFF: TakeoffBehavior(logger),
+            States.IDLE: IdleBehavior(),
+            States.TAKEOFF: TakeoffBehavior(
+                walk_goal_radius=agent_parameter.walk_goal_radius,
+                takeoff_height=agent_parameter.takeoff_height,
+            ),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(
-                logger,
-                navigation_goal_tolerance=agent_parameter.navigation_goal_tolerance,
+                walk_goal_radius=agent_parameter.walk_goal_radius,
+                walk_speed=agent_parameter.speed,
             ),
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(
-                logger,
-                navigation_aruco_tolerance=agent_parameter.navigation_aruco_tolerance,
+                align_goal_radius=agent_parameter.align_goal_radius,
+                align_speed=agent_parameter.align_speed,
             ),
-            States.LOAD: LoadBehavior(logger),
-            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger),
+            States.LOAD: LoadBehavior(),
+            States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(),
             States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(
-                logger,
-                navigation_aruco_tolerance=agent_parameter.navigation_aruco_tolerance,
+                align_goal_radius=agent_parameter.align_goal_radius,
             ),
-            States.WAIT: WaitBehavior(logger),
-            States.DROP: DropBehavior(logger),
-            States.BONUS: BonusBehavior(logger),
+            States.WAIT: WaitBehavior(),
+            States.DROP: DropBehavior(),
+            States.BONUS: BonusBehavior(),
         }
 
         # add state on_enter/on_exit callback
@@ -126,11 +126,22 @@ class AgentMachine(Machine):
             initial=States.IDLE,
         )
 
+    def pre_execute(self):
+        Logger.info(f"Current state: {self.state.name}")
+
+        # 要 2 Hz 發送, 否則會退出 offboard control mode
+        px4_api = ApiRegistry.get(Px4Api)
+        px4_api.set_offboard_control_mode()
+
+        # 傳送 agent status 給 mediator
+        mediator_api = ApiRegistry.get(MediatorApi)
+        mediator_api.send_status(self.machine.state.value)
+        mediator_api.send_agent_local_position(px4_api.local_position)
+
     def execute(self):
         """
         Executes the behavior of the current state.
         """
-        self.logger.info(self.state.name)
         behavior: Behavior = self.state_behavior_map.get(self.state)
         if behavior:
             behavior.execute()

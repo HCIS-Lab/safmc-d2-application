@@ -1,3 +1,5 @@
+# TODO[lnfu]
+
 from typing import Optional
 
 from api import ApiRegistry, LidarApi, MediatorApi, Px4Api
@@ -13,8 +15,7 @@ class BonusBehavior(Behavior):
     mediator_api: MediatorApi
     lidar_api: LidarApi
 
-    def __init__(self, logger: Logger):
-        super().__init__(logger)
+    def __init__(self):
         self.px4_api = ApiRegistry.get(Px4Api)
         self.mediator_api = ApiRegistry.get(MediatorApi)
         self.lidar_api = ApiRegistry.get(LidarApi)

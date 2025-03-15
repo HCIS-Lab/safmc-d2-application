@@ -9,16 +9,12 @@ from common.logger import Logger
 
 class Agent(Node):
 
-    logger: Logger
-
     def __init__(self):
         super().__init__("agent")
-        # TODO[lnfu] logger refactor
-        self.logger = Logger(self.get_logger(), self.get_clock())
-        agent_parameter = AgentParameter(self)
+        Logger(self)
         self._register_apis()
-
-        self.machine = AgentMachine(self.logger, agent_parameter)
+        agent_parameter = AgentParameter(self)
+        self.machine = AgentMachine(agent_parameter)
         self.timer = self.create_timer(agent_parameter.delta_time, self._update)
 
     def _register_apis(self):
@@ -29,18 +25,10 @@ class Agent(Node):
         ApiRegistry.register(ArucoApi, self)
 
     def _update(self):
-        # TODO[lnfu]: 進入 offboard 再搞?
-        # 要 2 Hz 發送, 否則會退出 offboard control mode
-        px4_api = ApiRegistry.get(Px4Api)
-        px4_api.set_offboard_control_mode()
-
-        # 傳送 agent status 給 mediator
-        mediator_api = ApiRegistry.get(MediatorApi)
-        mediator_api.send_status(self.machine.state.value)
-        mediator_api.send_agent_local_position(px4_api.local_position)
-
         self.machine.proceed()
+        self.machine.pre_execute()
         self.machine.execute()
+        # self.machine.post_execute()
 
 
 def main(args=None):

@@ -1,37 +1,45 @@
-import inspect
-
-from rclpy.clock import Clock
 from rclpy.impl.rcutils_logger import RcutilsLogger
+from rclpy.node import Node
 
 
-class Logger():
-    def __init__(self, rcutils_logger: RcutilsLogger, clock: Clock):
-        self.ori: RcutilsLogger = rcutils_logger
-        self.__clock: Clock = clock
-        self.__log_caller_time_map = {}
-        self.__time_interval = 3e10  # TODO magic number (30 secs)
+class Logger:
+    _instance = None
+    _logger: RcutilsLogger
 
-    def debug(self, msg, **kwargs):
-        self.__log(self.ori.debug, msg, **kwargs)
+    def __new__(cls, node: Node = None):
+        if cls._instance is None:
+            if node is None:
+                raise ValueError(
+                    "Logger is not initialized yet! Please initialize it with a ROS 2 Node."
+                )
+            cls._instance = super().__new__(cls)
+            cls._instance._logger = node.get_logger()
+        return cls._instance
 
-    def info(self, msg, **kwargs):
-        self.__log(self.ori.info, msg, **kwargs)
+    @classmethod
+    def _get_logger(cls):
+        if cls._instance is None:
+            raise ValueError(
+                "Logger is not initialized yet! Please initialize it with a ROS 2 Node."
+            )
+        return cls._instance._logger
 
-    def warning(self, msg, **kwargs):
-        self.__log(self.ori.warning, msg, **kwargs)
+    @classmethod
+    def debug(cls, msg, *args):
+        cls._get_logger().debug(msg, *args)
 
-    def error(self, msg, **kwargs):
-        self.__log(self.ori.error, msg, **kwargs)
+    @classmethod
+    def info(cls, msg, *args):
+        cls._get_logger().info(msg, *args)
 
-    def fatal(self, msg, **kwargs):
-        self.__log(self.ori.fatal, msg, **kwargs)
+    @classmethod
+    def warning(cls, msg, *args):
+        cls._get_logger().warning(msg, *args)
 
-    def __log(self, log_function: callable, msg, **kwargs):
+    @classmethod
+    def error(cls, msg, *args):
+        cls._get_logger().error(msg, *args)
 
-        timestamp = self.__clock.now().nanoseconds
-        last_time = self.__log_caller_time_map.get(msg)
-
-        if last_time is None or (timestamp - last_time >= self.__time_interval):
-            self.__log_caller_time_map[msg] = timestamp
-            # log_function(msg, **kwargs)
-            log_function(msg)
+    @classmethod
+    def fatal(cls, msg, *args):
+        cls._get_logger().fatal(msg, *args)
