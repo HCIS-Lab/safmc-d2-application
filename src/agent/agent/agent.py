@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from agent.agent_machine import AgentMachine
-from agent.constants import DELTA_TIME
+from agent.agent_parameter import AgentParameter
 from api import ApiRegistry, ArucoApi, LidarApi, MagnetApi, MediatorApi, Px4Api
 from common.logger import Logger
 
@@ -13,11 +13,13 @@ class Agent(Node):
 
     def __init__(self):
         super().__init__("agent")
+        # TODO[lnfu] logger refactor
         self.logger = Logger(self.get_logger(), self.get_clock())
-
+        agent_parameter = AgentParameter(self)
         self._register_apis()
-        self.machine = AgentMachine(self.logger)
-        self.timer = self.create_timer(DELTA_TIME, self._update)
+
+        self.machine = AgentMachine(self.logger, agent_parameter)
+        self.timer = self.create_timer(agent_parameter.delta_time, self._update)
 
     def _register_apis(self):
         ApiRegistry.register(Px4Api, self)

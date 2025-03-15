@@ -16,6 +16,7 @@ from agent.behavior import (
     WalkToSupplyBehavior,
 )
 from common.logger import Logger
+from agent.agent_parameter import AgentParameter
 
 
 class States(Enum):
@@ -66,7 +67,7 @@ class AgentMachine(Machine):
 
     logger: Logger
 
-    def __init__(self, logger: Logger):
+    def __init__(self, logger: Logger, agent_parameter: AgentParameter):
 
         self.logger = logger
 
@@ -74,11 +75,20 @@ class AgentMachine(Machine):
         self.state_behavior_map = {
             States.IDLE: IdleBehavior(logger),
             States.TAKEOFF: TakeoffBehavior(logger),
-            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(logger),
-            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(logger),
+            States.WALK_TO_SUPPLY: WalkToSupplyBehavior(
+                logger,
+                navigation_goal_tolerance=agent_parameter.navigation_goal_tolerance,
+            ),
+            States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(
+                logger,
+                navigation_aruco_tolerance=agent_parameter.navigation_aruco_tolerance,
+            ),
             States.LOAD: LoadBehavior(logger),
             States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(logger),
-            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(logger),
+            States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(
+                logger,
+                navigation_aruco_tolerance=agent_parameter.navigation_aruco_tolerance,
+            ),
             States.WAIT: WaitBehavior(logger),
             States.DROP: DropBehavior(logger),
             States.BONUS: BonusBehavior(logger),

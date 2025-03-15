@@ -1,0 +1,12 @@
+/**/agent:
+  ros__parameters:
+    delta_time: 0.1
+    takeoff_height: 0.9
+    load_height: 0.15
+    navigation_goal_tolerance: 0.1
+    navigation_height_tolerance: 0.05
+    navigation_aruco_tolerance: 0.015
+/**/aruco_tracker:
+  ros__parameters:
+    aruco_marker_size: 0.05
+    camera_calibration_file_path: "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_800x600.yaml"
