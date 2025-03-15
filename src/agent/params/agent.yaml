@@ -1,0 +1,17 @@
+/**/agent:
+  ros__parameters:
+    delta_time: 0.1 # > 2Hz (offboard)
+    takeoff_height: 0.9
+
+    walk_goal_radius: 0.25
+    align_goal_radius: 0.05
+
+    align_timeout: 3e9 # nanoseconds
+
+    walk_speed: 0.5
+    align_speed: 0.5
+
+/**/aruco_tracker:
+  ros__parameters:
+    aruco_marker_size: 0.05
+    camera_calibration_file_path: "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_800x600.yaml"

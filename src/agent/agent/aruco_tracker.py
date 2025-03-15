@@ -6,56 +6,72 @@ from cv_bridge import CvBridge
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from common.qos import sensor_qos_profile, status_qos_profile
-from agent.constants import ARUCO_DICT, ARUCO_MARKER_SIZE
+from agent.constants import ARUCO_DICT
 from safmc_msgs.msg import ArucoPose
 import transforms3d
 
 
 class ArucoTracker(Node):
-    # use calibration or not (image_rect)
-    # ref: http://wiki.ros.org/image_proc?distro=noetic
-    _use_calibration = False
 
     _cv_bridge = CvBridge()
     _aruco_dict = cv2.aruco.getPredefinedDictionary(ARUCO_DICT)
     _detector_parameters = cv2.aruco.DetectorParameters()
     _detector = cv2.aruco.ArucoDetector(_aruco_dict, _detector_parameters)
-    _image_encoding = "bgr8"
-    _camera_yaml_file = "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_320x240.yaml"  # TODO[lnfu] better location?
 
-    _marker_points = np.array(
-        [
-            [-ARUCO_MARKER_SIZE / 2, ARUCO_MARKER_SIZE / 2, 0],  # 左上角
-            [ARUCO_MARKER_SIZE / 2, ARUCO_MARKER_SIZE / 2, 0],  # 右上角
-            [ARUCO_MARKER_SIZE / 2, -ARUCO_MARKER_SIZE / 2, 0],  # 右下角
-            [-ARUCO_MARKER_SIZE / 2, -ARUCO_MARKER_SIZE / 2, 0],  # 左下角
-        ],
-        dtype=np.float32,
-    )
+    def _get_aruco_marker_points(self, aruco_marker_size: float) -> np.ndarray:
+        return np.array(
+            [
+                [
+                    -aruco_marker_size / 2,
+                    aruco_marker_size / 2,
+                    0,
+                ],  # 左上角
+                [aruco_marker_size / 2, aruco_marker_size / 2, 0],  # 右上角
+                [
+                    aruco_marker_size / 2,
+                    -aruco_marker_size / 2,
+                    0,
+                ],  # 右下角
+                [
+                    -aruco_marker_size / 2,
+                    -aruco_marker_size / 2,
+                    0,
+                ],  # 左下角
+            ],
+            dtype=np.float32,
+        )
 
     def __init__(self):
         super().__init__("aruco_tracker")
 
+        # parameters
+        self.declare_parameter("aruco_marker_size", 0.05)
+        aruco_marker_size = self.get_parameter("aruco_marker_size").value
+
+        self.declare_parameter(
+            "camera_calibration_file_path",
+            "~/.ros/camera_info/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_320x240.yaml",
+        )
+        camera_calibration_file_path = self.get_parameter(
+            "camera_calibration_file_path"
+        ).value
+
+        self._marker_points = self._get_aruco_marker_points(aruco_marker_size)
+
         # 相機資訊 之後要校正
         self._camera_matrix, self._dist_coeffs = self._load_camera_intrinsic_params(
-            self._camera_yaml_file
+            camera_calibration_file_path
         )
 
         self.get_logger().info(f"camera matrix: {self._camera_matrix}")
         self.get_logger().info(f"dist coeffs: {self._dist_coeffs}")
 
-        if self._use_calibration:
-            self.create_subscription(
-                Image,
-                "camera/image_rect",  # TODO[lnfu] topic name
-                self._image_callback,
-                sensor_qos_profile,
-            )
-        else:
-            self.create_subscription(
-                Image, "camera/image_raw", self._image_callback, sensor_qos_profile
-            )
+        # Subscribers
+        self.create_subscription(
+            Image, "camera/image_raw", self._image_callback, sensor_qos_profile
+        )
 
+        # Publishers
         self._image_aruco_pub = self.create_publisher(
             Image, f"camera/image_aruco", sensor_qos_profile
         )
@@ -64,8 +80,8 @@ class ArucoTracker(Node):
             ArucoPose, "aruco_pose", status_qos_profile
         )
 
-    def _load_camera_intrinsic_params(self, yaml_file):
-        with open(yaml_file, "r") as file:
+    def _load_camera_intrinsic_params(self, file_path):
+        with open(file_path, "r") as file:
             camera_data = yaml.safe_load(file)
 
         camera_matrix = np.array(camera_data["camera_matrix"]["data"]).reshape(
@@ -84,7 +100,8 @@ class ArucoTracker(Node):
         self.get_logger().info("receive image")
 
         frame = self._cv_bridge.imgmsg_to_cv2(
-            msg, desired_encoding=self._image_encoding
+            msg,
+            desired_encoding="bgr8",  # TODO[lnfu] desired_encoding 可以拿掉吧???
         )
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         corners, ids, _ = self._detector.detectMarkers(gray)
@@ -126,7 +143,7 @@ class ArucoTracker(Node):
                     )
 
                     msg = self._cv_bridge.cv2_to_imgmsg(
-                        frame, encoding=self._image_encoding
+                        frame, encoding="bgr8"  # TODO[lnfu] 可以拿掉 encoding 吧???
                     )
 
                     rotation_matrix, _ = cv2.Rodrigues(rvec)

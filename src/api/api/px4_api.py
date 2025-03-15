@@ -1,4 +1,3 @@
-# TODO 使用 VehicleCommandAck 來追蹤是否設定成功 (error log)
 from typing import Optional
 
 import numpy as np
@@ -27,8 +26,7 @@ class Px4Api(Api):
     _heading: Optional[float] = None
     _local_position: Optional[Coordinate] = None
     _local_velocity: Optional[Coordinate] = None
-    _last_state = "walk_to_supply"  # TODO 留下/不留下?
-    _control_field = "position"  # TODO
+    _control_field = "velocity"  # TODO
 
     def __init__(self, node: Node):
         # Initial Values
@@ -79,10 +77,6 @@ class Px4Api(Api):
         return self._is_armed
 
     @property
-    def last_state(self) -> str:
-        return self._last_state
-
-    @property
     def heading(self) -> float:
         return self._heading
 
@@ -93,13 +87,6 @@ class Px4Api(Api):
     @property
     def local_velocity(self) -> Coordinate:
         return self._local_velocity
-
-    # TODO: 留下/不留?
-    def set_resume_state(self, state_name: str) -> None:
-        """
-        Record state under unexpected disarm circumstances
-        """
-        self._last_state = state_name
 
     def _get_timestamp(self) -> int:  # microseconds
         return int(self._clock.now().nanoseconds / 1000)
@@ -167,8 +154,9 @@ class Px4Api(Api):
         trajectory_setpoint_msg.timestamp = self._get_timestamp()
 
         # 控制速度
-        # TODO[lnfu] 為什麼 velocity = [vel.x, vel.y, 0.0] 會錯誤?
-        trajectory_setpoint_msg.velocity = [velocity.x, velocity.y, velocity.z]
+        trajectory_setpoint_msg.velocity[0] = velocity.x
+        trajectory_setpoint_msg.velocity[1] = velocity.y
+        trajectory_setpoint_msg.velocity[2] = velocity.z
 
         # 控制角度與角速度 (不變)
         trajectory_setpoint_msg.yaw = float(0)
@@ -189,7 +177,6 @@ class Px4Api(Api):
         trajectory_setpoint_msg.velocity[0] = velocity.x
         trajectory_setpoint_msg.velocity[1] = velocity.y
         trajectory_setpoint_msg.velocity[2] = 0.0
-        # [velocity.y, 0.0]
 
         # 控制角度與角速度 (不變)
         trajectory_setpoint_msg.yaw = float(0)

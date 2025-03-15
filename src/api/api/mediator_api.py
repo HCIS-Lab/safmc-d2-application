@@ -105,13 +105,6 @@ class MediatorApi(Api):
     def is_ok_to_drop(self):
         return self._is_ok_to_drop
 
-    def reset_states(self):
-        """
-        重置 is_ok_to_takeoff, is_ok_to_drop
-        """
-        self._is_ok_to_takeoff = False
-        self._is_ok_to_drop = False
-
     @property
     def supply_zone_marker_id(self):
         return self._supply_zone_marker_id

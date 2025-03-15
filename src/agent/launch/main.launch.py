@@ -16,7 +16,13 @@ def generate_launch_description():
                 executable="agent",
                 namespace=f"px4_{drone_id}",
                 output="screen",
-                parameters=[{"drone_id": drone_id}],
+                parameters=[
+                    os.path.join(
+                        get_package_share_directory("agent"),
+                        "params",
+                        f"agent.yaml",
+                    )
+                ],
             ),
             Node(
                 package="agent",
