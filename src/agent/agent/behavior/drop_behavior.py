@@ -28,4 +28,5 @@ class DropBehavior(Behavior):
 
         if not self.magnet_api.is_loaded:
             return "walk_to_supply"
+
         return None

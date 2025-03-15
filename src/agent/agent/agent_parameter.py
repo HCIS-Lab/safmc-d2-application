@@ -11,12 +11,11 @@ class AgentParameter:
         node.declare_parameter("align_speed", 0.3)
 
         node.declare_parameter("takeoff_height", 0.9)
-        node.declare_parameter("load_height", 0.15)
 
         node.declare_parameter("walk_goal_radius", 0.1)
         node.declare_parameter("align_goal_radius", 0.015)
 
-        node.declare_parameter("navigation_height_tolerance", 0.05)
+        node.declare_parameter("align_timeout", 3e9)
 
     @property
     def delta_time(self) -> float:
@@ -46,19 +45,9 @@ class AgentParameter:
         return self._node.get_parameter("takeoff_height").value
 
     @property
-    def load_height(self) -> float:
-        """撿取 Payload 下降終點高度 (TODO[lnfu] 可能不用, 直接 landing 就好)"""
-        return self._node.get_parameter("load_height").value
-
-    @property
     def walk_goal_radius(self) -> float:
         """移動過程到達目標範圍 TODO[lnfu] 註解 docstring 重寫"""
         return self._node.get_parameter("walk_goal_radius").value
-
-    @property
-    def navigation_height_tolerance(self) -> float:
-        """起飛高度範圍 TODO[lnfu] maybe remove"""
-        return self._node.get_parameter("navigation_height_tolerance").value
 
     @property
     def align_goal_radius(self) -> float:
@@ -73,3 +62,7 @@ class AgentParameter:
     @property
     def align_speed(self) -> float:
         return self._node.get_parameter("align_speed").value
+
+    @property
+    def align_timeout(self) -> int:
+        return self._node.get_parameter("align_timeout").value

@@ -23,4 +23,5 @@ class WaitBehavior(Behavior):
 
         if self.mediator_api.is_ok_to_drop:
             return "drop"
+
         return None

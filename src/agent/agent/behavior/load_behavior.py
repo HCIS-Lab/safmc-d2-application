@@ -20,7 +20,6 @@ class LoadBehavior(Behavior):
         self._mediator_api = ApiRegistry.get(MediatorApi)
 
     def execute(self):
-
         self._magnet_api.activate_magnet()
 
         # TODO[lnfu] 改成不要偵測 (等過幾秒自動判定為已經拿取)

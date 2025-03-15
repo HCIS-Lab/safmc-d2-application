@@ -36,11 +36,10 @@ class AlignToSupplyBehavior(Behavior):
         if not self._px4_api.is_armed:
             return "idle"
 
+        if self._aruco_api.elapsed_time.nanoseconds > self._align_timeout:
+            return "walk_to_hotspot"
+
         if self._aruco_api.marker_position_diff.magnitude <= self._align_goal_radius:
             return "load"
-
-        # TODO[lnfu]! 等等回來重寫
-        # if self._aruco_api.idle_time.nanoseconds > 3e9:  # 3sec
-        #     return "walk_to_supply"  # 偵測不到目標 marker，退回去重走
 
         return None

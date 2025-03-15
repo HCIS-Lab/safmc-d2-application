@@ -14,14 +14,18 @@ class AlignToHotspotBehavior(Behavior):
 
     _align_speed: float
     _align_goal_radius: float
+    _align_timeout: float
 
-    def __init__(self, align_goal_radius: float, align_speed: float):
+    def __init__(
+        self, align_goal_radius: float, align_speed: float, align_timeout: float
+    ):
         self._aruco_api = ApiRegistry.get(ArucoApi)
         self._px4_api = ApiRegistry.get(Px4Api)
         self._mediator_api = ApiRegistry.get(MediatorApi)
 
         self._align_goal_radius = align_goal_radius
         self._align_speed = align_speed
+        self._align_timeout = align_timeout
 
     def execute(self):
         self._px4_api.change_control_field("velocity")
@@ -34,6 +38,9 @@ class AlignToHotspotBehavior(Behavior):
     def get_next_state(self) -> Optional[str]:
         if not self._px4_api.is_armed:
             return "idle"
+
+        if self._aruco_api.elapsed_time.nanoseconds > self._align_timeout:
+            return "walk_to_hotspot"
 
         if self._aruco_api.marker_position_diff.magnitude_2d <= self._align_goal_radius:
             return "wait"  # 等待

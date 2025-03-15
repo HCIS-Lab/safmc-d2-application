@@ -43,7 +43,6 @@ class BonusBehavior(Behavior):
 
     def get_next_state(self) -> Optional[str]:
         if not self.px4_api.is_armed:
-            self.px4_api.set_resume_state("bonus")  # TODO 留下/不留下?
             return "idle"
 
         if False:  # TODO[lnfu]: 如果畫面中有出現 aruco marker

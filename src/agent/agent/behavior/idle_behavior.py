@@ -28,4 +28,5 @@ class IdleBehavior(Behavior):
     def get_next_state(self) -> Optional[str]:
         if self.px4_api.is_armed and self.mediator_api.is_ok_to_takeoff:
             return "takeoff"
+
         return None

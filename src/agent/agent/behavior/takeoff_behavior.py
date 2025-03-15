@@ -38,4 +38,5 @@ class TakeoffBehavior(Behavior):
             <= self._walk_goal_radius
         ):
             return "walk_to_hotspot" if self._magnet_api.is_loaded else "walk_to_supply"
+
         return None

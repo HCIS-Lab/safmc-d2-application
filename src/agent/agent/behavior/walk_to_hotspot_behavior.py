@@ -57,4 +57,5 @@ class WalkToHotspotBehavior(Behavior):
 
         if self._aruco_api.is_marker_detected:  # 偵測到目標的 ArUco Marker
             return "align_to_hotspot"  # 開始精準定位
+
         return None

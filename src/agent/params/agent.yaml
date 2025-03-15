@@ -2,11 +2,15 @@
   ros__parameters:
     delta_time: 0.1 # > 2Hz (offboard)
     takeoff_height: 0.9
-    load_height: 0.15
+
     walk_goal_radius: 0.25
     align_goal_radius: 0.05
-    navigation_height_tolerance: 0.05
-    speed: 0.5 # TODO[lnfu] 可能有多種速度
+
+    align_timeout: 3e9 # nanoseconds
+
+    walk_speed: 0.5
+    align_speed: 0.5
+
 /**/aruco_tracker:
   ros__parameters:
     aruco_marker_size: 0.05
