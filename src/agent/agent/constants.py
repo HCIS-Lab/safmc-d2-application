@@ -10,21 +10,20 @@ TAKEOFF_HEIGHT = 0.9
 Altitude (meters) for takeoff.
 """
 
-NAV_THRESHOLD = 0.1
-"""
-Maximum distance (meters) to target for navigation completion.
-"""
-
-HEIGHT_THRESHOLD = 0.05
-"""
-Maximum height difference (meters) to target for navigation completion.
-"""
-
 LOAD_HEIGHT = 0.15
 """
 Altitude (meters) for the drone to descend to in order to pick up the payload.
 """
 
+NAVIGATION_GOAL_TOLERANCE = 0.1
+"""
+Maximum distance (meters) to target for navigation completion.
+"""
+
+NAVIGATION_HEIGHT_TOLERANCE = 0.05
+"""
+Maximum height difference (meters) to target for navigation completion.
+"""
 
 ARUCO_DICT = cv2.aruco.DICT_5X5_50
 

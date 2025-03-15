@@ -2,7 +2,11 @@
 
 from typing import Optional
 
-from agent.constants import HEIGHT_THRESHOLD, LOAD_HEIGHT, NAV_THRESHOLD
+from agent.constants import (
+    NAVIGATION_HEIGHT_TOLERANCE,
+    LOAD_HEIGHT,
+    NAVIGATION_GOAL_TOLERANCE,
+)
 from api import ApiRegistry, MagnetApi, MediatorApi, Px4Api
 from common.coordinate import Coordinate
 from common.logger import Logger
@@ -36,9 +40,9 @@ class LoadBehavior(Behavior):
 
         if (
             Coordinate.distance_2d(self.px4_api.local_position, self.load_position)
-            <= NAV_THRESHOLD
+            <= NAVIGATION_GOAL_TOLERANCE
             and (self.px4_api.local_position.z - self.load_position.z)
-            < HEIGHT_THRESHOLD
+            < NAVIGATION_HEIGHT_TOLERANCE
         ):
             self.magnet_api.activate_magnet()
 
@@ -56,7 +60,7 @@ class LoadBehavior(Behavior):
         if (
             self.magnet_api.is_loaded
             and Coordinate.distance(self.px4_api.local_position, self.origin_position)
-            <= NAV_THRESHOLD
+            <= NAVIGATION_GOAL_TOLERANCE
         ):
             return "walk_to_hotspot"
         return None

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.constants import NAV_THRESHOLD
+from agent.constants import NAVIGATION_GOAL_TOLERANCE
 from api import ApiRegistry, ArucoApi, MediatorApi, Px4Api
 from common.coordinate import Coordinate
 from common.logger import Logger
@@ -45,7 +45,7 @@ class WalkToSupplyBehavior(Behavior):
 
         if (
             Coordinate.distance_2d(current_location, self.target_position)
-            <= NAV_THRESHOLD
+            <= NAVIGATION_GOAL_TOLERANCE
         ):
             # 換方向
             self.logger.info(f"reached target position, changing to next target")

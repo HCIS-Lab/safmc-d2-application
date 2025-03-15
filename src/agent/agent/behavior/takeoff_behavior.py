@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agent.constants import NAV_THRESHOLD, TAKEOFF_HEIGHT
+from agent.constants import NAVIGATION_GOAL_TOLERANCE, TAKEOFF_HEIGHT
 from api import ApiRegistry, MagnetApi, MediatorApi, Px4Api
 from common.coordinate import Coordinate
 from common.logger import Logger
@@ -32,7 +32,7 @@ class TakeoffBehavior(Behavior):
     def __has_reached_final_position(self) -> bool:
         return (
             Coordinate.distance(self.px4_api.local_position, self.target_position)
-            <= NAV_THRESHOLD
+            <= NAVIGATION_GOAL_TOLERANCE
         )
 
     def get_next_state(self) -> Optional[str]:
