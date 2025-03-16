@@ -57,7 +57,7 @@ class MediatorApi(Api):
         )
 
         self.agent_local_pos_pub = node.create_publisher(
-            Point, prefix + "agent_local_pos", cmd_qos_profile
+            Point, prefix + "agent_local_p", cmd_qos_profile
         )
 
         self.online_pub = node.create_publisher(
