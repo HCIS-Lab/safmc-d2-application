@@ -3,15 +3,15 @@ from rclpy.node import Node
 
 from agent.agent_machine import AgentMachine
 from agent.agent_parameter import AgentParameter
-from api import ApiRegistry, ArucoApi, LidarApi, MagnetApi, MediatorApi, Px4Api
+from api import ApiRegistry, ArucoApi, LidarApi, MagnetApi, MediatorApi, Px4Api, UwbApi
 from common.logger import Logger
 
 
 class Agent(Node):
-
     def __init__(self):
         super().__init__("agent")
         Logger(self)
+
         self._register_apis()
         agent_parameter = AgentParameter(self)
         self.machine = AgentMachine(agent_parameter)
@@ -23,6 +23,7 @@ class Agent(Node):
         ApiRegistry.register(MagnetApi, self)
         ApiRegistry.register(LidarApi, self)
         ApiRegistry.register(ArucoApi, self)
+        ApiRegistry.register(UwbApi, self)
 
     def _update(self):
         self.machine.proceed()

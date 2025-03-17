@@ -19,13 +19,15 @@ class IdleBehavior(Behavior):
         # TODO[lnfu]   使用 VehicleCommandAck 來追蹤是否設定成功
 
         pf_pass: bool = self.px4_api.is_each_pre_flight_check_passed
-        Logger.info(f"Preflight checks passed? {pf_pass}")
-        Logger.info(f"Arming? {self.px4_api.is_armed}")
+        # Logger.info(f"Preflight checks passed? {pf_pass}")
+        # Logger.info(f"Arming? {self.px4_api.is_armed}")
 
         if pf_pass:
             self.mediator_api.online()
 
     def get_next_state(self) -> Optional[str]:
+        return None
+
         if self.px4_api.is_armed and self.mediator_api.is_ok_to_takeoff:
             return "takeoff"
 

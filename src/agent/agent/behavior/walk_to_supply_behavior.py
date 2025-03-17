@@ -1,6 +1,6 @@
 from typing import Optional
 
-from api import ApiRegistry, ArucoApi, MediatorApi, Px4Api
+from api import ApiRegistry, ArucoApi, MediatorApi, Px4Api, UwbApi
 from common.coordinate import Coordinate
 from common.logger import Logger
 
@@ -12,6 +12,7 @@ class WalkToSupplyBehavior(Behavior):
     _aruco_api: ArucoApi
     _px4_api: Px4Api
     _mediator_api: MediatorApi
+    _uwb_api: UwbApi
 
     _walk_speed: float
     _walk_goal_radius: float
@@ -20,6 +21,7 @@ class WalkToSupplyBehavior(Behavior):
         self._aruco_api = ApiRegistry.get(ArucoApi)
         self._px4_api = ApiRegistry.get(Px4Api)
         self._mediator_api = ApiRegistry.get(MediatorApi)
+        self._uwb_api = ApiRegistry.get(UwbApi)
 
         self._walk_goal_radius = walk_goal_radius
         self._walk_speed = walk_speed
@@ -33,7 +35,9 @@ class WalkToSupplyBehavior(Behavior):
     def execute(self):
         self._px4_api.change_control_field("velocity")
 
-        target_p = self._mediator_api.supply_zone_points[self.target_index]
+        target_p = self._uwb_api.get_supply_zone_local_ps(
+            self._mediator_api.supply_zone_code, self._px4_api.local_position
+        )[self.target_index]
         current_p = self._px4_api.local_position
 
         # 往 target_position 移動, 速度大小是 self.speed

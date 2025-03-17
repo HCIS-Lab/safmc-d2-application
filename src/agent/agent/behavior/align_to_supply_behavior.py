@@ -5,6 +5,8 @@ from common.coordinate import Coordinate
 
 from .behavior import Behavior
 
+import numpy as np
+
 
 class AlignToSupplyBehavior(Behavior):
 
@@ -27,9 +29,17 @@ class AlignToSupplyBehavior(Behavior):
         self._px4_api.change_control_field("velocity")
 
         # TODO[lnfu] 到底要是水平移動, 然後 landing, load, takeoff, 還是直接 align 的時候垂直, load, takeoff???
-        vel = Coordinate.clamp_magnitude(
-            self._aruco_api.marker_position_diff, self._align_speed
-        )
+
+        heading = self._aruco_api.heading
+        cos_theta = np.cos(heading)
+        sin_theta = np.sin(heading)
+
+        vel = self._aruco_api.marker_position
+        vel.x = cos_theta * vel.x - sin_theta * vel.y
+        vel.y = sin_theta * vel.x + cos_theta * vel.y
+        # vel.z = 0  # 只要水平移動
+
+        vel = Coordinate.clamp_magnitude(vel, self._align_speed)
         self._px4_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
@@ -39,7 +49,7 @@ class AlignToSupplyBehavior(Behavior):
         if self._aruco_api.elapsed_time.nanoseconds > self._align_timeout:
             return "walk_to_hotspot"
 
-        if self._aruco_api.marker_position_diff.magnitude <= self._align_goal_radius:
+        if self._aruco_api.marker_position.magnitude <= self._align_goal_radius:
             return "load"
 
         return None

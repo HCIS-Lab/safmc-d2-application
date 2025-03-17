@@ -132,7 +132,7 @@ class Px4Api(Api):
         )
         self._vehicle_command_pub.publish(msg)
 
-    def move_to(self, position: Coordinate) -> None:
+    def move_position_to(self, position: Coordinate) -> None:
         goto_setpoint_msg = GotoSetpoint()
         goto_setpoint_msg.timestamp = self._get_timestamp()
 

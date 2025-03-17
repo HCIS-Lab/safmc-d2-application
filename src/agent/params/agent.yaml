@@ -14,4 +14,4 @@
 /**/aruco_tracker:
   ros__parameters:
     aruco_marker_size: 0.05
-    camera_calibration_file_path: "/workspace/safmc-d2-bridge/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_800x600.yaml"
+    camera_calibration_file_path: "/home/user/.ros/camera_info/camera/imx708_wide__base_soc_i2c0mux_i2c_1_imx708_1a_320x240.yaml"

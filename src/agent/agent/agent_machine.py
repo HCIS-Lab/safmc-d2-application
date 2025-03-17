@@ -78,7 +78,7 @@ class AgentMachine(Machine):
             ),
             States.WALK_TO_SUPPLY: WalkToSupplyBehavior(
                 walk_goal_radius=agent_parameter.walk_goal_radius,
-                walk_speed=agent_parameter.speed,
+                walk_speed=agent_parameter.walk_speed,
             ),
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(
                 align_goal_radius=agent_parameter.align_goal_radius,
@@ -88,6 +88,8 @@ class AgentMachine(Machine):
             States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(),
             States.ALIGN_TO_HOTSPOT: AlignToHotspotBehavior(
                 align_goal_radius=agent_parameter.align_goal_radius,
+                align_speed=agent_parameter.align_speed,
+                align_timeout=agent_parameter.align_timeout,
             ),
             States.WAIT: WaitBehavior(),
             States.DROP: DropBehavior(),
@@ -127,7 +129,7 @@ class AgentMachine(Machine):
         )
 
     def pre_execute(self):
-        Logger.info(f"Current state: {self.state.name}")
+        # Logger.info(f"Current state: {self.state.name}")
 
         # 要 2 Hz 發送, 否則會退出 offboard control mode
         px4_api = ApiRegistry.get(Px4Api)
@@ -135,8 +137,7 @@ class AgentMachine(Machine):
 
         # 傳送 agent status 給 mediator
         mediator_api = ApiRegistry.get(MediatorApi)
-        mediator_api.send_status(self.machine.state.value)
-        mediator_api.send_agent_local_position(px4_api.local_position)
+        mediator_api.send_status(self.state.value)
 
     def execute(self):
         """

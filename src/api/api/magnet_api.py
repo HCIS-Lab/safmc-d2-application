@@ -13,15 +13,16 @@ class MagnetApi(Api):
         self.__is_loaded = False
 
         # Subscriptions
+        # TODO[lnfu] ????????????? 微動 ?????????????
         self.is_loaded_sub = node.create_subscription(
-            Payload, f"out/payload", self.__set_is_loaded, cmd_qos_profile
+            Payload, f"payload/out/payload", self.__set_is_loaded, cmd_qos_profile
         )
 
         # Publishers
         self.magnet_control_pub = node.create_publisher(
             Magnet,
             # payload system subscribe to /drone_{i}/magnet_control, for i from 0 to 3
-            f"in/magnet",
+            f"payload/in/magnet",
             cmd_qos_profile,
         )
 

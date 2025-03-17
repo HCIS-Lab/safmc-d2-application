@@ -27,13 +27,13 @@ class AgentParameter:
         return self._node.get_parameter("delta_time").value
 
     @property
-    def speed(self) -> float:
+    def walk_speed(self) -> float:
         """
         飛行速度
 
         單位: meter/second
         """
-        return self._node.get_parameter("speed").value
+        return self._node.get_parameter("walk_speed").value
 
     @property
     def takeoff_height(self) -> float:
