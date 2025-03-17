@@ -57,12 +57,12 @@ class Mediator(Node):
             assert task == "task1" or task == "task2"
 
             sz_msg = SupplyZoneInfo()
-            sz_msg.supply_zone_id = SCHE[drone_id]["color"]  # "green"|"blue"
+            sz_msg.supply_zone_code = SCHE[drone_id]["color"]  # "green"|"blue"
             sz_msg.aruco_marker_id = SCHE[drone_id][task]["supply_marker_id"]
             self._supply_zone_pubs[drone_id].publish(sz_msg)
 
             dz_msg = DropZoneInfo()
-            dz_msg.drop_zone_id = SCHE[drone_id][task]["drop_zone"]  # "A"|"B"|"C"|"D"
+            dz_msg.drop_zone_code = SCHE[drone_id][task]["drop_zone"]  # "A"|"B"|"C"|"D"
             dz_msg.aruco_marker_id = SCHE[drone_id][task]["drop_marker_id"]
             self._drop_zone_pubs[drone_id].publish(dz_msg)
 

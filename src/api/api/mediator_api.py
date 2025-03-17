@@ -1,25 +1,22 @@
-from typing import List, Optional
-
 from rclpy.node import Node
 from std_msgs.msg import Bool
-
-from safmc_msgs.msg import DropZoneInfo, ObstacleArray, SupplyZoneInfo
-from geometry_msgs.msg import Point
+from safmc_msgs.msg import DropZoneInfo, SupplyZoneInfo
 from std_msgs.msg import Int32
-from common.coordinate import Coordinate
 from common.qos import cmd_qos_profile
 
 from .api import Api
 
 
 class MediatorApi(Api):
+
     _is_ok_to_takeoff = False
     _is_ok_to_drop = False
-    _supply_zone: List[Optional[Coordinate]] = [None, None, None, None]
-    _supply_zone_marker_id = 0  # TODO[lnfu]
-    _drop_zone: Optional[Coordinate] = None
+
+    _supply_zone_marker_id = -1
     _drop_zone_marker_id = -1
-    _obstacle_array: List[Coordinate] = []  # list
+
+    _supply_zone_code = ""
+    _drop_zone_code = ""
 
     def __init__(self, node: Node):
         prefix = "mediator/"
@@ -44,20 +41,9 @@ class MediatorApi(Api):
             DropZoneInfo, prefix + "drop_zone", self._set_drop_zone, cmd_qos_profile
         )
 
-        node.create_subscription(
-            ObstacleArray,
-            prefix + "obstacle_array",
-            self._set_obstacle_array,
-            cmd_qos_profile,
-        )
-
         # Publishers
         self.status_pub = node.create_publisher(
             Int32, prefix + "status", cmd_qos_profile
-        )
-
-        self.agent_local_pos_pub = node.create_publisher(
-            Point, prefix + "agent_local_p", cmd_qos_profile
         )
 
         self.online_pub = node.create_publisher(
@@ -88,15 +74,6 @@ class MediatorApi(Api):
         msg = Int32(data=state_value)
         self.status_pub.publish(msg)
 
-    def send_agent_local_position(self, agent_local_position: Coordinate):
-        if agent_local_position is None:
-            # TODO[lnfu] log warning
-            return
-        msg = Point(
-            x=agent_local_position.x, y=agent_local_position.y, z=agent_local_position.z
-        )
-        self.agent_local_pos_pub.publish(msg)
-
     @property
     def is_ok_to_takeoff(self):
         return self._is_ok_to_takeoff
@@ -106,24 +83,20 @@ class MediatorApi(Api):
         return self._is_ok_to_drop
 
     @property
+    def supply_zone_code(self):
+        return self._drop_zone_code
+
+    @property
     def supply_zone_marker_id(self):
         return self._supply_zone_marker_id
 
     @property
-    def supply_zone_points(self):
-        return self._supply_zone
-
-    @property
-    def drop_zone_point(self):
-        return self._drop_zone
+    def drop_zone_code(self):
+        return self._drop_zone_code
 
     @property
     def drop_zone_marker_id(self):
         return self._drop_zone_marker_id
-
-    @property
-    def obstacle_array(self) -> List[Coordinate]:
-        return self._obstacle_array
 
     def _set_is_ok_to_takeoff(self, msg: Bool):
         self._is_ok_to_takeoff = msg.data
@@ -132,15 +105,9 @@ class MediatorApi(Api):
         self._is_ok_to_drop = msg.data
 
     def _set_supply_zone(self, msg: SupplyZoneInfo):
-        self._supply_zone[0] = Coordinate.from_point(msg.point_1)
-        self._supply_zone[1] = Coordinate.from_point(msg.point_2)
-        self._supply_zone[2] = Coordinate.from_point(msg.point_3)
-        self._supply_zone[3] = Coordinate.from_point(msg.point_4)
+        self._supply_zone_code = msg.supply_zone_code
         self._supply_zone_marker_id = msg.aruco_marker_id
 
     def _set_drop_zone(self, msg: DropZoneInfo):
-        self._drop_zone = Coordinate.from_point(msg.point)
+        self._drop_zone_code = msg.drop_zone_code
         self._drop_zone_marker_id = msg.aruco_marker_id
-
-    def _set_obstacle_array(self, msg: ObstacleArray):
-        self._obstacle_array = [Coordinate.from_point(point) for point in msg.points]
