@@ -15,24 +15,24 @@ SCHE = {
         "color": "green",
         "teammate": 2,
         "task1": {"supply_marker_id": 0, "drop_zone": "A", "drop_marker_id": 8},
-        "task2": {"supply_marker_id": 1, "drop_zone": "B", "drop_marker_id": 9},
+        "task2": {"supply_marker_id": 1, "drop_zone": "C", "drop_marker_id": 9},
     },
     2: {
         "color": "blue",
         "teammate": 1,
         "task1": {"supply_marker_id": 2, "drop_zone": "A", "drop_marker_id": 10},
-        "task2": {"supply_marker_id": 3, "drop_zone": "B", "drop_marker_id": 11},
+        "task2": {"supply_marker_id": 3, "drop_zone": "C", "drop_marker_id": 11},
     },
     3: {
         "color": "green",
         "teammate": 4,
-        "task1": {"supply_marker_id": 4, "drop_zone": "C", "drop_marker_id": 12},
+        "task1": {"supply_marker_id": 4, "drop_zone": "B", "drop_marker_id": 12},
         "task2": {"supply_marker_id": 5, "drop_zone": "D", "drop_marker_id": 13},
     },
     4: {
         "color": "blue",
         "teammate": 3,
-        "task1": {"supply_marker_id": 6, "drop_zone": "C", "drop_marker_id": 14},
+        "task1": {"supply_marker_id": 6, "drop_zone": "B", "drop_marker_id": 14},
         "task2": {"supply_marker_id": 7, "drop_zone": "D", "drop_marker_id": 15},
     },
 }
