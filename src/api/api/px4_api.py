@@ -32,7 +32,7 @@ class Px4Api(Api):
         # Initial Values
         self._clock: Clock = node.get_clock()
 
-        topic_prefix = "/fmu/"  # TODO 現在 rpi4 px4 怪怪的 (被洗掉?) 沒有 prefix
+        topic_prefix = "fmu/"  # TODO 現在 rpi4 px4 怪怪的 (被洗掉?) 沒有 prefix
 
         # Subscriptions
         node.create_subscription(

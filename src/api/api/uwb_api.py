@@ -1,5 +1,5 @@
 from rclpy.node import Node
-from common.qos import cmd_qos_profile
+from common.qos import cmd_qos_profile, status_qos_profile, sensor_qos_profile
 from common.logger import Logger
 from .api import Api
 from safmc_msgs.msg import TagPosition
@@ -13,15 +13,16 @@ NUM_DRONES = 4
 class UwbApi(Api):
     _id: int
 
-    _agent_global_p: Optional[Dict[int, Coordinate]] = None
-    _supply_zone_global_p: Optional[Dict[str, Coordinate]] = None
-    _drop_zone_global_p: Optional[Dict[str, Coordinate]] = None
+    _agent_global_p: Optional[Dict[int, Coordinate]] = {}
+    _supply_zone_global_p: Optional[Dict[str, Coordinate]] = {}
+    _drop_zone_global_p: Optional[Dict[str, Coordinate]] = {}
 
     def __init__(self, node: Node):
-        self.lidar_sub = node.create_subscription(
-            TagPosition, "/tag_position", self._set_tag_position, cmd_qos_profile
+        node.create_subscription(
+            TagPosition, "/tag_position", self._set_tag_position, sensor_qos_profile
         )
         self._id = int((node.get_namespace()).split("/px4_")[1])
+        Logger.info(f"ID = {self._id}")
 
     def get_drop_zone_local_p(
         self, dz_code: str, agent_local_p: Coordinate
@@ -39,6 +40,11 @@ class UwbApi(Api):
         """
         根據 agent local + global 和目標的 global 計算出目標的 local position
         """
+        if agent_local_p is None:
+            return None
+        if target_global_p is None:
+            return None
+
         return Coordinate(
             agent_local_p.x + target_global_p.x - self._agent_global_p[self._id].x,
             agent_local_p.y + target_global_p.y - self._agent_global_p[self._id].y,
@@ -56,7 +62,6 @@ class UwbApi(Api):
         self, sz_code: str, agent_local_p: Coordinate
     ) -> Optional[List[Coordinate]]:
         assert sz_code == "green" or sz_code == "blue"
-        assert self._supply_zone_global_p is not None
 
         if sz_code == "green":
             sign_ = 1
@@ -66,6 +71,15 @@ class UwbApi(Api):
             Logger.error("sz_code ERROR")
             return
 
+        if sz_code not in self._supply_zone_global_p:
+            Logger.info("no supply zone global position")
+            return None
+
+        Logger.info(f"agent local position = {agent_local_p}")
+        Logger.info(
+            f"supply zone global position = {self._supply_zone_global_p[sz_code]}"
+        )
+
         point_1 = self._get_target_local_p(
             agent_local_p,
             self._supply_zone_global_p[sz_code] + sign_ * Coordinate.front * 3,
@@ -73,7 +87,7 @@ class UwbApi(Api):
         point_2 = self._get_target_local_p(
             agent_local_p,
             self._supply_zone_global_p[sz_code] - sign_ * Coordinate.front * 3,
-        ).to_point()
+        )
         point_3 = self._get_target_local_p(
             agent_local_p,
             self._supply_zone_global_p[sz_code]
@@ -90,18 +104,22 @@ class UwbApi(Api):
 
     def _set_tag_position(self, msg):
         """記下 UWB 傳來的資料"""
+        # Logger.info(f"{msg.eui}")
         if msg.eui == "01:01":
             self._agent_global_p[1] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
         elif msg.eui == "02:02":
             self._agent_global_p[2] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
+            # Logger.info(f"agent global position = {self._agent_global_p[2]}")
         elif msg.eui == "03:03":
             self._agent_global_p[3] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
         elif msg.eui == "04:04":
             self._agent_global_p[4] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
         elif msg.eui == "05:05":
-            self._supply_zone_global_p["green"] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
-        elif msg.eui == "06:06":
+            # Logger.info("receive blue global location")
             self._supply_zone_global_p["blue"] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
+        elif msg.eui == "06:06":
+            # Logger.info("receive green global location")
+            self._supply_zone_global_p["green"] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
         elif msg.eui == "07:07":
             self._drop_zone_global_p["A"] = Coordinate(x=msg.x, y=msg.y, z=msg.z)
         elif msg.eui == "08:08":

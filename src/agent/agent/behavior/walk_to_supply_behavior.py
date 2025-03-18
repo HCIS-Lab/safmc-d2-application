@@ -37,9 +37,20 @@ class WalkToSupplyBehavior(Behavior):
     def execute(self):
         self._px4_api.change_control_field("velocity")
 
+        if self._px4_api.local_position is None:
+            Logger.info(f"agent local position is None")
+            return
+
         sz_local_ps = self._uwb_api.get_supply_zone_local_ps(
             self._mediator_api.supply_zone_code, self._px4_api.local_position
         )
+
+        if sz_local_ps is None:
+            Logger.error(
+                f"supply zone local position is None code = {self._mediator_api.supply_zone_code}"
+            )
+            return
+
         target_p = sz_local_ps[self.target_index]
         current_p = self._px4_api.local_position
 
