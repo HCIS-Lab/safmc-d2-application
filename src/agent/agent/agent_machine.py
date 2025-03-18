@@ -83,6 +83,7 @@ class AgentMachine(Machine):
             States.ALIGN_TO_SUPPLY: AlignToSupplyBehavior(
                 align_goal_radius=agent_parameter.align_goal_radius,
                 align_speed=agent_parameter.align_speed,
+                align_timeout=agent_parameter.align_timeout,
             ),
             States.LOAD: LoadBehavior(),
             States.WALK_TO_HOTSPOT: WalkToHotspotBehavior(),

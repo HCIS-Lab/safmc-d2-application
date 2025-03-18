@@ -15,8 +15,8 @@ class MediatorApi(Api):
     _supply_zone_marker_id = -1
     _drop_zone_marker_id = -1
 
-    _supply_zone_code = ""
-    _drop_zone_code = ""
+    _supply_zone_code = "no value"
+    _drop_zone_code = "no value"
 
     def __init__(self, node: Node):
         prefix = "mediator/"
@@ -84,7 +84,7 @@ class MediatorApi(Api):
 
     @property
     def supply_zone_code(self):
-        return self._drop_zone_code
+        return self._supply_zone_code
 
     @property
     def supply_zone_marker_id(self):

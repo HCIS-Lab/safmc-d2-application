@@ -14,6 +14,11 @@ class IdleBehavior(Behavior):
         self.px4_api = ApiRegistry.get(Px4Api)
         self.mediator_api = ApiRegistry.get(MediatorApi)
 
+    def on_exit(self):
+        self.mediator_api.online()  # TODO[lnfu]
+        Logger.info("ONLINE")
+        Logger.info(f"EXIT IDLE STATE")
+
     def execute(self):
         self.px4_api.activate_offboard_control_mode()  # TODO[lnfu] 一直發送會不會有問題?
         # TODO[lnfu]   使用 VehicleCommandAck 來追蹤是否設定成功
@@ -26,9 +31,9 @@ class IdleBehavior(Behavior):
             self.mediator_api.online()
 
     def get_next_state(self) -> Optional[str]:
-        return None
+        return "takeoff"
 
         if self.px4_api.is_armed and self.mediator_api.is_ok_to_takeoff:
-            return "takeoff"
+            return "align_to_supply"
 
         return None

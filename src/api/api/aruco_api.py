@@ -4,7 +4,6 @@ from rclpy.time import Time
 from safmc_msgs.msg import ArucoPose
 from common.coordinate import Coordinate
 from common.qos import sensor_qos_profile
-from scipy.spatial.transform import Rotation
 from common.logger import Logger
 from .api import Api
 import numpy as np
@@ -28,7 +27,7 @@ class ArucoApi(Api):
     _detected_time: Time = None
     _detected_marker_position: Coordinate = None
 
-    _heading: float
+    _heading: float = 0
 
     def __init__(self, node: Node):
         self._clock = node.get_clock()
@@ -91,13 +90,16 @@ class ArucoApi(Api):
 
     def _aruco_pose_callback(self, msg):
         marker_id = msg.aruco_marker_id
-        # Logger.info(f"RECEIVE ARUCO = {marker_id}")
+        Logger.info(f"received marker_id = {marker_id}")
+        Logger.info(f"target marker id = {self._target_marker_id}")
 
         if marker_id != self._target_marker_id:
             return
 
         self._is_marker_detected = True
         self._detected_time = self._clock.now()
-        self._detected_marker_position.x = msg.position.x
-        self._detected_marker_position.y = msg.position.y
-        self._detected_marker_position.z = msg.position.z
+        self._detected_marker_position = Coordinate(
+            x=msg.position.x,
+            y=msg.position.y,
+            z=msg.position.z,
+        )

@@ -1,4 +1,4 @@
 import cv2
 
-ARUCO_DICT = cv2.aruco.DICT_5X5_50
+ARUCO_DICT = cv2.aruco.DICT_5X5_50  # DICT_5X5_50
 ARUCO_DICT_FOR_HEADING = cv2.aruco.DICT_5X5_100

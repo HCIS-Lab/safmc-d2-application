@@ -6,6 +6,7 @@ from common.coordinate import Coordinate
 from .behavior import Behavior
 
 import numpy as np
+from common.logger import Logger
 
 
 class AlignToSupplyBehavior(Behavior):
@@ -17,18 +18,26 @@ class AlignToSupplyBehavior(Behavior):
     _align_speed: float
     _align_goal_radius: float
 
-    def __init__(self, align_goal_radius: float, align_speed: float):
+    def __init__(
+        self, align_goal_radius: float, align_speed: float, align_timeout: float
+    ):
         self._aruco_api = ApiRegistry.get(ArucoApi)
         self._px4_api = ApiRegistry.get(Px4Api)
         self._mediator_api = ApiRegistry.get(MediatorApi)
 
         self._align_goal_radius = align_goal_radius
         self._align_speed = align_speed
+        self._align_timeout = align_timeout
 
     def execute(self):
         self._px4_api.change_control_field("velocity")
 
         # TODO[lnfu] 到底要是水平移動, 然後 landing, load, takeoff, 還是直接 align 的時候垂直, load, takeoff???
+        marker_position = self._aruco_api.marker_position
+
+        if marker_position is None:
+            Logger.debug("no aruco marker")
+            return
 
         heading = self._aruco_api.heading
         cos_theta = np.cos(heading)
@@ -37,17 +46,21 @@ class AlignToSupplyBehavior(Behavior):
         vel = self._aruco_api.marker_position
         vel.x = cos_theta * vel.x - sin_theta * vel.y
         vel.y = sin_theta * vel.x + cos_theta * vel.y
+        vel -= Coordinate.front * 0.1  # 10cm
+        Logger.info(f"TARGET VEL = {vel}")
         # vel.z = 0  # 只要水平移動
 
         vel = Coordinate.clamp_magnitude(vel, self._align_speed)
         self._px4_api.move_with_velocity(vel)
 
     def get_next_state(self) -> Optional[str]:
+        return None
+
         if not self._px4_api.is_armed:
             return "idle"
 
         if self._aruco_api.elapsed_time.nanoseconds > self._align_timeout:
-            return "walk_to_hotspot"
+            return "walk_to_supply"
 
         if self._aruco_api.marker_position.magnitude <= self._align_goal_radius:
             return "load"

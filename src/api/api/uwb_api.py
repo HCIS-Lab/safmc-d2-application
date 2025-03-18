@@ -4,7 +4,7 @@ from common.logger import Logger
 from .api import Api
 from safmc_msgs.msg import TagPosition
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 from common.coordinate import Coordinate
 
 NUM_DRONES = 4
@@ -13,9 +13,9 @@ NUM_DRONES = 4
 class UwbApi(Api):
     _id: int
 
-    _agent_global_p: Dict[int, Coordinate]
-    _supply_zone_global_p: Dict[str, Coordinate]
-    _drop_zone_global_p: Dict[str, Coordinate]
+    _agent_global_p: Optional[Dict[int, Coordinate]] = None
+    _supply_zone_global_p: Optional[Dict[str, Coordinate]] = None
+    _drop_zone_global_p: Optional[Dict[str, Coordinate]] = None
 
     def __init__(self, node: Node):
         self.lidar_sub = node.create_subscription(
@@ -54,8 +54,10 @@ class UwbApi(Api):
 
     def get_supply_zone_local_ps(
         self, sz_code: str, agent_local_p: Coordinate
-    ) -> List[Coordinate]:
+    ) -> Optional[List[Coordinate]]:
         assert sz_code == "green" or sz_code == "blue"
+        assert self._supply_zone_global_p is not None
+
         if sz_code == "green":
             sign_ = 1
         elif sz_code == "blue":

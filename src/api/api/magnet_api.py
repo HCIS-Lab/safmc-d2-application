@@ -36,8 +36,8 @@ class MagnetApi(Api):
     def activate_magnet(self) -> None:
         magnet_msg = Magnet()
         magnet_msg.magnet1 = True
-        magnet_msg.magnet2 = False
-        magnet_msg.magnet3 = False
+        magnet_msg.magnet2 = True
+        magnet_msg.magnet3 = True
         self.magnet_control_pub.publish(magnet_msg)
 
     def deactivate_magnet(self) -> None:
