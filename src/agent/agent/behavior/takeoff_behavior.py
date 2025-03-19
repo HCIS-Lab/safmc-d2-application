@@ -38,7 +38,7 @@ class TakeoffBehavior(Behavior):
         self._px4_api.move_position_to(self._target_p)
 
     def get_next_state(self) -> Optional[str]:
-        return "walk_to_supply"
+        return "walk_to_hotspot"
 
         if not self._px4_api.is_armed:
             return "idle"

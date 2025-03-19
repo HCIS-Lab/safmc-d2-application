@@ -6,6 +6,7 @@ from common.logger import Logger
 
 from .behavior import Behavior
 
+import numpy as np
 
 class WalkToSupplyBehavior(Behavior):
 
@@ -37,32 +38,31 @@ class WalkToSupplyBehavior(Behavior):
     def execute(self):
         self._px4_api.change_control_field("velocity")
 
-        if self._px4_api.local_position is None:
-            Logger.info(f"agent local position is None")
-            return
-
-        sz_local_ps = self._uwb_api.get_supply_zone_local_ps(
-            self._mediator_api.supply_zone_code, self._px4_api.local_position
+        target_p = self._uwb_api.get_drop_zone_local_p(
+            self._mediator_api.drop_zone_code, self._px4_api.local_position
         )
 
-        if sz_local_ps is None:
-            Logger.error(
-                f"supply zone local position is None code = {self._mediator_api.supply_zone_code}"
+        heading = self._aruco_api.heading
+
+        obstacle_points = self._lidar_api.get_obstacle_points_2d(max_distance=5.0)
+
+        other_drone_points = [
+            (point.x, point.y)
+            for point in self._uwb_api.get_other_agent_local_ps(
+                self._px4_api.local_position
             )
-            return
+        ]
 
-        target_p = sz_local_ps[self.target_index]
-        current_p = self._px4_api.local_position
+        vel = self.apf_navigator.compute_velocity(
+            current_position=self._px4_api.local_position,
+            target_position=target_p,
+            obstacle_points=obstacle_points,
+            mediator_obstacles=other_drone_points,
+            heading=heading,
+        )
 
-        # 往 target_position 移動, 速度大小是 self.speed
-        vel = Coordinate.clamp_magnitude_2d(target_p - current_p, self._walk_speed)
-        self._px4_api.move_with_velocity_2d(vel)
+        self._px4_api.move_with_velocity(vel) 
 
-        # 如果到達 target_p, 換方向
-        if Coordinate.distance_2d(current_p, target_p) <= self._walk_goal_radius:
-            Logger.info(f"reached target position, changing to next target")
-            # 0, 1, 2, 3, 0, ...
-            self.target_index = (self.target_index + 1) % len(sz_local_ps)
 
     def get_next_state(self) -> Optional[str]:
 
