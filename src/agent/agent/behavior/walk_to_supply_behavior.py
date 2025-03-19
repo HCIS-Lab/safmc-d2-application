@@ -38,9 +38,7 @@ class WalkToSupplyBehavior(Behavior):
     def execute(self):
         self._px4_api.change_control_field("velocity")
 
-        target_p = self._uwb_api.get_drop_zone_local_p(
-            self._mediator_api.drop_zone_code, self._px4_api.local_position
-        )
+        target_p = Coordinate(5,-5)
 
         heading = self._aruco_api.heading
 
