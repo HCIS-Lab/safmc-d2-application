@@ -18,7 +18,7 @@ class LidarApi(Api):
 
     def __init__(self, node: Node):
         self.lidar_sub = node.create_subscription(
-            LaserScan, f"scan", self._set_lidar_status, sensor_qos_profile
+            LaserScan, f"/drone_1/scan", self._set_lidar_status, sensor_qos_profile
         )
 
     def _set_lidar_status(self, msg: LaserScan):
